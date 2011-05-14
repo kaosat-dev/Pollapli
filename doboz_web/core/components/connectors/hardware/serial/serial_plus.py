@@ -59,9 +59,6 @@ class SerialPlus(Thread,HardwareConnector):
                     serial.blockedPorts.append(bPort)
 
         self.serial=None
-        
-
-        
         self.lastCommand=""
         
     def reset_seperator(self):

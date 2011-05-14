@@ -1,4 +1,3 @@
-
 """
 .. py:module:: reprap_node
    :synopsis: hardware node for reprap handling.
@@ -39,17 +38,8 @@ class ReprapNode(HardwareNode):
             
         self.logger.critical("Reprap Node Init Done")
         
-    def set_connector(self,connector):
-        """
-        Sets what connector to use
+    
          
-        """
-        self.connector=connector
-        if hasattr(self.connector, 'events'):    
-             self.connector.events.disconnected+=self._on_connector_disconnected
-             self.connector.events.reconnected+=self._on_connector_reconnected  
-             self.connector.events.OnDataRecieved+=self._on_data_recieved
-        self.connector.start()    
          
     def set_paths(self,rootPath):
         """

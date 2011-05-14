@@ -1,3 +1,7 @@
+"""
+.. py:module:: environment_manager
+   :synopsis: manager of environments.
+"""
 import os
 import random
 import logging
@@ -7,38 +11,31 @@ import shutil
 import imp
 import inspect
 
-#from pollapli.core.components.environments.environment import Environment
-
-
-
+from doboz_web.core.components.environments.environment import Environment
 
 class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
     """
     def __init__(self,envPath):
-        self.logger = logging.getLogger("Pollapli.Core.EnvironmentManager") 
+        self.logger = logging.getLogger("dobozweb.core.components.environmentManager") 
         self.environments={}
-        
-        self.registeredHardwareTypes={}
-        self.registeredConverters={}
         self.path=envPath
-
+        self.setup()
     
     def setup(self):
         #self.scan_plugins()
         self.startTime = time.time()
         """Retrieve all existing environments from disk"""
-#        for fileDir in os.listdir(self.path):    
-#            if os.path.isdir(os.path.join(self.path,fileDir)):           
-#                envName= fileDir
-#                envPath=os.path.join(self.path,envName)
-#                env=Environment(envPath,envName,"")   
-#                env.add_registered_hardwareTypes(self.registeredHardwareTypes) 
-#                env.setup()
-#                self.environments[envName]=env
+        for fileDir in os.listdir(self.path):    
+            if os.path.isdir(os.path.join(self.path,fileDir)):           
+                envName= fileDir
+                envPath=os.path.join(self.path,envName)
+                env=Environment(envPath,envName,"")    
+                env.setup()
+                self.environments[envName]=env
                 #temporary: this should be recalled from db from within the environments ?
-                
+        self.logger.critical("Environment manager setup correctly")
         
         
     def __getattr__(self, attr_name):
@@ -61,6 +58,15 @@ class EnvironmentManager(object):
     ####################################################################################
     The following functions are for the general handling of environements
     """
+    def get_environments(self):
+        """
+        Returns the list of environments
+        """
+        return [env for env in self.environments ]
+    
+    def get_environment(self,envName):
+        return self.environments[envName]
+    
     def add_environment(self,name,description="Add Description here",status="frozen"):
         """
         Add an environment to the list of managed environements : 
@@ -72,27 +78,32 @@ class EnvironmentManager(object):
         """
         #create hash from envName
         envPath=os.path.join(self.path,name)  
-        
+       
         #if such an environment does not exist, add it
         if not name in self.environments:
             os.mkdir(envPath)
             env=Environment(envPath,name,description)
             env.setup()
             self.environments[name]=env
+            self.logger.critical("Adding environment named %s, description: %s",name,description)
             """ IF IT IS ALREADY PRESENT,  DISPATCH A " WARNING" MESSAGE"""
             
-    def remove_environment(self,envName):
+    def remove_environment(self,name):
         """
         Remove an environment : this needs a whole set of checks, 
         as it would delete an environment completely (very dangerous)
         Params:
-        EnvName: the name of the environment
+        name: the name of the environment
         """
-        envPath=self.environments[envName].path
-        self.logger.critical("Removing and deleting envrionment: '%s' at : '%s'",envName,envPath)
+      
+        envPath=os.path.join(self.path,name)#self.environments[name].path
+        
+       
         #self.environments[envName].shutdown()
-        del self.environments[envName]
+        del self.environments[name]
         shutil.rmtree(envPath)
+        
+        self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",name,envPath) 
         
     def get_environementInfo(self,envName):
         print(self.environments[envName].get_environmentInfo())

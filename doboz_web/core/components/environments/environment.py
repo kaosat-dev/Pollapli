@@ -1,36 +1,25 @@
+"""
+.. py:module:: environment
+   :synopsis: all things environment
+"""
 import os
 import random
 import logging
 import imp
 import inspect
 
+from doboz_web.core.components.nodes.node_manager import NodeManager
 
-from Core.HardwareNodesV2.hardware_node_manager import NodeManager 
-
-
-#from pollapli.core.components.hardware_nodes import HardwareNode as hNode
-import Core.HardwareNodes.sensor as sns
-import Core.HardwareNodes.schedule as schd
-from threading import Thread
-import Queue
 
 class Environment(object):
     def __init__(self,path,name,description="Add Description here",status="frozen"):
-        self.logger=logging.getLogger("Pollapli.Core.EnvironmentManager.Environment")
+        self.logger=logging.getLogger("dobozweb.core.components.environment")
         self.path=path
         self.name=name
-        self.description=""
+        self.description=description
         self.status=status
-        """hardware manager"""
-        
         self.nodeManager=NodeManager()
-        self.registered_types={}
-        self.commandQueue=Queue.PriorityQueue
-        
-        self.registered_types["HardwareNode"]=hNode
-        self.registered_types["Sensor"]=sns
-        self.registered_types["Schedule"]=schd
-        
+                
     """
     ####################################################################################
     Configuration and shutdown methods
@@ -42,12 +31,12 @@ class Environment(object):
         """
         self.logger.debug("Starting Configuring Environment '%s' ",self.name)
         #create db if not existent else just connect to it
-        dbPath=self.path+os.sep+self.name+"_db"
-        if not os.path.exists(dbPath):    
-            self.db=db_manager_SQLLITE(dbPath)
-            self.db.add_environment(self.name,self.description)
-        else:
-            self.db=db_manager_SQLLITE(dbPath)
+#        dbPath=self.path+os.sep+self.name+"_db"
+#        if not os.path.exists(dbPath):    
+#            self.db=db_manager_SQLLITE(dbPath)
+#            self.db.add_environment(self.name,self.description)
+#        else:
+#            self.db=db_manager_SQLLITE(dbPath)
             
       
 
@@ -57,52 +46,40 @@ class Environment(object):
         """
         Tidilly shutdown and cleanup after environment
         """
-        self.nodeManager.tearDown()     
+        #self.nodeManager.tearDown()     
 
 
     def get_environmentInfo(self):
-        return self.db.get_environmentInfo()
-    """
-    ####################################################################################
-    The following functions are typically plugin related methods
-    """ 
-    def add_registered_hardwareTypes(self,hardwareTypes):
-        """
-        Adds the dictionary of validated hardwareTypes to the list of registered hardwareTypes
-        """
-        self.registered_types.update(hardwareTypes)
-        
-    def add_registered_converters(self,hardwareTypes):
-        self.registered_converters.update(hardwareTypes)
-        
+        return self.name
+       
   
-        
-    
-
-
-
+    def __getattr__(self, attr_name):
+        if hasattr(self.nodeManager, attr_name):
+                return getattr(self.nodeManager, attr_name)
+        else:
+            raise AttributeError(attr_name)
     """
     ####################################################################################
     The following functions are typically hardware manager/hardware nodes and sensors related, pass through methods for the most part
     """  
     
-    def add_node(self,type,name="",description="",params=None):
-        """
-        Add a hardware node to this environement, via its node manager (passthrough function)
-        Params:
-        title:the name of the node
-        Desciption: short description of node
-        NodeType: nodetype id
-        """
+#    def add_node(self,type,name="",description="",params=None):
+#        """
+#        Add a node to this environement, via its node manager (passthrough function)
+#        Params:
+#        name:the name of the node
+#        Desciption: short description of node
+#        NodeType: nodetype id
+#        """
       
-        self.nodeManager.add_node(type,params)
+        #self.nodeManager.add_node(type,params)
         
     def remove_node(self,nodeId):
         """
         Remove a hardware node from this environement , via its node manager (passthrough function)
         Params:nodeId : the id of the node we want removed
         """
-        self.nodeManager.remove_node(nodeId)
+        #self.nodeManager.remove_node(nodeId)
         
     def set_connectorToNode(self,nodeName):
         """
@@ -120,7 +97,7 @@ class Environment(object):
         Params: its working parameters
         Node: its parent node id
         """ 
-        self.nodeManager.add_actor(node,params) 
+        #self.nodeManager.add_actor(node,params) 
           
     def remove_actor(self,actorId):
         """
@@ -139,14 +116,14 @@ class Environment(object):
         Node: its parent node id
         port: its pin/port (might be too arduino specific
         """ 
-        self.nodeManager.add_sensor(node,params)   
+        #self.nodeManager.add_sensor(node,params)   
         
     def remove_sensor(self,sensorId):
         """
         Remove a sensor from this environement , via its node manager (passthrough function)
         Params:sensorId : the id of the sensor we want removed
         """
-        self.nodeManager.remove_sensor(sensorId)    
+        #self.nodeManager.remove_sensor(sensorId)    
     
     def add_sensorType(self,title,description):
         """
@@ -156,14 +133,14 @@ class Environment(object):
         title:the name of the sensor type
         Desciption: short description of sensor type   
         """ 
-        self.db.add_sensorType(title,description)
+        #self.db.add_sensorType(title,description)
         
     def remove_sensorType(self,title):
         """
         Remove a sensor from this environement , via its node manager (passthrough function)
         Params:sensorId : the id of the node we want removed
         """
-        self.db.delete_sensorType(title)   
+        #self.db.delete_sensorType(title)   
     
     """
     ####################################################################################
@@ -191,7 +168,7 @@ class Environment(object):
         """
         Removes a task from the database as well as the scheduler
         """
-        self.db.delete_task(title)
+        #self.db.delete_task(title)
         
     def retrieve_data(self,sensorId):
         """

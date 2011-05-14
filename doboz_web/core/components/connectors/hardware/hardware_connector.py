@@ -30,6 +30,9 @@ class HardwareConnector(object):
         """
         raise NotImplementedException()
     
+    def disconnect(self):
+        raise NotImplementedException()
+    
     def fetch_data(self):
         """cheap hack for now"""
         pass
