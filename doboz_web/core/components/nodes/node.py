@@ -40,7 +40,8 @@ class Node(object):
              self.connector.events.disconnected+=self._on_connector_disconnected
              self.connector.events.reconnected+=self._on_connector_reconnected  
              self.connector.events.OnDataRecieved+=self._on_data_recieved
-    
+        self.taskManager.connector=self.connector
+        
     def add_component(self,component,*args,**kwargs):
         pass
     

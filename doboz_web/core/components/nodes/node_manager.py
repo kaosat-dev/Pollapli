@@ -61,6 +61,7 @@ class NodeManager(object):
             self.logger.critical("Removed node with id %s",str(nodeId))
         except Exception as inst:
             self.logger.error("Error in node deletion: %s ",str(inst))
+    
     def clear_nodes(self):
         self.nodesById.clear()
     

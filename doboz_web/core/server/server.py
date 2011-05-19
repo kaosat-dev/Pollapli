@@ -185,9 +185,14 @@ def tasks_post(envName,nodeId):
 @server.route('/environments/:envName/nodes/:nodeId/tasks' , method='PUT')
 def tasks_put(envName,nodeId):
     print("putting into tasks in node "+ nodeId+" in env "+envName)
+
 @server.route('/environments/:envName/nodes/:nodeId/tasks' , method='DELETE')
 def tasks_delete(envName,nodeId):
-    print("deleting tasks in node "+ nodeId+" in env "+envName)
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).clear_tasks(**request.params)
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d tasks delete: error: %s",envName,int(nodeId), str(inst))
+       
 
 @server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId' , method='GET')
 def task_get(envName,nodeId,taskId):
@@ -200,8 +205,70 @@ def task_put(envName,nodeId,taskId):
     print("puting info for task"+ taskId+ "in node"+ nodeId+" in env "+envName)
 @server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId' , method='DELETE')
 def task_delete(envName,nodeId,taskId):
-    print("deleting info for task"+ taskId+ "in node"+ nodeId+" in env "+envName)
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).remove_task(int(nodeId))
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task delete: error: %s",envName,int(nodeId), str(inst))
+        
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/conditions' , method='GET')
+def task_conditions_get(envName,nodeId,taskId):
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).get_conditions(int(taskId))
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task conditions get: error: %s",envName,int(nodeId), str(inst))       
+ 
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/conditions' , method='POST')
+def task_conditions_post(envName,nodeId,taskId):
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).add_condition(**params)
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task conditions get: error: %s",envName,int(nodeId), str(inst))       
 
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/conditions' , method='DELETE')
+def task_conditions_delete(envName,nodeId,taskId):
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).clear_conditions(int(taskId))
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task conditions get: error: %s",envName,int(nodeId), str(inst))       
+
+
+        
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions' , method='GET')
+def task_actions_get(envName,nodeId,taskId):
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).get_actions(int(taskId))
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task actions get: error: %s",envName,int(nodeId), str(inst))       
+ 
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions' , method='POST')
+def task_actions_post(envName,nodeId,taskId):
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).add_action(**params)
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task actions get: error: %s",envName,int(nodeId), str(inst))       
+
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions' , method='DELETE')
+def task_actions_delete(envName,nodeId,taskId):
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).clear_actions(int(taskId))
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task actions get: error: %s",envName,int(nodeId), str(inst))       
+    
+        
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/start' , method='POST')
+def task_start(envName,nodeId,taskId):
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).start_task(int(taskId))
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task start: error: %s",envName,int(nodeId), str(inst))
+    
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/stop' , method='POST')
+def task_stop(envName,nodeId,taskId):
+    try:
+        server.environmentManager.get_environment(envName).get_node(int(nodeId)).stop_task(int(taskId))
+    except Exception as inst:
+        server.logger.critical("in env %s node id %d task stop: error: %s",envName,int(nodeId), str(inst))
+    
 #############################################
 """Node Connector handling """
 @server.route('/environments/:envName/nodes/:nodeId/connector' , method='GET')
