@@ -4,6 +4,7 @@ import sys
 import time
 import datetime
 import socket
+import json
 
 from bottle import Bottle, route, run, send_file, redirect, abort, request, response 
 import bottle
@@ -12,13 +13,72 @@ from doboz_web.core.components.automation.scan_task import ScanTask
 from doboz_web.core.components.automation.transition_task import TransitionTask
 from doboz_web.core.components.automation.timer_task import TimerTask
 
+from doboz_web.core.server.rest.envs_handler import EnvsRestHandler
+from doboz_web.core.server.rest.env_handler import EnvRestHandler
+from doboz_web.core.server.rest.nodes_handler import NodesRestHandler
+from doboz_web.core.server.rest.node_handler import NodeRestHandler
+from doboz_web.core.server.rest.connector_handler import ConnectorRestHandler
+from doboz_web.core.server.rest.connector_status_handler import ConnectorStatusRestHandler
+from doboz_web.core.server.rest.tasks_handler import TasksRestHandler
+from doboz_web.core.server.rest.task_handler import TaskRestHandler
 server = Bottle()
 server.rootPath=os.path.join(os.path.abspath("."),"core","server")
 server.logger=logging.getLogger("dobozweb.core.WebServer")
 
+"""Helper functions"""
+
 def fullPrintFileInfo(file):
     return {"fileName":str(file),"modDate": str(time.ctime(os.path.getmtime(os.path.join(server.rootPath,"files","machine","printFiles",file))))}
+
+"""Convert any dict keys to str, because of a bug in pre 2.6.5 python"""
+def stringify_data(obj):
+        if type(obj) in (int, float, str, bool):
+                return obj
+        elif type(obj) == unicode:
+                return obj#return str(obj)
+        elif type(obj) == dict:
+                modobj={}
+                for i,v in obj.iteritems():
+                        modobj[str(i)]=stringify_data(v)
+                obj=modobj
+                       # obj[i] = filter_data(v)
+        else:
+                print "invalid object in data, converting to string"
+                obj = str(obj) 
+        return obj    
+
+def fetch_jsonData():
+    """ In python pre 2.6.5, bug in unicode dict keys"""
+    data=request.body.readline()
+    params=json.loads(data,encoding='utf8')
+    params=stringify_data(params)
+    return params 
+
+def format_jsonResponse():
+    callback=request.GET.get('callback', '').strip()
+    response=callback+"()"
     
+data_fetchers={}
+data_fetchers["application/json"]=fetch_jsonData
+
+
+    
+def request_handler(xmlHandler=None,jsonHandler=None,errorMessage="",contentTypeErrorMessage=""):
+    """only handles json for now"""
+    handlers={}
+    handlers["application/json"]=jsonHandler
+    handlers["application/xml"]=xmlHandler
+    
+    content_type=request.headers.get("Content-Type")
+    print(content_type)
+    if not handlers[content_type]: 
+        abort(501,contentTypeErrorMessage)
+    else:
+        try: 
+            handlers[content_type](**data_fetchers[content_type]())
+        except Exception as inst:
+            server.logger.critical("error %s",str(inst))
+            abort(500,errorMessage)    
 
 @server.route('/files' , method='GET')
 def files_get():
@@ -51,6 +111,7 @@ def files_post():
 @server.route('/files' , method='PUT')
 def files_put():
     print("puting to file list")
+    
 @server.route('/files' , method='DELETE')
 def files_delete():
     fileName=request.params["filename"].strip()
@@ -60,156 +121,140 @@ def files_delete():
         server.logger.critical("Deleted file: %s",fileName)
     except Exception as inst:
         server.logger.critical("error %s",str(inst))
+        abort(500,"Error in attempting to delete files")
     
-    
+            
 
 @server.route('/environments' , method='GET')
-def environments_get():
-    print("getting env list")
-    callback=request.GET.get('callback', '').strip()
-    response=callback+"()"
-    response=callback+"("+str(server.environmentManager.get_environments())+")"
-    return response
-    
 @server.route('/environments' , method='POST')
-def environments_post():
-    print("posting to env list")
 @server.route('/environments' , method='PUT')
-def environments_put():
-    try:
-        server.environmentManager.add_environment(**request.params)
-    except Exception as inst:
-        server.logger.critical("error %s",str(inst))
-  
 @server.route('/environments' , method='DELETE')
-def environments_delete():
-    try:
-        server.environmentManager.remove_environment(**request.params)
-    except Exception as inst:
-        server.logger.critical("environment deletion error %s",str(inst))
+@server.route('/environments/' , method='GET')
+@server.route('/environments/' , method='POST')
+@server.route('/environments/' , method='PUT')
+@server.route('/environments/' , method='DELETE')
+def handle_envs():
+    envsHandler=EnvsRestHandler(server.environmentManager)
+    return envsHandler._handle(request)
+
 
 @server.route('/environments/:envName' , method='GET')
-def environment_get(envName):
-    try:
-        server.environmentManager.get_environementInfo(envName)
-    except Exception as inst:
-        server.logger.critical("environment %s get error %s",envName, str(inst))
-    
 @server.route('/environments/:envName' , method='POST')
-def environment_post(command):
-    pass
 @server.route('/environments/:envName' , method='PUT')
-def environment_put(envName):
-    print("putting info for "+ envName)
 @server.route('/environments/:envName' , method='DELETE')
-def environment_delete(envName):
-    print("deleting "+ envName)
+@server.route('/environments/:envName/' , method='GET')
+@server.route('/environments/:envName/' , method='POST')
+@server.route('/environments/:envName/' , method='PUT')
+@server.route('/environments/:envName/' , method='DELETE')
+def handle_env(envName):
+    envHandler=EnvRestHandler(server.environmentManager,envName)
+    return envHandler._handle(request)
 
-#############################################
 
 @server.route('/environments/:envName/nodes' , method='GET')
-def nodes_get(envName):
-    callback=request.GET.get('callback', '').strip()
-    response=callback+"()"
-    try:
-        data=server.environmentManager.get_environment(envName).get_nodes()
-        response=callback+"("+str(data)+")"
-    except Exception as inst:
-        server.logger.critical("in env %s  node get error: %s",envName, str(inst))
-    return response
 @server.route('/environments/:envName/nodes' , method='POST')
-def nodes_post(envName):
-    try:
-        server.environmentManager.get_environment(envName).add_node(**request.params)
-    except Exception as inst:
-        server.logger.critical("in env %s  node post error: %s",envName, str(inst))
-    
 @server.route('/environments/:envName/nodes' , method='PUT')
-def nodes_put(envName):
-    pass
-    
 @server.route('/environments/:envName/nodes' , method='DELETE')
-def nodes_delete(envName):
-    try:
-        server.environmentManager.get_environment(envName).clear_nodes()
-    except Exception as inst:
-        server.logger.critical("in env %s  node delete error: %s",envName, str(inst))
-    
+@server.route('/environments/:envName/nodes/' , method='GET')
+@server.route('/environments/:envName/nodes/' , method='POST')
+@server.route('/environments/:envName/nodes/' , method='PUT')
+@server.route('/environments/:envName/nodes/' , method='DELETE')
+def handle_nodes(envName):
+    nodesHandler=NodesRestHandler(server.environmentManager,envName)
+    return nodesHandler._handle(request)
 
 @server.route('/environments/:envName/nodes/:nodeId' , method='GET')
-def node_get(envName,nodeId):
-    try:
-        server.environmentManager.get_environment(envName).add_node("pouet","reprap")
-    except Exception as inst:
-        server.logger.critical("in env %s node get error: %s",envName, str(inst))
-    
 @server.route('/environments/:envName/nodes/:nodeId' , method='POST')
-def node_post(envName,nodeId):
-    print("posting info for node"+ nodeId+" in env"+envName)
 @server.route('/environments/:envName/nodes/:nodeId' , method='PUT')
-def node_put(envName,nodeId):
-    print("putting info for node"+ nodeId+" in env"+envName)
 @server.route('/environments/:envName/nodes/:nodeId' , method='DELETE')
-def node_delete(envName,nodeId):
-    try:
-        server.environmentManager.get_environment(envName).delete_node(int(nodeId))
-    except Exception as inst:
-        server.logger.critical("in env %s  node %d connector delete error: %s",envName,nodeId, str(inst))
-    
-#############################################
-@server.route('/environments/:envName/nodes/:nodeId/connect' , method='PUT')
-def node_connect_put(envName,nodeId):
-    try:
-        server.environmentManager.get_environment(envName).get_node(int(nodeId)).connect()
-    except Exception as inst:
-        server.logger.critical("in env %s node connect error: %s",envName, str(inst))
-@server.route('/environments/:envName/nodes/:nodeId/disconnect' , method='PUT')
-def node_disconnect_put(envName,nodeId):
-    try:
-        server.environmentManager.get_environment(envName).get_node(int(nodeId)).disconnect()
-    except Exception as inst:
-        server.logger.critical("in env %s node connect error: %s",envName, str(inst))
+@server.route('/environments/:envName/nodes/:nodeId/' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/' , method='DELETE')
+def handle_node(envName,nodeId):
+    nodeHandler=NodeRestHandler(server.environmentManager,envName,int(nodeId))
+    return nodeHandler._handle(request)
 
-#############################################
+
+@server.route('/environments/:envName/nodes/:nodeId/connector' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/connector' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/connector' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/connector' , method='DELETE')
+def handle_connector(envName,nodeId):
+    connectorHandler=ConnectorRestHandler(server.environmentManager,envName,int(nodeId))
+    return connectorHandler._handle(request)
+
+@server.route('/environments/:envName/nodes/:nodeId/connector/status' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/connector/status' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/connector/status' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/connector/status' , method='DELETE')
+def handle_connector_status(envName,nodeId):
+    connectorStatusHandler=ConnectorStatusRestHandler(server.environmentManager,envName,int(nodeId))
+    return connectorStatusHandler._handle(request)
 
 @server.route('/environments/:envName/nodes/:nodeId/tasks' , method='GET')
-def tasks_get(envName,nodeId):
-    print("getting info for tasks in node "+ nodeId+" in env "+envName)
 @server.route('/environments/:envName/nodes/:nodeId/tasks' , method='POST')
-def tasks_post(envName,nodeId):
-    try:
-        server.environmentManager.get_environment(envName).get_node(int(nodeId)).add_task(**request.params)
-    except Exception as inst:
-        server.logger.critical("in env %s node id %d task post error: %s",envName,int(nodeId), str(inst))
-        
 @server.route('/environments/:envName/nodes/:nodeId/tasks' , method='PUT')
-def tasks_put(envName,nodeId):
-    print("putting into tasks in node "+ nodeId+" in env "+envName)
-
 @server.route('/environments/:envName/nodes/:nodeId/tasks' , method='DELETE')
-def tasks_delete(envName,nodeId):
-    try:
-        server.environmentManager.get_environment(envName).get_node(int(nodeId)).clear_tasks(**request.params)
-    except Exception as inst:
-        server.logger.critical("in env %s node id %d tasks delete: error: %s",envName,int(nodeId), str(inst))
-       
+@server.route('/environments/:envName/nodes/:nodeId/tasks/' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/' , method='DELETE')
+def handle_tasks(envName,nodeId):
+    tasksHandler=TasksRestHandler(server.environmentManager,envName,int(nodeId))
+    return tasksHandler._handle(request)
 
 @server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId' , method='GET')
-def task_get(envName,nodeId,taskId):
-    print("getting info for task "+ taskId+ " in node "+ nodeId+" in env "+envName)
 @server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId' , method='POST')
-def task_post(envName,nodeId,taskId):
-    print("post info for task"+ taskId+ "in node"+ nodeId+" in env "+envName)
 @server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId' , method='PUT')
-def task_put(envName,nodeId,taskId):
-    print("puting info for task"+ taskId+ "in node"+ nodeId+" in env "+envName)
 @server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId' , method='DELETE')
-def task_delete(envName,nodeId,taskId):
-    try:
-        server.environmentManager.get_environment(envName).get_node(int(nodeId)).remove_task(int(nodeId))
-    except Exception as inst:
-        server.logger.critical("in env %s node id %d task delete: error: %s",envName,int(nodeId), str(inst))
-        
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/' , method='DELETE')
+def handle_task(envName,nodeId,taskId):
+    taskHandler=TaskRestHandler(server.environmentManager,envName,int(nodeId),int(taksId))
+    return taskHandler._handle(request)
+
+
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/status' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/status' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/status' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/status' , method='DELETE')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/status/' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/status/' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/status/' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/status/' , method='DELETE')
+def handle_task_status(envName,nodeId,taskId):
+    pass
+    #taskHandler=TaskRestHandler(server.environmentManager,envName,int(nodeId),int(taksId))
+    #return taskHandler._handle(request)
+
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/condtions' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/condtions' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/condtions' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/condtions' , method='DELETE')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/condtions/' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/condtions/' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/condtions/' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/condtions/' , method='DELETE')
+def handle_task_conditions(envName,nodeId,taskId):
+    pass#taskHandler=TaskRestHandler(server.environmentManager,envName,int(nodeId),int(taksId))
+    #return taskHandler._handle(request)
+
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions' , method='DELETE')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions/' , method='GET')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions/' , method='POST')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions/' , method='PUT')
+@server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/actions/' , method='DELETE')
+def handle_task_actions(envName,nodeId,taskId):
+    pass#taskHandler=TaskRestHandler(server.environmentManager,envName,int(nodeId),int(taksId))
+    #return taskHandler._handle(request)
+#############################################
+  
 @server.route('/environments/:envName/nodes/:nodeId/tasks/:taskId/conditions' , method='GET')
 def task_conditions_get(envName,nodeId,taskId):
     try:
@@ -270,56 +315,14 @@ def task_stop(envName,nodeId,taskId):
         server.logger.critical("in env %s node id %d task stop: error: %s",envName,int(nodeId), str(inst))
     
 #############################################
-"""Node Connector handling """
-@server.route('/environments/:envName/nodes/:nodeId/connector' , method='GET')
-def connector_get(envName,nodeId):
-    print("getting info for connector of node "+ nodeId+" in env "+envName)
     
-@server.route('/environments/:envName/nodes/:nodeId/connector' , method='PUT')
-def connector_put(envName,nodeId):
-    nodeId=int(nodeId)
-    request.params['nodeId']=nodeId
-    try:
-        server.environmentManager.get_environment(envName).set_connector(**request.params)
-    except Exception as inst:
-        server.logger.critical("in env %s  node %d connector put error: %s",envName,nodeId, str(inst))
-    
-@server.route('/environments/:envName/nodes/:nodeId/connector' , method='DELETE')
-def connector_delete(envName,nodeId):
-    nodeId=int(nodeId)
-    try:
-        pass#server.environmentManager.get_environment(envName).delete_node(nodeId)
-    except Exception as inst:
-        server.logger.critical("in env %s  node %d connector delete error: %s",envName,nodeId, str(inst))
-    
-#############################################
-#############################################
-"""Node connector DRIVER handling """
-@server.route('/environments/:envName/nodes/:nodeId/connector/driver' , method='GET')
-def driver_get(envName,nodeId):
-    print("getting info for driver of node "+ nodeId+" in env "+envName)
-    
-@server.route('/environments/:envName/nodes/:nodeId/connector/driver' , method='PUT')
-def driver_put(envName,nodeId):
-    print("puting info for driver of node"+ nodeId+" in env "+envName)
-    nodeId=int(nodeId)
-    request.params['nodeId']=nodeId
-    try:
-        server.environmentManager.get_environment(envName).set_driver(**request.params)
-    except Exception as inst:
-        server.logger.critical("in env %s  node %d driver put error: %s",envName,nodeId, str(inst))
-    
-@server.route('/environments/:envName/nodes/:nodeId/connector/driver' , method='DELETE')
-def driver_delete(envName,nodeId):
-    print("deleting info for connector of node"+ nodeId+" in env "+envName)
-#############################################
-
 
 
 
 def start_webServer():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(('google.com', 0))
-    hostIp=s.getsockname()[0]
-
+    #s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #s.connect(('google.com', 0))
+    #hostIp=s.getsockname()[0]
+    hostIp='127.0.0.1'
+    
     run(app=server,server=server.chosenServer, host=hostIp, port=server.chosenPort)

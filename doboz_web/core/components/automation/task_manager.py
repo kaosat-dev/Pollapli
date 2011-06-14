@@ -10,7 +10,7 @@ import uuid
 
 from doboz_web.core.components.automation.print_task import PrintTask
 from doboz_web.core.components.automation.timer_task import TimerTask
-
+ 
 
 class TaskManager(object):
     taskTypes={}
@@ -23,6 +23,12 @@ class TaskManager(object):
         self.tasksById=[]
         self.lastTaskId=0
         self.connector=connector
+        
+#    def __getattr__(self, attr_name):
+#        if hasattr(self.tasksById[id], attr_name):
+#                return getattr(self.tasksById, attr_name)
+#        else:
+#            raise AttributeError(attr_name)
         
     def add_task(self,name,type,*args,**kwargs):
         """

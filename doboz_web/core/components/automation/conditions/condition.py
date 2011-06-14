@@ -1,4 +1,4 @@
-from pollapli.core.tools.event_sys import *
+from doboz_web.core.tools.event_sys import *
 
 
 class ConditionEvents(Events):
@@ -14,14 +14,12 @@ class Condition(object):
     def __init__(self,critical=False):
         self.events=ConditionEvents()
         self.critical=critical#is this a critical condition
+        self.valid=False
         
-    def check(self):
-        if not self.critical:
-            return True
-        return False
-    
     def validate(self):
+        self.valid=True
         self.events.validated(self)
     
     def invalidate(self):
+        self.valid=False
         self.events.invalidated(self)

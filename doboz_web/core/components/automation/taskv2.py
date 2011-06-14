@@ -5,7 +5,7 @@ import sys
 import os
 
 
-from pollapli.core.tools.event_sys import *
+from doboz_web.core.tools.event_sys import *
 
 
 class AutomationEvents(Events):

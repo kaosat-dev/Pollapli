@@ -77,7 +77,9 @@ class EnvironmentManager(object):
         status: either frozen or live : whether the environment is active or not
         """
         #create hash from envName
+       
         envPath=os.path.join(self.path,name)  
+       
        
         #if such an environment does not exist, add it
         if not name in self.environments:

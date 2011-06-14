@@ -21,7 +21,7 @@ class SerialPlus(Thread,HardwareConnector):
     """
     Class for sending out events each time data is sent through the observed serial port
     """
-    blockedPorts=[]
+    blockedPorts=["COM3"]
     """A class level list of all , already in use serial ports: neeeded for multiplatform correct behaviour of serial ports """
     
     def __init__(self,pseudoName="serial",port=None,isBuffering=True,seperator='\r\n',Speed=115200,bannedPorts=None,maxErrors=5,waitForAnswer=False,protocol=None):
@@ -52,6 +52,8 @@ class SerialPlus(Thread,HardwareConnector):
         self.buffer=""
         
         self.finished=Event()
+        self.connectionRequested=False
+        self.isStarted=False
         
         if bannedPorts:
             for bPort in bannedPorts:
@@ -70,6 +72,17 @@ class SerialPlus(Thread,HardwareConnector):
         conf=os.path.join(avrpath,"avrdude.conf")
     
     def connect(self):
+        if not self.isStarted:
+            self.isStarted=True
+            self.start()
+        self.connectionRequested=True
+    def disconnect(self):
+        self.connectionRequested=False
+        self.isConnected=False
+        
+    def _connect(self):
+        
+            
         """Port connection/reconnection procedure"""    
         try:
             serial.blockedPorts.remove(self.port)
@@ -156,9 +169,9 @@ class SerialPlus(Thread,HardwareConnector):
         seperator) is dispatched
         """
         while not self.finished.isSet():
-            if not self.isConnected:
-                self.connect()
-            else:   
+            if self.connectionRequested:
+                self._connect()
+            if self.isConnected:   
                 nextCommand=self.driver.get_next_command()
                 if nextCommand:
                     self.send_command(nextCommand)
@@ -175,6 +188,7 @@ class SerialPlus(Thread,HardwareConnector):
                         #in the case of buffering we fill the data buffer with all recieved data
                         #and as soon as we find a complete seperator, we split the substring ending with the seperator
                         #from the rest of the string and raise an event, sending the substring as message
+                        
                         if self.isBuffering:
                             self.logger.debug("serial buffering")
                             self.buffer+=str(data)

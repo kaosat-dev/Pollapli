@@ -47,12 +47,12 @@
 // for belts, this is (steps per motor turn) / (number of gear teeth) / (belt module)
 // half-stepping doubles the number, quarter stepping requires * 4, etc.
 // valid range = 0.020 to 4194.303
-#define	STEPS_PER_MM_X				75.955
-#define	STEPS_PER_MM_Y				75.955
-#define	STEPS_PER_MM_Z				75.955
+#define	STEPS_PER_MM_X				1600.000//3200
+#define	STEPS_PER_MM_Y				1600.000//3200
+#define	STEPS_PER_MM_Z				675.000//2700.000//2600.000
 
 // http://blog.arcol.hu/?p=157 may help with this next one
-#define	STEPS_PER_MM_E				320.000
+#define	STEPS_PER_MM_E				115.000//125
 
 
 /*
@@ -63,33 +63,33 @@
 */
 
 // used for G0 rapid moves and as a cap for all other feedrates
-#define	MAXIMUM_FEEDRATE_X		200
-#define	MAXIMUM_FEEDRATE_Y		200
-#define	MAXIMUM_FEEDRATE_Z		100
+#define	MAXIMUM_FEEDRATE_X		140
+#define	MAXIMUM_FEEDRATE_Y		140
+#define	MAXIMUM_FEEDRATE_Z		30
 #define	MAXIMUM_FEEDRATE_E		200
 
 // used when searching endstops and as default feedrate
-#define	SEARCH_FEEDRATE_X			50
-#define	SEARCH_FEEDRATE_Y			50
-#define	SEARCH_FEEDRATE_Z			50
-#define	SEARCH_FEEDRATE_E			50
+#define	SEARCH_FEEDRATE_X			140
+#define	SEARCH_FEEDRATE_Y			140
+#define	SEARCH_FEEDRATE_Z			30
+//#define	SEARCH_FEEDRATE_E			50
 
 // this is how many steps to suck back the filament by when we stop. set to zero to disable
-#define	E_STARTSTOP_STEPS			20
+#define	E_STARTSTOP_STEPS			0
 
 /*
 Soft axis limits, in mm
 undefine if you don't want to use them
 */
 
-//#define	X_MIN			0.0
-//#define	X_MAX			200.0
+#define	X_MIN			-60.0
+#define	X_MAX			60.0
 
-//#define	Y_MIN			0.0
-//#define	Y_MAX			200.0
+#define	Y_MIN			-100.0
+#define	Y_MAX			100.0
 
-//#define	Z_MIN			0.0
-//#define	Z_MAX			140.0
+#define	Z_MIN			-5.0
+#define	Z_MAX			140.0
 
 
 /***************************************************************************\
@@ -107,7 +107,7 @@ undefine if you don't want to use them
 	acceleration, reprap style.
 		Each movement starts at the speed of the previous command and accelerates or decelerates linearly to reach target speed at the end of the movement.
 */
-// #define ACCELERATION_REPRAP
+ //#define ACCELERATION_REPRAP
 
 
 /*
@@ -119,7 +119,7 @@ undefine if you don't want to use them
 // how fast to accelerate when using ACCELERATION_RAMPING
 // smaller values give quicker acceleration
 // valid range = 1 to 8,000,000; 500,000 is a good starting point
-#define ACCELERATION_STEEPNESS	500000
+#define ACCELERATION_STEEPNESS	31250
 
 
 /*
@@ -168,8 +168,8 @@ undefine if you don't want to use them
 #define	X_DIR_PIN							DIO18
 //#define	X_MIN_PIN							DIO7
 //#define	X_MAX_PIN							DIO6
-#define	X_ENABLE_PIN					DIO24
-//#define	X_INVERT_DIR
+//#define	X_ENABLE_PIN					DIO24
+#define	X_INVERT_DIR
 //#define	X_INVERT_MIN
 //#define	X_INVERT_MAX
 //#define	X_INVERT_ENABLE
@@ -178,8 +178,8 @@ undefine if you don't want to use them
 #define	Y_DIR_PIN							DIO22
 //#define	Y_MIN_PIN							DIO5
 //#define	Y_MAX_PIN							DIO4
-#define	Y_ENABLE_PIN					DIO24
-//#define	Y_INVERT_DIR
+//#define	Y_ENABLE_PIN					DIO24
+#define	Y_INVERT_DIR
 //#define	Y_INVERT_MIN
 //#define	Y_INVERT_MAX
 //#define	Y_INVERT_ENABLE
@@ -188,7 +188,7 @@ undefine if you don't want to use them
 #define	Z_DIR_PIN							DIO25
 //#define	Z_MIN_PIN							DIO3
 //#define	Z_MAX_PIN							DIO2
-#define	Z_ENABLE_PIN					DIO24
+//#define	Z_ENABLE_PIN					DIO24
 //#define	Z_INVERT_DIR
 //#define	Z_INVERT_MIN
 //#define	Z_INVERT_MAX
@@ -197,7 +197,7 @@ undefine if you don't want to use them
 #define	E_STEP_PIN						DIO28
 #define	E_DIR_PIN							DIO27
 #define E_ENABLE_PIN					DIO24
-//#define	E_INVERT_DIR
+#define	E_INVERT_DIR
 
 #define	PS_ON_PIN							DIO15
 
@@ -217,8 +217,8 @@ undefine if you don't want to use them
 
 	temperature is "achieved" for purposes of M109 and friends when actual temperature is within [hysteresis] of target for [residency] seconds
 */
-#define	TEMP_HYSTERESIS				5
-#define	TEMP_RESIDENCY_TIME		60
+#define	TEMP_HYSTERESIS				15
+#define	TEMP_RESIDENCY_TIME		2
 
 // which temperature sensors are you using? (intercom is the gen3-style separate extruder board)
 // #define	TEMP_MAX6675
@@ -243,8 +243,8 @@ undefine if you don't want to use them
 #endif
 
 //                 name       type          pin
-DEFINE_TEMP_SENSOR(extruder,TT_THERMISTOR,PA1,THERMISTOR_EXTRUDER)
-DEFINE_TEMP_SENSOR(bed,	TT_THERMISTOR,PA2,THERMISTOR_EXTRUDER)
+DEFINE_TEMP_SENSOR(extruder,TT_THERMISTOR,PA2,THERMISTOR_EXTRUDER)
+DEFINE_TEMP_SENSOR(bed,	TT_THERMISTOR,PA1,THERMISTOR_EXTRUDER)
 // "noheater" is a special name for a sensor which doesn't have a heater.
 // Use "M105 P#" to read it, where # is a zero-based index into this list.
 // DEFINE_TEMP_SENSOR(noheater,				TT_THERMISTOR,	1)
@@ -313,6 +313,7 @@ DEFINE_HEATER(fan,PA0)
 	Undefine it for best human readability, set it to an old date for compatibility with hosts before August 2010
 */
 // #define REPRAP_HOST_COMPATIBILITY 19750101
+// 20112704
 #define REPRAP_HOST_COMPATIBILITY 20100806
 // #define REPRAP_HOST_COMPATIBILITY <date of next RepRap Host compatibility break>
 
@@ -342,7 +343,7 @@ DEFINE_HEATER(fan,PA0)
 		WARNING: this WILL break most host-side talkers that expect particular responses from firmware such as reprap host and replicatorG
 		use with serial terminal or other suitable talker only.
 */
-// #define	DEBUG
+//#define DEBUG
 
 /*
 	BANG_BANG
@@ -386,7 +387,7 @@ DEFINE_HEATER(fan,PA0)
 	this option makes the step interrupt interruptible (nested).
 	this should help immensely with dropped serial characters, but may also make debugging infuriating due to the complexities arising from nested interrupts
 */
-#define		STEP_INTERRUPT_INTERRUPTIBLE	1
+//#define		STEP_INTERRUPT_INTERRUPTIBLE	1
 
 /*
 	temperature history count. This is how many temperature readings to keep in order to calculate derivative in PID loop
