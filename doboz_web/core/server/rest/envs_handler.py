@@ -10,12 +10,19 @@ class EnvsRestHandler(BaseRestHandler):
         if request.headers.get("Content-Type")=="application/json":
               callback=request.GET.get('callback', '').strip()
               response=callback+"()"
-              response=callback+"(Environments:("+str(self.environmentManager.get_environments())+"))"
+              try:
+                  envData=self.environmentManager.get_environments()
+                  envStr=['"'+str(env)+'"' for env in envData]
+                  response=callback+'{"Environments":['+','.join(envStr)+']}'
+              except Exception as inst:
+                  self.logger.exception("Error in envs get %s",str(inst))
+                  abort(500,"error in getting environments")
               return response
         else:
             abort(501,"Not Implemented")
             
     def render_PUT(self,request):
+        
         try:       
             self.environmentManager.add_environment(**self._fetch_jsonData(request))
         except Exception as inst:
@@ -24,7 +31,7 @@ class EnvsRestHandler(BaseRestHandler):
             
     def render_DELETE(self,request):
         try:
-            self.environmentManager.remove_environment(**self._fetch_jsonData(request))
+            self.environmentManager.clear_environments()
         except Exception as inst:
             self.logger.critical("environment deletion error %s",str(inst))
             abort(500,"Failed to delete environments")

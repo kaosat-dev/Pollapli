@@ -66,8 +66,9 @@ class BaseRestHandler(object):
         
         if data == None or data == '':
             return {}
-        else:    
+        else:   
             params=json.loads(data,encoding='utf8')
+           
             params=self._stringify_data(params)
         return params 
     

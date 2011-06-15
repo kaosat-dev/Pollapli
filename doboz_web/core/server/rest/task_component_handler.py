@@ -1,6 +1,6 @@
 from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
 
-class TaskActionRestHandler(BaseRestHandler):
+class TaskComponentRestHandler(BaseRestHandler):
     def __init__(self,environmentManager=None,envName=None,nodeId=None,taskId=None):
         BaseRestHandler.__init__(self)
         self.environmentManager=environmentManager

@@ -68,6 +68,7 @@ class EnvironmentManager(object):
         return self.environments[envName]
     
     def add_environment(self,name,description="Add Description here",status="frozen"):
+        print("name",name)
         """
         Add an environment to the list of managed environements : 
         Automatically creates a new folder and launches the new environement auto creation
@@ -106,7 +107,14 @@ class EnvironmentManager(object):
         shutil.rmtree(envPath)
         
         self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",name,envPath) 
-        
+    def clear_environments(self):
+        for fileDir in os.listdir(self.path):    
+            if os.path.isdir(os.path.join(self.path,fileDir)):           
+                envName= fileDir
+                envPath=os.path.join(self.path,envName)
+                del self.environments[envName]
+                shutil.rmtree(envPath)
+                
     def get_environementInfo(self,envName):
         print(self.environments[envName].get_environmentInfo())
     

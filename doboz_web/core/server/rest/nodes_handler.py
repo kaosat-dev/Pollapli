@@ -13,7 +13,7 @@ class NodesRestHandler(BaseRestHandler):
             response=callback+"()"
             try:
                 data=self.environmentManager.get_environment(self.envName).get_nodes()
-                response=callback+"(Environment:"+self.envName+",Nodes:("+str(data)+"))"
+                response=callback+'{"Environment":"'+self.envName+'","Nodes":'+str(data)+'}'
             except Exception as inst:
                 self.logger.critical("environment %s nodes get error %s",str(self.envName), str(inst))
                 abort(500,"error in getting environment info")
