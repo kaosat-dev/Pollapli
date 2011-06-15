@@ -40,7 +40,7 @@ class PrintTask(Task):
         self.gcodeParser=GCodeParser()
         
         """For the history of all previous commands this will need to be replaced with something more robust in the future"""
-        self.gcodeHistoryMaxSize=100
+        self.gcodeHistoryMaxSize=50
         self.gcodeHistoryIndex=0
         self.gcodeHistory=[]
         
@@ -207,9 +207,9 @@ class PrintTask(Task):
                 self.connector.add_command(line,answerRequired=True)
                 
                 try:
-                    self.gcodeHistory.insert(self.gcodeHistoryIndex, line)
+                    self.gcodeHistory.append(line)
                     if len(self.gcodeHistory)>self.gcodeHistoryMaxSize:
-                        self.gcodeHistoryIndex=0
+                        del self.gcodeHistory[0]
                 except:
                     pass
                 """

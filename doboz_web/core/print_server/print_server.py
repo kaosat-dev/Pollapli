@@ -321,10 +321,6 @@ def server_static(path):
 
 
 def start_webServer():
-    
-    
-    
-    
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(('google.com', 0))
     hostIp=s.getsockname()[0]
