@@ -19,7 +19,8 @@ class EnvironmentManager(object):
     """
     def __init__(self,envPath):
         self.logger = logging.getLogger("dobozweb.core.components.environmentManager") 
-        self.environments={}
+        #self.environments={}
+        self.environments=[]
         self.path=envPath
         self.setup()
     
@@ -33,13 +34,16 @@ class EnvironmentManager(object):
                 envPath=os.path.join(self.path,envName)
                 env=Environment(envPath,envName,"")    
                 env.setup()
-                self.environments[envName]=env
+                #self.environments[envName]=env
+                self.environments.append(env)
+                id=self.environments.index(env)
+                self.environments[id].id=id
                 #temporary: this should be recalled from db from within the environments ?
         self.logger.critical("Environment manager setup correctly")
         
         
     def __getattr__(self, attr_name):
-        for env in self.environments.itervalues():
+        for env in self.environments:
             if hasattr(env, attr_name):
                 return getattr(env, attr_name)
         raise AttributeError(attr_name)
@@ -62,13 +66,12 @@ class EnvironmentManager(object):
         """
         Returns the list of environments
         """
-        return [env for env in self.environments ]
+        return self.environments
     
-    def get_environment(self,envName):
-        return self.environments[envName]
+    def get_environment(self,envId):
+        return self.environments[envId]
     
     def add_environment(self,name,description="Add Description here",status="frozen"):
-        print("name",name)
         """
         Add an environment to the list of managed environements : 
         Automatically creates a new folder and launches the new environement auto creation
@@ -87,36 +90,42 @@ class EnvironmentManager(object):
             os.mkdir(envPath)
             env=Environment(envPath,name,description)
             env.setup()
-            self.environments[name]=env
+            self.environments.append(env)
+            id=self.environments.index(env)
+            self.environments[id].id=id
             self.logger.critical("Adding environment named %s, description: %s",name,description)
             """ IF IT IS ALREADY PRESENT,  DISPATCH A " WARNING" MESSAGE"""
-            
-    def remove_environment(self,name):
+            return env
+        
+    def remove_environment(self,id):
         """
         Remove an environment : this needs a whole set of checks, 
         as it would delete an environment completely (very dangerous)
         Params:
         name: the name of the environment
         """
-      
-        envPath=os.path.join(self.path,name)#self.environments[name].path
+        envName=self.environments[id].name
+        envPath=os.path.join(self.path,envName)#self.environments[name].path
         
        
         #self.environments[envName].shutdown()
-        del self.environments[name]
+        del self.environments[id]
         shutil.rmtree(envPath)
         
-        self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",name,envPath) 
+        self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",envName,envPath) 
+        
     def clear_environments(self):
-        for fileDir in os.listdir(self.path):    
-            if os.path.isdir(os.path.join(self.path,fileDir)):           
-                envName= fileDir
-                envPath=os.path.join(self.path,envName)
-                del self.environments[envName]
+       
+        for env in self.environments:
+            envName=env.name
+            envPath=os.path.join(self.path,envName)
+            if os.path.isdir(envPath): 
+                #del self.environments[self.environments.index(env)]
                 shutil.rmtree(envPath)
+        self.environments=[]
                 
-    def get_environementInfo(self,envName):
-        print(self.environments[envName].get_environmentInfo())
+    def get_environementInfo(self,id):
+        print(self.environments[id].get_environmentInfo())
     
     def get_data(self,params):
         pass
@@ -124,7 +133,7 @@ class EnvironmentManager(object):
     ####################################################################################
     The following functions are typically hardware manager/hardware nodes and sensors related, pass through methods for the most part
     """
-    def add_node(self,envName,type,name,description="Add description here",params=None):
+    def add_node(self,id,type,name,description="Add description here",params=None):
         """
         Add a hardware node to the specified environment
         Params:
@@ -133,37 +142,37 @@ class EnvironmentManager(object):
         Desciption: short description of node
         NodeType: nodetype id
         """
-        self.environments[envName].add_node(type,params)
+        self.environments[id].add_node(type,params)
         
-    def remove_node(self,envName,nodeId):
+    def remove_node(self,id,nodeId):
         """
         Remove a hardware node from the specified environment
         Params:nodeId : the id of the node we want removed
         """
-        self.environments[envName].remove_node(nodeId)
+        self.environments[id].remove_node(nodeId)
         
     def add_actor(self,envId,type,port):
         pass
     def remove_actor(self,envId):
         pass
     
-    def add_sensor(self,envName,node,params):
+    def add_sensor(self,id,node,params):
         """
         Add a sensor to an environment 
         Params:
         EnvName: the name of the environment
         Title: title of the sensor
         """
-        self.environments[envName].add_sensor(node,params)
+        self.environments[id].add_sensor(node,params)
        
-    def remove_sensor(self,envName,sensorId):
+    def remove_sensor(self,id,sensorId):
         """
         Remove a sensor from an environment 
         Params:
         EnvName: the name of the environment
         sensorId: id of the sensor to remove
         """
-        self.environments[envName]   
+        self.environments[id]   
     
     def add_sensorType(self,envName,title, description):
         """

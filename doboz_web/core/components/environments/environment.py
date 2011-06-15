@@ -12,13 +12,15 @@ from doboz_web.core.components.nodes.node_manager import NodeManager
 
 
 class Environment(object):
-    def __init__(self,path,name,description="Add Description here",status="frozen"):
+    def __init__(self,path,name,description="Add Description here",status="active"):
         self.logger=logging.getLogger("dobozweb.core.components.environment")
         self.path=path
+        self.id=-1
         self.name=name
         self.description=description
         self.status=status
         self.nodeManager=NodeManager()
+        
                 
     """
     ####################################################################################

@@ -1,22 +1,24 @@
 from doboz_web.core.server.base_rest_handler import BaseRestHandler
+from doboz_web.core.server.bottle import Bottle, request, response 
 
 class EnvRestHandler(BaseRestHandler):
-    def __init__(self,environmentManager=None,envName=None):
+    def __init__(self,environmentManager=None,envId=None):
         BaseRestHandler.__init__(self)
         self.environmentManager=environmentManager
-        self.envName=envName
+        self.envId=envId
         
     def render_GET(self, request):
         self.logger.critical("Using env GET handler")
         if request.headers.get("Content-Type")=="application/json":
             callback=request.GET.get('callback', '').strip()
-            response=callback+"()"
+            resp=callback+"()"
             try:
-                response=callback+"("+str(self.environmentManager.get_environementInfo(self.envName))+")"
+                resp=callback+"("+str(self.environmentManager.get_environementInfo(self.envId))+")"
             except Exception as inst:
-                self.logger.critical("environment %s get error %s",str(self.envName), str(inst))
+                self.logger.critical("environment %s get error %s",str(self.envId), str(inst))
                 abort(500,"error in getting environment info")
-            return response
+            response.content_type = 'application/json'
+            return resp
         else:
             abort(501,"Not Implemented")
             
@@ -29,7 +31,7 @@ class EnvRestHandler(BaseRestHandler):
             
     def render_DELETE(self,request):
         try:
-            self.environmentManager.remove_environment(self.envName)
+            self.environmentManager.remove_environment(self.envId)
         except Exception as inst:
             self.logger.critical("environment deletion error %s",str(inst))
             abort(500,"Failed to delete environments")

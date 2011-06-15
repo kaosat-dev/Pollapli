@@ -60,7 +60,12 @@ class Node(object):
              self.connector.events.reconnected+=self._on_connector_reconnected  
              self.connector.events.OnDataRecieved+=self._on_data_recieved
         #self.taskManager.connector=self.connector
-        
+    def remove_connector(self):
+        if self.connector:
+            self.connector.disconnect()     
+            self.connector=None
+        self.logger.info("Disconnected and removed connector")  
+         
     def set_driver(self): 
         """Method to set a this nodes connector's driver 
         Params:
