@@ -1,12 +1,15 @@
 from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
+from doboz_web.core.server.bottle import  response 
 
 class TaskComponentRestHandler(BaseRestHandler):
-    def __init__(self,environmentManager=None,envName=None,nodeId=None,taskId=None):
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envName=None,nodeId=None,taskId=None):
         BaseRestHandler.__init__(self)
+        self.rootUri=rootUri
         self.environmentManager=environmentManager
         self.envName=envName
         self.nodeId=nodeId
         self.taskId=taskId
+        self.taskComponentId=taskComponentId
         
     def render_GET(self, request):
         self.logger.critical("Using task GET handler")

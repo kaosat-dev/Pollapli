@@ -4,9 +4,10 @@ from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
 from doboz_web.core.server.bottle import response 
 
 class ConnectorRestHandler(BaseRestHandler):
-    def __init__(self,environmentManager=None,envId=None,nodeId=None):
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None,nodeId=None):
         BaseRestHandler.__init__(self)
         self.logger=logging.getLogger("dobozweb.core.server.connectorhandler")
+        self.rootUri=rootUri
         self.environmentManager=environmentManager
         self.envId=envId
         self.nodeId=nodeId

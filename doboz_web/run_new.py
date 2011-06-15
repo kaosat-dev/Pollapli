@@ -12,6 +12,7 @@ import os
 import socket
 
 
+
 from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
@@ -90,11 +91,12 @@ def configure_all():
         
     server.environmentManager=environmentManager
 
+    
     """
     starts all server components
     """
     start_webServer()
-
+    
     
 if __name__ == "__main__":
     configure_all()

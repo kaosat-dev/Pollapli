@@ -57,7 +57,9 @@ class Task(object):
         When taks is exited
         """
         self.events.OnExited(self,"Exited")
-
+    def _toJson(self):
+        return '"id":'+ str(self.id)+',"progress":"'+str(self.progress)+'","status":"'+self.status+'"'
+    
     def _do_action_step(self):
         """
         do sub action in task

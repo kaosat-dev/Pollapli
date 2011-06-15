@@ -54,7 +54,9 @@ class Environment(object):
     def get_environmentInfo(self):
         return self.name
        
-  
+    def _toJson(self):
+        return '"id":'+ str(self.id)+',"name":"'+self.name+'","status":"'+self.status+'"'
+    
     def __getattr__(self, attr_name):
         if hasattr(self.nodeManager, attr_name):
                 return getattr(self.nodeManager, attr_name)

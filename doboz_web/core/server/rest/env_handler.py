@@ -1,9 +1,10 @@
-from doboz_web.core.server.base_rest_handler import BaseRestHandler
-from doboz_web.core.server.bottle import Bottle, request, response 
+from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
+from doboz_web.core.server.bottle import  response 
 
 class EnvRestHandler(BaseRestHandler):
-    def __init__(self,environmentManager=None,envId=None):
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None):
         BaseRestHandler.__init__(self)
+        self.rootUri=rootUri
         self.environmentManager=environmentManager
         self.envId=envId
         
@@ -13,15 +14,18 @@ class EnvRestHandler(BaseRestHandler):
             callback=request.GET.get('callback', '').strip()
             resp=callback+"()"
             try:
-                resp=callback+"("+str(self.environmentManager.get_environementInfo(self.envId))+")"
+                env=self.environmentManager.get_environment(self.envId)
+                lnk='{"link" : {"href":"'+self.rootUri+str(env.id)+'", "rel": "environment"},'
+                resp='{"Environment":'+lnk+env._toJson()+'}}'
             except Exception as inst:
                 self.logger.critical("environment %s get error %s",str(self.envId), str(inst))
                 abort(500,"error in getting environment info")
+                
             response.content_type = 'application/json'
             return resp
         else:
             abort(501,"Not Implemented")
-            
+       
     def render_PUT(self,request):
         try:       
             self.environmentManager.add_environment(**self._fetch_jsonData(request))

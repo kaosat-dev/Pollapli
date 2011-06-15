@@ -1,26 +1,26 @@
 from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
-from doboz_web.core.server.bottle import Bottle, request, response 
+from doboz_web.core.server.bottle import  response 
 
-class EnvsRestHandler(BaseRestHandler):
-    def __init__(self,rootUri="http://localhost",environmentManager=None):
+class PluginsConfigRestHandler(BaseRestHandler):
+    def __init__(self,rootUri="http://localhost"):
         BaseRestHandler.__init__(self)
         self.rootUri=rootUri
-        self.environmentManager=environmentManager
         
     def render_GET(self, request):
-        self.logger.critical("Using envs GET handler")
+        self.logger.critical("Using server config GET handler")
         if request.headers.get("Content-Type")=="application/json":
             callback=request.GET.get('callback', '').strip()
             resp=""
-            resp=callback+"()"
+            #response=callback+"()"
             try:
                 envData=self.environmentManager.get_environments()
-                tmp=[]
+                thingy=[]
                 for env in envData:
+                    
                     lnk='{"link" : {"href":"'+self.rootUri+str(env.id)+'", "rel": "environment"},'
-                    tmp.append(lnk+env._toJson()+'}')
+                    thingy.append(lnk+env._toJson()+'}')
 #                   
-                resp=callback+'{"Environments List":{"link":{"href":"'+self.rootUri+'", "rel": "environments"}},"items":['+','.join(tmp)+']}'
+                resp=callback+'{"Environments List":{"link":{"href":"'+self.rootUri+'", "rel": "environments"}},"items":['+','.join(thingy)+']}'
             except Exception as inst:
                 self.logger.exception("Error in envs get %s",str(inst))
                 abort(500,"error in getting environments")

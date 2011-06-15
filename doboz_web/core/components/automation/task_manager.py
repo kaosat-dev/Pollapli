@@ -20,8 +20,6 @@ class TaskManager(object):
     def __init__(self,connector=None):
         self.logger=logging.getLogger("dobozweb.core.components.automation.taskManager")
         self.tasks=[]
-        self.tasksById=[]
-        self.lastTaskId=0
         self.connector=connector
         
 #    def __getattr__(self, attr_name):
@@ -38,15 +36,16 @@ class TaskManager(object):
         task=None
         if type in TaskManager.taskTypes.iterkeys():
             task=TaskManager.taskTypes[type](**kwargs)
-            task.id=self.lastTaskId
-            self.lastTaskId+=1
-            self.tasksById.append(task)
+            self.tasks.append(task)
+            id=self.tasks.index(task)
+            self.tasks[id].id=id
             task.events.OnExited+=self._on_task_exited
             self.logger.critical("Added  task %s of type %s with id set to %s",name,type,str(task.id))
             #self.logger.critical ("Task %s added , %d remaining tasks before starting",task.id,len(self.tasks)-1)        
         else:
             self.logger.critical("unknown task type")
         #task.id=str(uuid.uuid4()) 
+        return task
             
     def remove_task(self,id,forceStop=False):
         """Removes the task with id==id 
@@ -54,30 +53,34 @@ class TaskManager(object):
         If forcestop is true, shutdown the task even if it is running
         """
         if forceStop:
-            if self.tasksById[id].isRunning:
-                    self.tasksById[id].shutdown()
-        del self.tasksById[id]
+            if self.tasks[id].isRunning:
+                    self.tasks[id].shutdown()
+        del self.tasks[id]
         self.logger.critical ("Task %s Removed ",id)         
        
     def clear_tasks(self,forceStop=False):
         """Clears the task list completely 
         Params: forceStop: if set to true, the current running task gets stopped and removed aswell
         """
-        [self.remove_task(task.id, forceStop) for task in self.tasksById]
-        
+        [self.remove_task(task.id, forceStop) for task in self.tasks]
+    
+    def get_task(self,id):
+        print("getting task")
+        return self.tasks[id]
+    
     def start_task(self,id):
         """Starts the task in line"""
         try:
             self.logger.critical ("Starting task with id %d",id)
-            self.tasksById[id].connect(self.connector)
-            self.tasksById[id].start()
+            self.tasks[id].connect(self.connector)
+            self.tasks[id].start()
         except Exception as inst:
             self.logger.critical ("Error while starting task %s",str(inst))
    
     def stop_task(self,id):
         """Forcefully Stops the task with the given id """
-        if self.tasksById[id].isRunning:
-            self.tasksById[id].shutdown()
+        if self.tasks[id].isRunning:
+            self.tasks[id].shutdown()
                 
     def _on_task_exited(self,args,kargs):
         """Handles the event when the task exited (whether force stopped or because it was finished """

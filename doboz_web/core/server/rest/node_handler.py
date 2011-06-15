@@ -1,9 +1,10 @@
 from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
-from doboz_web.core.server.bottle import Bottle, request, response 
+from doboz_web.core.server.bottle import  response 
 
 class NodeRestHandler(BaseRestHandler):
-    def __init__(self,environmentManager=None,envId=None,nodeId=None):
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None,nodeId=None):
         BaseRestHandler.__init__(self)
+        self.rootUri=rootUri
         self.environmentManager=environmentManager
         self.envId=envId
         self.nodeId=nodeId
