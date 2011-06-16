@@ -57,6 +57,13 @@ class Environment(object):
     def _toJson(self):
         return '"id":'+ str(self.id)+',"name":"'+self.name+'","status":"'+self.status+'"'
     
+    def _toDict(self):
+        result={}
+        result["id"]=self.id
+        result["name"]=self.name
+        result["status"]=self.status
+        return result
+    
     def __getattr__(self, attr_name):
         if hasattr(self.nodeManager, attr_name):
                 return getattr(self.nodeManager, attr_name)

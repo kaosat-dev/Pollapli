@@ -14,13 +14,25 @@ class NodeRestHandler(BaseRestHandler):
         if request.headers.get("Content-Type")=="application/json":
             callback=request.GET.get('callback', '').strip()
             resp=callback+"()"
-            response.content_type = 'application/json'
-            return resp
+            resp=""
+            try:
+                node=self.environmentManager.get_environment(self.envId).get_node(self.nodeId)
+                if node:
+                    lnk='{"link" : {"href":"'+self.rootUri+str(node.id)+'", "rel": "node"},'
+                    resp='{"Node":'+lnk+node._toJson()+'}}'
+                else:
+                    response.status=500
+                    error='{"error":{"id":0,"message":"failed to get node"}}'
+                    resp='{"Tasks":'+error+'}'
+            except Exception as inst:
+                self.logger.critical("in env %d node id %d task post error: %s",self.envId,self.nodeId, str(inst))
+                response.status=500
+            finally:
+                return resp
         else:
             abort(501,"Not Implemented")
             
     def render_DELETE(self,request):
-        
         try:
             self.environmentManager.get_environment(self.envId).delete_node(self.nodeId)
         except Exception as inst:

@@ -7,10 +7,11 @@ class EnvRestHandler(BaseRestHandler):
         self.rootUri=rootUri
         self.environmentManager=environmentManager
         self.envId=envId
+        self.valid_contentTypes.append("application/pollapli.environment+json") 
         
     def render_GET(self, request):
-        self.logger.critical("Using env GET handler")
-        if request.headers.get("Content-Type")=="application/json":
+        self.logger.info("Using env GET handler")
+        if request.headers.get("Content-Type")=="application/pollapli.envList+json":
             callback=request.GET.get('callback', '').strip()
             resp=callback+"()"
             try:
@@ -19,7 +20,7 @@ class EnvRestHandler(BaseRestHandler):
                 resp='{"Environment":'+lnk+env._toJson()+'}}'
             except Exception as inst:
                 self.logger.critical("environment %s get error %s",str(self.envId), str(inst))
-                abort(500,"error in getting environment info")
+                abort(404,"environment not found")
                 
             response.content_type = 'application/json'
             return resp

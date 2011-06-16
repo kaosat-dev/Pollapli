@@ -12,6 +12,8 @@ Contents:
    :maxdepth: 2
    
    run
+   environments
+   nodes
    hardware_nodes
    hardware_connectors
    hardware_drivers

@@ -16,10 +16,14 @@ class Task(object):
     """
     Base class for tasks (printing , scanning etc
     """
-    def __init__(self,type=None):
-    
+    print("jhkhkjh")
+    def __init__(self,name="task"):
+        self.logger=logging.getLogger("dobozweb.core.components.automation.task")
+       
         self.connector=None
-        self.type=type
+        self.name=name
+        
+        self.isRunning=False
             
         self.startTime=time.time()        
         self.totalTime=0#for total print/scan time count

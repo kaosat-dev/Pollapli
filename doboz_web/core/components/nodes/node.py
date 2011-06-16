@@ -18,8 +18,9 @@ class Node(object):
     Base class for all nodes: a hardware node is a software component handling either a physical device such as a webcam, reprap , arduino etc
     or some software node (pachube etc)
     """
-    def __init__(self):
+    def __init__(self,name="node"):
         self.logger=logging.getLogger("dobozweb.core.components.nodes.node")
+        self.name=name
         self.isRunning=False  
         self.connector=None 
         self.taskManager=TaskManager()
@@ -95,4 +96,9 @@ class Node(object):
     def _on_connector_reconnected(self,args,kargs):
         raise NotImplementedError, "This methods needs to be implemented in your node subclass"  
 
-       
+    def _toJson(self):
+        """
+        return a json representation of the node
+        """
+        return '"id":'+ str(self.id)+',"name":"'+self.name+'","active":"'+str(self.isRunning)+'"'
+    

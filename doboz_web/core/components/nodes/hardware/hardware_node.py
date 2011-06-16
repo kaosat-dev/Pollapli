@@ -14,8 +14,8 @@ class HardwareNode(Node):
     """
     Base class for all hardware nodes: a hardware node is a software component handling a physical device such as a webcam, reprap , arduino etc
     """
-    def __init__(self):
-        Node.__init__(self)
+    def __init__(self,name="HardwareNode"):
+        Node.__init__(self,name)
         self.logger=logging.getLogger("dobozweb.core.components.nodes.hardware.hardwareNode")
         
 #    def add_task(self,task):

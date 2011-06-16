@@ -1,0 +1,62 @@
+Environments
+=====================================
+ 
+Environments are the base elements of Doboz_web.
+
+General Environment manipulation
+================================
+Resource path:
+serverUrl/environments
+
+GET
+====
+url params/selection:
+environements can be either gotten as a whole (no params)
+or selected based on:
+	-status (active/inactive)
+	-id
+
+POST
+====
+this is used to add a new environment to the system
+Content-type:"application/pollapli.environmentsList+json"
+
+PUT
+====
+
+DELETE
+=====
+this method clears the environement list completely
+BEWARE!!! this deletes EVERY element !
+
+Single Environment manipulation
+================================
+Resource path:
+serverUrl/environments/id
+
+GET
+====
+
+POST
+====
+
+PUT
+====
+
+DELETE
+====
+
+
+
+ 
+ 
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+   
+
+
+.. automodule:: core.components.connectors
+ :members:
+ :show-inheritance:

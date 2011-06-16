@@ -62,10 +62,16 @@ class EnvironmentManager(object):
     ####################################################################################
     The following functions are for the general handling of environements
     """
-    def get_environments(self):
+    def get_environments(self,filter=None):
         """
         Returns the list of environments
         """
+        if filter:
+            try:
+                #return [env for env in self.environments if getattr(env, "id") in filter["id"]]
+                return [env for env in self.environments if [True for key in filter.keys() if getattr(env, key)in filter[key]]]
+            except:
+                pass
         return self.environments
     
     def get_environment(self,envId):

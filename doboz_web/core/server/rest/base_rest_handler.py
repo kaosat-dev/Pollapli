@@ -2,25 +2,21 @@ import json
 import logging
 from doboz_web.core.server.bottle import Bottle, route, run, send_file, redirect, abort, request, response 
 
+
 class BaseRestHandler(object):
-    def __init__(self):
-        self.logger=logging.getLogger("dobozweb.core.server.baseresthandler")
-        self.validApplication_types=[]
-        self.validApplication_types.append("application/json")
+    def __init__(self,rootUri="http://localhost"):
+        self.logger=logging.getLogger("dobozweb.core.server.rest.baseresthandler")
+        self.rootUri=rootUri
+        self.valid_contentTypes=[]
         
     def getChild(self, id, request):
         pass
-#        try:
-#            return EnvironmentHandler(int(id))    
-#        except ValueError :
-#             return self
     
     def render_GET(self, request):
         self.logger.critical("Using default GET handler")
         print(request.headers.get("Content-Type"))
         abort(501,"Not Implemented")      
-        
-        
+    
     def render_POST(self,request):
         self.logger.critical("Using default POST handler")
         abort(501,"Not Implemented")
@@ -35,6 +31,16 @@ class BaseRestHandler(object):
     
     def _handle(self, request):
         self.logger.critical("Handling request of type %s",str(request.method))
+        
+        """Here we pre filter the requests based on content type:
+        if the content type is not handled by a resource handler,
+        don't bother doing anything , and tell client that is not supported
+        """
+        if request.headers.get("Content-Type") not in self.valid_contentTypes:
+            abort(501,"Content Type not supported")
+            return None
+        
+         
         if request.method=="GET":
             return self.render_GET(request)
         elif request.method=="POST":
@@ -43,6 +49,48 @@ class BaseRestHandler(object):
             return self.render_PUT(request)
         elif request.method=="DELETE":
             return self.render_DELETE(request)
+    
+    def _build_response(self,request,status,payload,contentType="text/html"):
+        callback=request.GET.get('callback', '').strip() 
+        
+        response.status=status
+        response.content_type=contentType
+        
+        if callback:
+            return callback+"("+payload+")" 
+        else:
+            return payload
+        
+    
+    
+    def _build_resource_uri(self,resourceInstance,resourceName):
+        """
+        builds the current resource uri /link, based on resource name and root uri
+        """
+        item={}
+        item["link"]={}
+        item["link"]["href"]=self.rootUri+str(resourceInstance.id)
+        item["link"]["rel"]=resourceName
+    
+        item=dict(item.items() + resourceInstance._toDict().items())
+        return item
+    
+    def _build_resource_list_uri(self,list,resourceName):
+        """
+        generates a dictionary based data structure for a set of links in json, based on a list
+        and a resource name
+        """
+        result={}
+        try:
+            result[ resourceName+"s List"]={}
+            result[resourceName+"s List"]["link"]={}
+            result[resourceName+"s List"]["link"]["href"]=self.rootUri
+            result[resourceName+"s List"]["link"]["rel"]=resourceName+"s"
+            result[resourceName+"s List"]["items"]=[self._build_resource_uri(item,resourceName)for item in list] 
+        except Exception as inst:
+            self.logger.exception(" %s",str(inst))
+        return result
+        
     
     def _handle_request(self):
         handlers={}

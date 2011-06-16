@@ -28,14 +28,16 @@ class TaskManager(object):
 #        else:
 #            raise AttributeError(attr_name)
         
-    def add_task(self,name,type,*args,**kwargs):
+    def add_task(self,name,type,taskParams={},*args,**kwargs):
         """
         Adds the task to the tasklist
         TODO add weakref to task
         """
+        print("task",name,"params",taskParams)
         task=None
         if type in TaskManager.taskTypes.iterkeys():
-            task=TaskManager.taskTypes[type](**kwargs)
+            
+            task=TaskManager.taskTypes[type](name,**taskParams)
             self.tasks.append(task)
             id=self.tasks.index(task)
             self.tasks[id].id=id
@@ -65,7 +67,9 @@ class TaskManager(object):
         [self.remove_task(task.id, forceStop) for task in self.tasks]
     
     def get_task(self,id):
-        print("getting task")
+        """
+        returns the task with given id
+        """
         return self.tasks[id]
     
     def start_task(self,id):

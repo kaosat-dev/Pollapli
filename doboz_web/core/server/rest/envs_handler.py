@@ -1,53 +1,40 @@
+import logging
 from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
 from doboz_web.core.server.bottle import Bottle, request, response 
 
 class EnvsRestHandler(BaseRestHandler):
     def __init__(self,rootUri="http://localhost",environmentManager=None):
-        BaseRestHandler.__init__(self)
-        self.rootUri=rootUri
+        BaseRestHandler.__init__(self,rootUri)
+        self.logger=logging.getLogger("dobozweb.core.server.rest.environmentsHandler")
         self.environmentManager=environmentManager
-        
+        self.valid_contentTypes.append("application/pollapli.environmentsList+json")   
+             
     def render_GET(self, request):
-        self.logger.critical("Using envs GET handler")
-        if request.headers.get("Content-Type")=="application/json":
-            callback=request.GET.get('callback', '').strip()
-            resp=""
-            resp=callback+"()"
-            try:
-                envData=self.environmentManager.get_environments()
-                tmp=[]
-                for env in envData:
-                    lnk='{"link" : {"href":"'+self.rootUri+str(env.id)+'", "rel": "environment"},'
-                    tmp.append(lnk+env._toJson()+'}')
-#                   
-                resp=callback+'{"Environments List":{"link":{"href":"'+self.rootUri+'", "rel": "environments"}},"items":['+','.join(tmp)+']}'
-            except Exception as inst:
-                self.logger.exception("Error in envs get %s",str(inst))
-                abort(500,"error in getting environments")
-            response.content_type = 'application/json'
-            return resp
+#        tutu={}
+#        tutu.keys()
+#        tutu.itervalues()
+        print(request.GET.keys())
+        #print(request.GET.values())
+        test=request.GET.getall("id")
+        test2=request.GET.getall("active")
+        filterCriteria={}
+        filterCriteria["id"]=[int(id)for id in test]
+        #filterCriteria["active"]=[id.lower() in ("true") for id in test2]
+        filterCriteria["status"]=test2
+      
+        payload=self._build_resource_list_uri(self.environmentManager.get_environments(filterCriteria),"environment")
+        resp=None
+        if payload:
+            resp=self._build_response(request,200,payload,contentType="application/pollapli.environmentsList+json")
         else:
-            abort(501,"Not Implemented")
-            
+            resp=self._build_response(request,500,payload)
+        return resp
+    
     def render_POST(self,request):
-        try:       
-            env=self.environmentManager.add_environment(**self._fetch_jsonData(request))
-            resp=""
-            if env:
-                lnk='{"link" : {"href":"'+self.rootUri+str(env.id)+'", "rel": "environment"},'
-                resp='{"Environment":'+lnk+env._toJson()+'}}'
-            else:
-                response.status=500
-                error='{"error":{"id":0,"message":"failed to create environment"}}'
-                resp='{"Environments":'+error+'}'
-            
-        except Exception as inst:
-            self.logger.critical("error %s",str(inst))
-            response.status=500
-            error='{"error":{"id":0,"message":"failed to create environment"}}'
-            resp='{"Environments":'+error+'}'
-        finally:
-            return resp
+        env=self.environmentManager.add_environment(**self._fetch_jsonData(request))
+        payload=self._build_resource_uri(env,"environment")
+        resp=self._build_response(request,200,payload,contentType="application/pollapli.environment+json")
+        return resp
             
     def render_DELETE(self,request):
         try:

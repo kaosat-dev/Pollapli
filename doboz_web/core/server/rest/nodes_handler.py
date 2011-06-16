@@ -1,5 +1,5 @@
 from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
-from doboz_web.core.server.bottle import Bottle, request, response 
+from doboz_web.core.server.bottle import  response 
 
 class NodesRestHandler(BaseRestHandler):
     def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None):
@@ -14,15 +14,19 @@ class NodesRestHandler(BaseRestHandler):
             callback=request.GET.get('callback', '').strip()
             resp=callback+"()"
             try:
-                data=self.environmentManager.get_environment(self.envId).get_nodes()
-                resp=callback+'{"Environment":'+str(self.envId)+',"Nodes":'+str(data)+'}'
+                nodesData=self.environmentManager.get_environment(self.envId).get_nodes()
+                tmp=[]
+                for node in nodesData:
+                    lnk='{"link" : {"href":"'+self.rootUri+str(node.id)+'", "rel": "node"},'
+                    tmp.append(lnk+node._toJson()+'}')
+                resp=callback+'{"Nodes List":{"link":{"href":"'+self.rootUri+'", "rel": "nodes"}},"items":['+','.join(tmp)+']}'
+                response.content_type = 'application/json'
             except Exception as inst:
-                self.logger.critical("environment %d nodes get error %s",self.envId, str(inst))
-                abort(500,"error in getting environment info")
-            response.content_type = 'application/json'
+                self.logger.exception("Error in nodes get %s",str(inst))
             return resp
         else:
             abort(501,"Not Implemented")
+        
             
     def render_POST(self,request):
         try:

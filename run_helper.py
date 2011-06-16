@@ -16,7 +16,7 @@ def helper():
     except:
         pass
     try:
-        client.post('/environments/0/nodes/0/tasks',headers={'Content-Type': 'application/json'},payload='{"name":"testTask","type":"print"}')
+        client.post('/environments/0/nodes/0/tasks',headers={'Content-Type': 'application/json'},payload='{"name":"testTask","type":"print","taskParams":{"filePath":"test.gcode"}}')
     except:
         pass
 

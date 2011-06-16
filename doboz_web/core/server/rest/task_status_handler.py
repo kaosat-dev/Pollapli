@@ -1,10 +1,12 @@
 from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
+from doboz_web.core.server.bottle import  response 
 
 class TaskStatusRestHandler(BaseRestHandler):
-    def __init__(self,environmentManager=None,envName=None,nodeId=None,taskId=None):
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None,nodeId=None,taskId=None):
         BaseRestHandler.__init__(self)
+        self.rootUri=rootUri
         self.environmentManager=environmentManager
-        self.envName=envName
+        self.envId=envId
         self.nodeId=nodeId
         self.taskId=taskId
         
@@ -14,8 +16,8 @@ class TaskStatusRestHandler(BaseRestHandler):
             callback=request.GET.get('callback', '').strip()
             response=callback+"()"
             try:
-                #self.environmentManager.get_environment(self.envName).get_node(self.nodeId).connector
-                response=callback+"('Environment':"+self.envName+",'Node':"+str(self.nodeId)+",'Status':{'Active':true,'Progress':56,'Components':{})"
+                #self.environmentManager.get_environment(self.envId).get_node(self.nodeId).connector
+                response=callback+"('Environment':"+self.envId+",'Node':"+str(self.nodeId)+",'Status':{'Active':true,'Progress':56,'Components':{})"
             except Exception as inst:
                 self.logger.critical("Failed to get connector status error: %s",str(inst))
                 abort(500,"Failed to get connector status info ")
@@ -27,13 +29,14 @@ class TaskStatusRestHandler(BaseRestHandler):
     def render_POST(self, request):
         try:
             params=self._fetch_jsonData(request)
+            #task=self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_task(self.taskId)
             if params["enabled"]:
-                #self.logger.critical("Enabling task %d",self.taskId)
-                self.environmentManager.get_environment(self.envName).get_node(self.nodeId).connect()
+                self.logger.critical("Enabling task %d",self.taskId)
+                self.environmentManager.get_environment(self.envId).get_node(self.nodeId).start_task(self.taskId)
             else:
                 self.logger.critical("Disabling task %d",self.taskId)
-                #self.environmentManager.get_environment(self.envName).get_node(self.nodeId).disconnect()
+                self.environmentManager.get_environment(self.envId).get_node(self.nodeId).stop_task(self.taskId)
                 
         except Exception as inst:
-            self.logger.critical("in env %s  node %d task %d put error: %s",self.envName,self.nodeId,self.taskId, str(inst))
+            self.logger.critical("in env %s  node %d task %d put error: %s",self.envId,self.nodeId,self.taskId, str(inst))
             abort(500,"error in enabling task")

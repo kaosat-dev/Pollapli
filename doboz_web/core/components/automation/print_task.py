@@ -13,11 +13,10 @@ from doboz_web.core.components.automation.gcode_parser import GCodeParser
 
 class PrintTask(Task):
     """ A task for printing gcode files"""
-    def __init__(self,filePath=None):
-        Task.__init__(self,"print")
+    def __init__(self,name="printTask",filePath=None):
+        Task.__init__(self,name)
         self.logger=logging.getLogger("dobozweb.core.Automation.PrintTask")
         self.logger.setLevel(logging.ERROR)
-        
         
         self.filePath=filePath
         

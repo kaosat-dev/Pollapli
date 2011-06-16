@@ -17,6 +17,8 @@ from doboz_web.core.server.rest.connector_handler import ConnectorRestHandler
 from doboz_web.core.server.rest.connector_status_handler import ConnectorStatusRestHandler
 from doboz_web.core.server.rest.tasks_handler import TasksRestHandler
 from doboz_web.core.server.rest.task_handler import TaskRestHandler
+from doboz_web.core.server.rest.task_status_handler import TaskStatusRestHandler
+
 server = Bottle()
 server.rootPath=os.path.join(os.path.abspath("."),"core","server")
 server.logger=logging.getLogger("dobozweb.core.WebServer")
@@ -52,19 +54,23 @@ def handle_plugin():
 @server.route('/environments' , method='ANY')
 @server.route('/environments/' , method='ANY')
 def handle_envs():
-    server.logger.exception("klj")
-    print("lmk")
+ 
     rootUri=server.fullAdress+"/environments/"
     envsHandler=EnvsRestHandler(rootUri,server.environmentManager)
-    
+    #tuut=envsHandler._handle(request)
+
     return envsHandler._handle(request) 
 
 @server.route('/environments/:envId' , method='ANY')
 @server.route('/environments/:envId/' , method='ANY')
 def handle_env(envId):
-    rootUri=server.fullAdress+"/environments/"
-    envHandler=EnvRestHandler(rootUri,server.environmentManager,int(envId))
-    return envHandler._handle(request)
+    try:
+        rootUri=server.fullAdress+"/environments/"
+        envHandler=EnvRestHandler(rootUri,server.environmentManager,int(envId))
+        tuut=envHandler._handle(request)
+    except Exception as inst:
+        print(inst)
+    
 
 @server.route('/environments/:envId/nodes' , method='ANY')
 @server.route('/environments/:envId/nodes/' , method='ANY')
@@ -104,18 +110,16 @@ def handle_tasks(envId,nodeId):
 @server.route('/environments/:envId/nodes/:nodeId/tasks/:taskId' , method='ANY')
 @server.route('/environments/:envId/nodes/:nodeId/tasks/:taskId/' , method='ANY')
 def handle_task(envId,nodeId,taskId):
-    
     rootUri=server.fullAdress+"/environments/"+envId+"/nodes/"+nodeId+"/tasks/"
     taskHandler=TaskRestHandler(rootUri,server.environmentManager,int(envId),int(nodeId),int(taskId))
-  
     return taskHandler._handle(request)
 
 @server.route('/environments/:envId/nodes/:nodeId/tasks/:taskId/status' , method='ANY')
 @server.route('/environments/:envId/nodes/:nodeId/tasks/:taskId/status/' , method='ANY')
 def handle_task_status(envId,nodeId,taskId):
-    pass
-    #taskHandler=TaskRestHandler(server.environmentManager,int(envId),int(nodeId),int(taksId))
-    #return taskHandler._handle(request)
+    rootUri=server.fullAdress+"/environments/"+envId+"/nodes/"+nodeId+"/tasks/status"
+    taskStatusHandler=TaskStatusRestHandler(rootUri,server.environmentManager,int(envId),int(nodeId),int(taskId))
+    return taskStatusHandler._handle(request)
 
 @server.route('/environments/:envId/nodes/:nodeId/tasks/:taskId/condtions' , method='ANY')
 @server.route('/environments/:envId/nodes/:nodeId/tasks/:taskId/condtions/' , method='ANY')

@@ -26,21 +26,24 @@ class NodeManager(object):
     
     def __init__(self):
         self.logger=logging.getLogger("dobozweb.core.components.nodes.nodeManager")
-        self.nodes={}#dictionary of list of nodes, by nodeType
-        self.nodesById={}
+        #self.nodes={}#dictionary of list of nodes, by nodeType
+        self.nodes=[]
         self.lastNodeId=0
     
-    def add_node(self,name,type,connector=None,driver=None):
+    def add_node(self,name,type,connector=None,driver=None,*args,**kwargs):
         """each nodeType should have an id, just defaulting to 0 (reprap)
         for now"""
+        
         #nodeTypeId=self.nodeTypes[type]
         #self.nodes[nodeTypeId]=[]
+        
         node=None
         if type in NodeManager.nodeTypes.iterkeys():
-            node=NodeManager.nodeTypes[type]()
-            node.id=self.lastNodeId
-            self.lastNodeId+=1
-            self.nodesById[node.id]=node
+            node=NodeManager.nodeTypes[type](name)
+            self.nodes.append(node)
+            id=self.nodes.index(node)
+            self.nodes[id].id=id
+            node.id=id
             self.logger.critical("Added  node %s of type %s with id set to %s",name,type,str(node.id))
             
         else:
@@ -50,29 +53,29 @@ class NodeManager(object):
        # self.nodes[nodeTypeId].append(node) 
        
     
-    def delete_node(self,nodeId):
+    def delete_node(self,id):
         """
         Delete a specific node
         """
-        nodeId=int(nodeId)
+        nodeId=int(id)
         #self.nodesById[nodeId].stop()
         try:
-            del self.nodesById[nodeId] 
-            self.logger.critical("Removed node with id %s",str(nodeId))
+            del self.nodes[id] 
+            self.logger.critical("Removed node with id %d",id)
         except Exception as inst:
             self.logger.error("Error in node deletion: %s ",str(inst))
     
     def clear_nodes(self):
         self.nodesById.clear()
     
-    def get_node(self,nodeId):
-        return self.nodesById[nodeId]
+    def get_node(self,id):
+        return self.nodes[id]
     
     def get_nodes(self):
         """
         Return full list of nodes
         """
-        return [node.id for node in self.nodesById.itervalues() ]
+        return self.nodes
     
     def set_connector(self,nodeId,*args,**kwargs):
         """Method to set a nodes connector 
@@ -81,9 +84,9 @@ class NodeManager(object):
         WARNING: cheap hack for now, always defaults to serial
         connector
         """
-        self.nodesById[nodeId].set_connector(SerialPlus())
+        self.nodes[nodeId].set_connector(SerialPlus())
         self.logger.critical("Set connector of node %d",nodeId)
-        print("in connector for node",str(self.nodesById[nodeId].connector))
+        print("in connector for node",str(self.nodes[nodeId].connector))
         
     def set_driver(self,nodeId,**kwargs):
         """Method to set a nodes connector's driver 
@@ -101,15 +104,15 @@ class NodeManager(object):
             del kwargs["type"]
             driver=FiveDDriver(**kwargs)
         if driver:
-            self.nodesById[nodeId].connector.set_driver(driver)  
+            self.nodes[nodeId].connector.set_driver(driver)  
             self.logger.critical("Set driver for connector of node %d with params %s",nodeId,str(kwargs))
         else:
             raise Exception("unknown driver ")
         
     def start_node(self,nodeId,**kwargs):
-        self.nodesById[nodeId].start(**kwargs)
+        self.nodes[nodeId].start(**kwargs)
         
     def stop_node(self,nodeId):
-        self.nodesById[nodeId].stop()
+        self.nodes[nodeId].stop()
     
     

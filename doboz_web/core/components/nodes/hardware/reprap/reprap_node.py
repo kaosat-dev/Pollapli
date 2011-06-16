@@ -23,10 +23,10 @@ class ReprapNode(HardwareNode):
     """
     A reprap node : hardware node (ie "Arduino or similar with attached components such as sensors and actors: ie in the case of a reprap: endstops, temperature sensors, steppers, heaters")
     """
-    def __init__(self):
+    def __init__(self,name="ReprapNode"):
         self.logger=logging.getLogger("dobozweb.core.ReprapNode")
         self.logger.setLevel(logging.ERROR)
-        HardwareNode.__init__(self)
+        HardwareNode.__init__(self,name)
  
         
         self.startTime=time.time()

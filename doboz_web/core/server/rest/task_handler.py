@@ -11,25 +11,28 @@ class TaskRestHandler(BaseRestHandler):
         self.taskId=taskId
         
     def render_GET(self, request):
-        self.logger.critical("Using tasks GET handler")
+        self.logger.critical("Using task GET handler")
         if request.headers.get("Content-Type")=="application/json":
             callback=request.GET.get('callback', '').strip()
             resp=callback+"()"
+            resp=""
             try:
-                taskData=self.environmentManager.get_environment(self.envId).get_node(self.nodeId).tasks
-                tmp=[]
-                for task in taskData:
+                task=self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_task(self.taskId)
+                if task:
                     lnk='{"link" : {"href":"'+self.rootUri+str(task.id)+'", "rel": "task"},'
-                    tmp.append(lnk+task._toJson()+'}')
-                resp=callback+'{"Tasks List":{"link":{"href":"'+self.rootUri+'", "rel": "tasks"}},"items":['+','.join(tmp)+']}'
-                response.content_type = 'application/json'
+                    resp='{"Task":'+lnk+task._toJson()+'}}'
+                else:
+                    response.status=500
+                    error='{"error":{"id":0,"message":"failed to add task"}}'
+                    resp='{"Tasks":'+error+'}'
             except Exception as inst:
-                self.logger.exception("Error in tasks get %s",str(inst))
-            return resp
+                self.logger.critical("in env %d node id %d task post error: %s",self.envId,self.nodeId, str(inst))
+            finally:
+                return resp
         else:
             abort(501,"Not Implemented")
-            
-    def render_POST(self,request):
+                
+    def render_PUT(self,request):
         resp=""
         try:
             task=self.environmentManager.get_environment(self.envId).get_node(self.nodeId).add_task(**self._fetch_jsonData(request))
@@ -44,9 +47,10 @@ class TaskRestHandler(BaseRestHandler):
             self.logger.critical("in env %d node id %d task post error: %s",self.envId,self.nodeId, str(inst))
         finally:
             return resp
+        
     def render_DELETE(self,request):
         try:
-            self.environmentManager.get_environment(self.envId).get_node(self.nodeId).clear_tasks()
+            self.environmentManager.get_environment(self.envId).get_node(self.nodeId).remove_task(self.taskId)
         except Exception as inst:
             self.logger.critical("in env %s node id %d task clear error: %s",self.envId,self.nodeId, str(inst))
             abort(500,"Failed to clear tasks")
