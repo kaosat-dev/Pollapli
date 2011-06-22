@@ -1,4 +1,10 @@
 from doboz_web.core.tools.event_sys import *
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
+
 
 
 class ConditionEvents(Events):
@@ -7,11 +13,12 @@ class ConditionEvents(Events):
     """
     __events__=('validated','invalidated')
 
-
-class Condition(object):
+       
+class Condition(DBObject):
     """A condition is similar to a boolean expression: it must return
     true or false in its call method """
-    def __init__(self,critical=False):
+    def __init__(self,name="defaultCondition",description="",critical=False,*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
         self.events=ConditionEvents()
         self.critical=critical#is this a critical condition
         self.valid=False

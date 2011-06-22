@@ -8,24 +8,32 @@ import datetime
 import uuid
 
 from doboz_web.core.components.automation.task_manager import TaskManager
-
 from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
 
-class Node(object):
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
+
+class Node(DBObject):
     """
     Base class for all nodes: a hardware node is a software component handling either a physical device such as a webcam, reprap , arduino etc
     or some software node (pachube etc)
     """
-    def __init__(self,name="node"):
+    BELONGSTO = ['environment']
+
+    def __init__(self,name="node",description="",*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
         self.logger=logging.getLogger("dobozweb.core.components.nodes.node")
         self.name=name
         self.isRunning=False  
         self.connector=None 
         self.taskManager=TaskManager()
         self.components=[]
-        self.id=-1
+       
         """For Uptime calculation"""
         self.startTime=time.time()
     

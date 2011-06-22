@@ -7,17 +7,23 @@ import os
 
 from doboz_web.core.tools.event_sys import *
 
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
+
 
 class AutomationEvents(Events):
     __events__=("OnEntered","OnExited","ActionDone")
     
 
-class Task(object):
+class Task(DBObject):
     """
     Base class for tasks (printing , scanning etc
     """
-    print("jhkhkjh")
-    def __init__(self,name="task"):
+    def __init__(self,name="task",description="a task",*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
         self.logger=logging.getLogger("dobozweb.core.components.automation.task")
        
         self.connector=None

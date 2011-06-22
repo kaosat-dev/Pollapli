@@ -12,6 +12,11 @@ import imp
 import inspect
 
 from doboz_web.core.components.environments.environment import Environment
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
 
 class EnvironmentManager(object):
     """
@@ -25,6 +30,8 @@ class EnvironmentManager(object):
         self.setup()
     
     def setup(self):
+        pass
+    def setup_old(self):
         #self.scan_plugins()
         self.startTime = time.time()
         """Retrieve all existing environments from disk"""
@@ -48,6 +55,7 @@ class EnvironmentManager(object):
                 return getattr(env, attr_name)
         raise AttributeError(attr_name)
         
+        
     def stop(self):
         """
         Shuts down the environment manager and everything associated with it : ie EVERYTHING !!
@@ -62,22 +70,120 @@ class EnvironmentManager(object):
     ####################################################################################
     The following functions are for the general handling of environements
     """
+    
+    @defer.inlineCallbacks
+    def _generateDatabase(self):
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE environments(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             name TEXT,
+             status TEXT NOT NULL DEFAULT "Live",
+             description TEXT
+             )''')
+            
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE nodes(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             env_id INTEGER NOT NULL,
+             type_id INTEGER NOT NULL ,
+             name TEXT,          
+             description TEXT,
+             FOREIGN KEY(env_id) REFERENCES Environments(id)
+             )''')
+        
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE tasks(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             env_id INTEGER NOT NULL,
+             name TEXT,          
+             description TEXT,
+             FOREIGN KEY(env_id) REFERENCES Environments(id)
+             )''')
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE actions(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             env_id INTEGER NOT NULL,
+             task_id INTEGER NOT NULL,
+             name TEXT,          
+             description TEXT,
+             FOREIGN KEY(env_id) REFERENCES Environments(id),
+             FOREIGN KEY(task_id) REFERENCES Environments(id)
+             )''')
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE conditions(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             env_id INTEGER NOT NULL,
+             task_id INTEGER NOT NULL,
+             name TEXT,          
+             description TEXT,
+             FOREIGN KEY(env_id) REFERENCES Environments(id),
+             FOREIGN KEY(task_id) REFERENCES Environments(id)
+             )''')
+        defer.returnValue(None)
+#             
+#             
+#        Registry.DBPOOL.runQuery('''CREATE TABLE Sensors(
+#             id INTEGER PRIMARY KEY AUTOINCREMENT,
+#             env_id INTEGER NOT NULL,
+#             node_id INTEGER NOT NULL,
+#             auto_id INTEGER NOT NULL DEFAULT 1,
+#             captureType TEXT NOT NULL,
+#             captureMode TEXT NOT NULL DEFAULT "Analog",
+#             dataStorage TEXT NOT NULL DEFAULT "Db",
+#             type TEXT NOT NULL ,
+#             realName TEXT NOT NULL,
+#             name TEXT,
+#             description TEXT,
+#             FOREIGN KEY(env_id) REFERENCES Environments(id),
+#             FOREIGN KEY(node_id) REFERENCES Nodes(id),
+#             FOREIGN KEY(auto_id) REFERENCES Automation(id)
+#             )''').addCallback(self._dbGeneratedOk)
+#             
+#        Registry.DBPOOL.runQuery('''CREATE TABLE Actors(
+#            id INTEGER PRIMARY KEY AUTOINCREMENT,
+#             env_id INTEGER NOT NULL,
+#             node_id INTEGER NOT NULL,
+#             auto_id INTEGER NOT NULL DEFAULT 1,
+#             realName TEXT NOT NULL,
+#             params TEXT,
+#             name TEXT,
+#             description TEXT,
+#             FOREIGN KEY(env_id) REFERENCES Environments(id),
+#             FOREIGN KEY(node_id) REFERENCES Nodes(id),
+#             FOREIGN KEY(auto_id) REFERENCES Automation(id)
+#             )''').addCallback(self._dbGeneratedOk) 
+    
+    
+    
     def get_environments(self,filter=None):
         """
-        Returns the list of environments
+        Returns the list of environments, filtered by  the filter param
+        the filter is a dictionary of list, with each key beeing an attribute
+        to check, and the values in the list , values of that param to check against
         """
+        
+        def filter_check(env,filter):
+            for key in filter.keys():
+                if not getattr(env, key) in filter[key]:
+                    return False
+            return True
+        
         if filter:
-            try:
-                #return [env for env in self.environments if getattr(env, "id") in filter["id"]]
-                return [env for env in self.environments if [True for key in filter.keys() if getattr(env, key)in filter[key]]]
-            except:
-                pass
+            #return [env for env in self.environments if getattr(env, "id") in filter["id"]]
+            #return [env for env in self.environments if [True for key in filter.keys() if getattr(env, key)in filter[key]]]
+            return [env for env in self.environments if filter_check(env,filter)]
+        
         return self.environments
     
     def get_environment(self,envId):
         return self.environments[envId]
     
-    def add_environment(self,name,description="Add Description here",status="frozen"):
+    def _environmentAddedOk(self,result):
+        print("environment added ok")
+        print("result",result)
+    def _environmentAddFailure(self,failure):
+        print("failed to add environment  to db")
+        print(str(failure))
+    def _saveDb(self,result,env):
+        return env.save().addCallbacks(self._environmentAddedOk,errback=self._environmentAddFailure)
+    
+    @defer.inlineCallbacks
+    def add_environment(self,name="home_test",description="Add Description here",status="frozen"):
         """
         Add an environment to the list of managed environements : 
         Automatically creates a new folder and launches the new environement auto creation
@@ -85,23 +191,38 @@ class EnvironmentManager(object):
         EnvName: the name of the environment
         description:a short description of the environment
         status: either frozen or live : whether the environment is active or not
-        """
-        #create hash from envName
-       
+        """        
+        d=defer.Deferred()
+        #print("in env mgr",name,self.path)
         envPath=os.path.join(self.path,name)  
        
        
         #if such an environment does not exist, add it
         if not name in self.environments:
             os.mkdir(envPath)
-            env=Environment(envPath,name,description)
-            env.setup()
+            #env=Environment(envPath,name,description)
+            dbpath=os.path.join(envPath,name)+".db"
+            Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbpath)
+            
+            env=Environment(path="toto",name=name,description=description,status=status)
+            
+            yield self._generateDatabase()
+
+            yield env.save()#.addCallbacks(self._environmentAddedOk,errback=self._environmentAddFailure)
+            defer.returnValue(env)
+
+            #env.setup()
+              
             self.environments.append(env)
-            id=self.environments.index(env)
-            self.environments[id].id=id
+            #self.environments[id].id=int(env.id)
             self.logger.critical("Adding environment named %s, description: %s",name,description)
             """ IF IT IS ALREADY PRESENT,  DISPATCH A " WARNING" MESSAGE"""
-            return env
+        #reactor.callLater(0, d.callback, env)
+        #d.callback(env)
+        #return d
+        
+        #    return env
+        defer.returnValue(None)
         
     def remove_environment(self,id):
         """
@@ -120,8 +241,7 @@ class EnvironmentManager(object):
         
         self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",envName,envPath) 
         
-    def clear_environments(self):
-       
+    def clear_environments(self,params):
         for env in self.environments:
             envName=env.name
             envPath=os.path.join(self.path,envName)

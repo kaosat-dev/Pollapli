@@ -9,13 +9,17 @@ import imp
 import inspect
 
 from doboz_web.core.components.nodes.node_manager import NodeManager
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
 
 
-class Environment(object):
-    def __init__(self,path,name,description="Add Description here",status="active"):
+class Environment(DBObject):
+    def __init__(self,path="/",name="home",description="Add Description here",status="active",*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
         self.logger=logging.getLogger("dobozweb.core.components.environment")
         self.path=path
-        self.id=-1
         self.name=name
         self.description=description
         self.status=status
@@ -25,7 +29,8 @@ class Environment(object):
     """
     ####################################################################################
     Configuration and shutdown methods
-    """  
+    """
+     
     def setup(self):
         """
         Function to instanciate the whole environment from disk (db)
@@ -67,8 +72,8 @@ class Environment(object):
     def __getattr__(self, attr_name):
         if hasattr(self.nodeManager, attr_name):
                 return getattr(self.nodeManager, attr_name)
-        else:
-            raise AttributeError(attr_name)
+#       # else:
+       #     raise AttributeError(attr_name)
     """
     ####################################################################################
     The following functions are typically hardware manager/hardware nodes and sensors related, pass through methods for the most part

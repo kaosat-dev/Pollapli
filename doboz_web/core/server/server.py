@@ -54,11 +54,10 @@ def handle_plugin():
 @server.route('/environments' , method='ANY')
 @server.route('/environments/' , method='ANY')
 def handle_envs():
- 
     rootUri=server.fullAdress+"/environments/"
     envsHandler=EnvsRestHandler(rootUri,server.environmentManager)
     #tuut=envsHandler._handle(request)
-
+    #print(tuut)
     return envsHandler._handle(request) 
 
 @server.route('/environments/:envId' , method='ANY')
