@@ -25,13 +25,17 @@ from doboz_web.core.components.environments.exceptions import EnvironmentAlready
 
 
 
-class EnvironmentList(list):
+class WrapperList(list):
     def __init__(self, data=[],rootType="environments"):
         list.__init__(self,data)
         self.rootType=rootType
         
     def _toDict(self):
-        return
+        envDict={}
+        envDict[self.rootType]={}
+        envDict[self.rootType]["items"]=[item._toDict() for item in self]
+
+        return envDict
 
 class EnvironmentManager(object):
     """
@@ -134,10 +138,12 @@ class EnvironmentManager(object):
             if filter:
                 #return [env for env in self.environments if getattr(env, "id") in filter["id"]]
                 #return [env for env in self.environments if [True for key in filter.keys() if getattr(env, key)in filter[key]]]
-                return[env for env in envsList if filter_check(env,filter)]
+              
                 
+                return WrapperList(data=[env for env in envsList if filter_check(env,filter)],rootType="environments")
+                return []
             else:
-                return envsList
+                return WrapperList(data=envsList,rootType="environments")
             
         d.addCallback(get,self.environments)
         reactor.callLater(0.5,d.callback,filter)

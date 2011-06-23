@@ -12,13 +12,10 @@ from twisted.internet import reactor
 from twisted.enterprise import adbapi
 
 from doboz_web.core.server.rest.environments_handler import EnvironmentsHandler
+from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists
+from doboz_web.core.server.rest.exception_converter import ExceptionConverter
+from doboz_web.core.server.rest.exceptions import ParameterParseException,UnhandledContentTypeException
 
-
-class DummyResource(Resource):
-    isLeaf=False
-    def __init__(self):
-        Resource.__init__(self)
-    
     
 
 class MainServer():
@@ -26,6 +23,11 @@ class MainServer():
         self.port=port
         self.filePath=filepath
         
+        self.exceptionConverter=ExceptionConverter()
+        self.exceptionConverter.add_exception(ParameterParseException,400 ,1,"Params parse error")
+        self.exceptionConverter.add_exception(UnhandledContentTypeException,415 ,2,"bad content type")
+        self.exceptionConverter.add_exception(EnvironmentAlreadyExists,409 ,3,"environment already exists")
+    
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")
         observer.start()
@@ -35,7 +37,7 @@ class MainServer():
         restRoot=Resource()
         root.putChild("rest",restRoot)
         try:
-            restRoot.putChild("environments", EnvironmentsHandler(None,self.environmentManager))
+            restRoot.putChild("environments", EnvironmentsHandler(None,self.exceptionConverter,self.environmentManager))
         except Exception as inst:
             print("error in  resource creation",inst)
          

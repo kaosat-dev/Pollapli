@@ -3,14 +3,16 @@ from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.web import resource, http
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
+from doboz_web.core.server.rest.data_formater import DataFormater
 
 
 class ResponseGenerator(object):
-    def __init__(self,request,status=200,contentType="application/json",exceptionConverter=None):
+    def __init__(self,request,status=200,contentType="application/json",exceptionConverter=None,resource=None):
         self.request=request
         self.status=status
         self.contentType=contentType
         self.exceptionConverter=exceptionConverter or ExceptionConverter()
+        self.resource=resource
         
     def wrapAndRespond(self,payload):
         d = defer.Deferred()
@@ -20,32 +22,28 @@ class ResponseGenerator(object):
         """
         build a simple response
         """
-        print("building response")
         #callback=request.GET.get('callback', '').strip() 
         response=""
         callback=None
         #    
         if isinstance(payload, failure.Failure):
-            print("building error")
             payload=self._handle_errors(payload)
             self.request.setResponseCode(payload.responseCode)
             self.request.setHeader("Content-Type", "application/pollapli.error+json")
-
-        else:
-            print("building normal")
-            self.request.setResponseCode(self.status)
-            self.request.setHeader("Content-Type", self.contentType)    
-        
-        try:
             payload=payload._toDict() or ''
-        except:
-            payload=""     
+        else:
+            self.request.setResponseCode(self.status)
+            self.request.setHeader("Content-Type", self.contentType)   
+            
+            try:
+                payload=payload._toDict() or ''  
+                payload=DataFormater(self.resource,self.request.path).format(payload)
+            except Exception as inst:
+                payload=""     
+            
         if callback:
             payload= callback+"("+payload+")" 
         response=payload
-        
-        print("response",response)
-        
         self.request.write(json.dumps(response))
         self.request.finish()
         

@@ -6,17 +6,15 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from twisted.web.server import NOT_DONE_YET
 from twisted.internet.task import deferLater
-from doboz_web.core.server.rest.base_rest_handler import BaseRestHandler
+from doboz_web.core.server.rest.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-from doboz_web.core.server.rest.exceptions import ParameterParseException,UnhandledContentTypeException
 
 
-class EnvironmentHandler(BaseRestHandler):
+class EnvironmentHandler(DefaultRestHandler):
     isLeaf=False
     def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None):
-        BaseRestHandler.__init__(self)
+        DefaultRestHandler.__init__(self,rootUri,exceptionHandler)
         self.rootUri=rootUri
         self.environmentManager=environmentManager
         self.envId=envId

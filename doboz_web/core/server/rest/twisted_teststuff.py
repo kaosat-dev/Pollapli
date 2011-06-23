@@ -8,6 +8,37 @@
 
 
 
+    def _build_resource_uri(self,resourceInstance=None,resourceName=""):
+        """
+        builds the current resource uri /link, based on resource name and root uri
+        """
+        self.rootUri=""
+        item={}
+        item["link"]={}
+        item["link"]["rel"]=resourceName
+        if resourceInstance:   
+            item["link"]["href"]=self.rootUri+str(resourceInstance.id)
+            item=dict(item.items() + resourceInstance._toDict().items())
+        else:
+            item["link"]["href"]=self.rootUri
+        print("item",item)
+        return item
+            
+    def _build_resource_list_uri(self,list,resourceName):
+        """
+        generates a dictionary based data structure for a set of links in json, based on a list
+        and a resource name
+        """
+        result={}
+        result[resourceName+"s List"]={}
+        result[resourceName+"s List"]["link"]={}
+        result[resourceName+"s List"]["link"]["href"]=self.rootUri
+        result[resourceName+"s List"]["link"]["rel"]=resourceName+"s"
+        result[resourceName+"s List"]["items"]=[self._build_resource_uri(item,resourceName)for item in list] 
+        
+        return result
+    
+    
 
 
 def error_test(self,result):

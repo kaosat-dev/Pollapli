@@ -45,10 +45,8 @@ class RequestParser(object):
                 params=json.loads(data,encoding='utf8')
                 params=self._stringify_data(params)
         elif self.request.method=="GET":
-            print("GET params")
             for key in self.request.args.keys():         
                     params[key]=[int(elem) if elem.isdigit()  else elem for elem in self.request.args[key] ]    
-            print(params)
         d.callback(params)
         return d
     
