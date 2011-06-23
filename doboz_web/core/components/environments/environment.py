@@ -13,12 +13,13 @@ from twisted.enterprise import adbapi
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
+from twisted.python import log,failure
 
 
 class Environment(DBObject):
     def __init__(self,path="/",name="home",description="Add Description here",status="active",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
-        self.logger=logging.getLogger("dobozweb.core.components.environment")
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.environment")
         self.path=path
         self.name=name
         self.description=description
@@ -63,10 +64,13 @@ class Environment(DBObject):
         return '"id":'+ str(self.id)+',"name":"'+self.name+'","status":"'+self.status+'"'
     
     def _toDict(self):
-        result={}
-        result["id"]=self.id
-        result["name"]=self.name
-        result["status"]=self.status
+        #result={}
+        result={"environment":{"id":self.id,"name":self.name,"status":self.status,"link":{"rel":"environment"}}}
+#        result["id"]=self.id
+#        result["name"]=self.name
+#        result["status"]=self.status
+#        result["link"]={}
+#        result["link"]["rel"]="environment"
         return result
     
     def __getattr__(self, attr_name):

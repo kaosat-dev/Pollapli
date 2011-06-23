@@ -10,20 +10,35 @@ import datetime
 import shutil
 import imp
 import inspect
-
-from doboz_web.core.components.environments.environment import Environment
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
+from twisted.python import log,failure
+from twisted.python.log import PythonLoggingObserver
+
+
+from doboz_web.core.components.environments.environment import Environment
+from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists
+
+
+
+
+class EnvironmentList(list):
+    def __init__(self, data=[],rootType="environments"):
+        list.__init__(self,data)
+        self.rootType=rootType
+        
+    def _toDict(self):
+        return
 
 class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
     """
     def __init__(self,envPath):
-        self.logger = logging.getLogger("dobozweb.core.components.environmentManager") 
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.environmentManager")
         #self.environments={}
         self.environments=[]
         self.path=envPath
@@ -46,8 +61,8 @@ class EnvironmentManager(object):
                 id=self.environments.index(env)
                 self.environments[id].id=id
                 #temporary: this should be recalled from db from within the environments ?
-        self.logger.critical("Environment manager setup correctly")
-        
+        #self.logger.critical("Environment manager setup correctly")
+        log.msg("Environment manager setup correctly", logLevel=logging.CRITICAL)
         
     def __getattr__(self, attr_name):
         for env in self.environments:
@@ -62,15 +77,118 @@ class EnvironmentManager(object):
         Should not be called in most cases
         """
         pass
-    
 
-       
-  
     """
     ####################################################################################
-    The following functions are for the general handling of environements
+    The following are the "CRUD" (Create, read, update,delete) methods for the general handling of environements
     """
+    @defer.inlineCallbacks
+    def add_environment(self,name="home_test",description="Add Description here",status="frozen"):
+        """
+        Add an environment to the list of managed environements : 
+        Automatically creates a new folder and launches the new environement auto creation
+        Params:
+        EnvName: the name of the environment
+        description:a short description of the environment
+        status: either frozen or live : whether the environment is active or not
+        """
+        envPath=os.path.join(self.path,name)  
+        #if such an environment does not exist, add it
+        if not name in self.environments:
+            if os.path.exists(envPath):
+                 raise EnvironmentAlreadyExists()
+            os.mkdir(envPath)
+            #env=Environment(envPath,name,description)
+            dbpath=os.path.join(envPath,name)+".db"
+            Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbpath,check_same_thread=False)
+            
+            env=Environment(path="toto",name=name,description=description,status=status)
+            self.environments.append(env)
+            yield self._generateDatabase()
+            yield env.save()
+            #env.setup()
+            #self.environments[id].id=int(env.id)
+            log.msg("Adding environment named:",name ," description:",description, logLevel=logging.CRITICAL)
+            defer.returnValue(env)
+        else:
+            raise EnvironmentAlreadyExists()
+
+        defer.returnValue(None) 
     
+
+    def get_environments(self,filter=None):
+        """
+        Returns the list of environments, filtered by  the filter param
+        the filter is a dictionary of list, with each key beeing an attribute
+        to check, and the values in the list , values of that param to check against
+        """
+        d=defer.Deferred()
+        
+        def filter_check(env,filter):
+            for key in filter.keys():
+                if not getattr(env, key) in filter[key]:
+                    return False
+            return True
+      
+        def get(filter,envsList):
+            if filter:
+                #return [env for env in self.environments if getattr(env, "id") in filter["id"]]
+                #return [env for env in self.environments if [True for key in filter.keys() if getattr(env, key)in filter[key]]]
+                return[env for env in envsList if filter_check(env,filter)]
+                
+            else:
+                return envsList
+            
+        d.addCallback(get,self.environments)
+        reactor.callLater(0.5,d.callback,filter)
+        return d
+    
+    def get_environment(self,envId):
+        return self.environments[envId]
+    
+    def update_environment(self,id,name,description,status):
+        pass
+    
+    def remove_environment(self,id):
+        """
+        Remove an environment : this needs a whole set of checks, 
+        as it would delete an environment completely (very dangerous)
+        Params:
+        name: the name of the environment
+        """
+        d=defer.Deferred()
+        def remove(id,envs,path):
+            Registry.DBPOOL.close()
+            envName=envs[id].name
+            envPath=os.path.join(path,envName)    
+            #self.environments[envName].shutdown()
+            del envs[id]
+            if os.path.isdir(envPath): 
+                shutil.rmtree(envPath)
+            #raise Exception("mlkjlk")
+        d.addCallback(remove,self.environments,self.path)
+        reactor.callLater(0,d.callback,id)
+        return d
+        #self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",envName,envPath) 
+        
+    @defer.inlineCallbacks
+    def clear_environments(self):
+        print(self.environments)
+        for env in self.environments:
+            yield self.remove_environment(env.id-1)        
+        defer.returnValue(None)
+    """
+    ####################################################################################
+    Helper Methods    
+    """
+    @defer.inlineCallbacks
+    def _generateMasterDatabase(self):
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE environments(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             name TEXT,
+             status TEXT NOT NULL DEFAULT "Live",
+             description TEXT
+             )''')
     @defer.inlineCallbacks
     def _generateDatabase(self):
         yield Registry.DBPOOL.runQuery('''CREATE TABLE environments(
@@ -149,112 +267,6 @@ class EnvironmentManager(object):
 #             )''').addCallback(self._dbGeneratedOk) 
     
     
-    
-    def get_environments(self,filter=None):
-        """
-        Returns the list of environments, filtered by  the filter param
-        the filter is a dictionary of list, with each key beeing an attribute
-        to check, and the values in the list , values of that param to check against
-        """
-        
-        def filter_check(env,filter):
-            for key in filter.keys():
-                if not getattr(env, key) in filter[key]:
-                    return False
-            return True
-        
-        if filter:
-            #return [env for env in self.environments if getattr(env, "id") in filter["id"]]
-            #return [env for env in self.environments if [True for key in filter.keys() if getattr(env, key)in filter[key]]]
-            return [env for env in self.environments if filter_check(env,filter)]
-        
-        return self.environments
-    
-    def get_environment(self,envId):
-        return self.environments[envId]
-    
-    def _environmentAddedOk(self,result):
-        print("environment added ok")
-        print("result",result)
-    def _environmentAddFailure(self,failure):
-        print("failed to add environment  to db")
-        print(str(failure))
-    def _saveDb(self,result,env):
-        return env.save().addCallbacks(self._environmentAddedOk,errback=self._environmentAddFailure)
-    
-    @defer.inlineCallbacks
-    def add_environment(self,name="home_test",description="Add Description here",status="frozen"):
-        """
-        Add an environment to the list of managed environements : 
-        Automatically creates a new folder and launches the new environement auto creation
-        Params:
-        EnvName: the name of the environment
-        description:a short description of the environment
-        status: either frozen or live : whether the environment is active or not
-        """        
-        d=defer.Deferred()
-        #print("in env mgr",name,self.path)
-        envPath=os.path.join(self.path,name)  
-       
-       
-        #if such an environment does not exist, add it
-        if not name in self.environments:
-            os.mkdir(envPath)
-            #env=Environment(envPath,name,description)
-            dbpath=os.path.join(envPath,name)+".db"
-            Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbpath)
-            
-            env=Environment(path="toto",name=name,description=description,status=status)
-            
-            yield self._generateDatabase()
-
-            yield env.save()#.addCallbacks(self._environmentAddedOk,errback=self._environmentAddFailure)
-            defer.returnValue(env)
-
-            #env.setup()
-              
-            self.environments.append(env)
-            #self.environments[id].id=int(env.id)
-            self.logger.critical("Adding environment named %s, description: %s",name,description)
-            """ IF IT IS ALREADY PRESENT,  DISPATCH A " WARNING" MESSAGE"""
-        #reactor.callLater(0, d.callback, env)
-        #d.callback(env)
-        #return d
-        
-        #    return env
-        defer.returnValue(None)
-        
-    def remove_environment(self,id):
-        """
-        Remove an environment : this needs a whole set of checks, 
-        as it would delete an environment completely (very dangerous)
-        Params:
-        name: the name of the environment
-        """
-        envName=self.environments[id].name
-        envPath=os.path.join(self.path,envName)#self.environments[name].path
-        
-       
-        #self.environments[envName].shutdown()
-        del self.environments[id]
-        shutil.rmtree(envPath)
-        
-        self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",envName,envPath) 
-        
-    def clear_environments(self,params):
-        for env in self.environments:
-            envName=env.name
-            envPath=os.path.join(self.path,envName)
-            if os.path.isdir(envPath): 
-                #del self.environments[self.environments.index(env)]
-                shutil.rmtree(envPath)
-        self.environments=[]
-                
-    def get_environementInfo(self,id):
-        print(self.environments[id].get_environmentInfo())
-    
-    def get_data(self,params):
-        pass
     """
     ####################################################################################
     The following functions are typically hardware manager/hardware nodes and sensors related, pass through methods for the most part

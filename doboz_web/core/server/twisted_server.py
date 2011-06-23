@@ -11,10 +11,15 @@ from twisted.internet import selectreactor
 from twisted.internet import reactor
 from twisted.enterprise import adbapi
 
-#import webbrowser
+from doboz_web.core.server.rest.environments_handler import EnvironmentsHandler
 
-from doboz_web.core.server.rest.envs_handler import EnvsRestHandler
-from doboz_web.core.server.rest.env_handler import EnvRestHandler
+
+class DummyResource(Resource):
+    isLeaf=False
+    def __init__(self):
+        Resource.__init__(self)
+    
+    
 
 class MainServer():
     def __init__(self,port,filepath):
@@ -24,19 +29,20 @@ class MainServer():
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")
         observer.start()
-        
-        root = File(self.filePath)
-        print(self.filePath)
-        
-        restHandler=Resource()
+        #root = File(self.filePath)
+        #print(self.filePath)
+        root=Resource()
+        restRoot=Resource()
+        root.putChild("rest",restRoot)
         try:
-            restHandler.putChild("environments", EnvsRestHandler(None,self.environmentManager))
+            restRoot.putChild("environments", EnvironmentsHandler(None,self.environmentManager))
         except Exception as inst:
-            print("error in root resource creation",inst)
-        root.putChild("REST", restHandler)
-
+            print("error in  resource creation",inst)
+         
+        
         factory = Site(root)
         reactor.listenTCP(self.port, factory)
         #webbrowser.open("http://192.168.0.12:8000")
+        log.msg("Server started!", logLevel=logging.CRITICAL)
         reactor.run()
     
