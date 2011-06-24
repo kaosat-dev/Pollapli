@@ -162,7 +162,7 @@ class EnvironmentManager(object):
             del envs[id]
             if os.path.isdir(envPath): 
                 shutil.rmtree(envPath)
-            #raise Exception("mlkjlk")
+            log.msg("Removed environment ",envName,"with id ",id,logLevel=logging.CRITICAL)
         d.addCallback(remove,self.environments,self.path)
         reactor.callLater(0,d.callback,id)
         return d
@@ -203,10 +203,18 @@ class EnvironmentManager(object):
              environment_id INTEGER NOT NULL,
              type TEXT NOT NULL ,
              name TEXT,          
-             description TEXT
-             
+             description TEXT,
+            FOREIGN KEY(environment_id) REFERENCES environments(id) 
              )''')
-       #FOREIGN KEY(environment_id) REFERENCES Environments(id)
+        
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE reprap_nodes(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             environment_id INTEGER NOT NULL,
+             node_id INTEGER NOT NULL,
+             FOREIGN KEY(environment_id) REFERENCES environments(id),
+             FOREIGN KEY(node_id) REFERENCES nodes(id)  
+             )''')
+      
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE tasks(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -232,6 +240,26 @@ class EnvironmentManager(object):
              description TEXT,
              FOREIGN KEY(env_id) REFERENCES Environments(id),
              FOREIGN KEY(task_id) REFERENCES Environments(id)
+             )''')
+        
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE connectors(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             environment_id INTEGER NOT NULL,
+             node_id INTEGER NOT NULL,
+             type TEXT NOT NULL ,
+             name TEXT,          
+             description TEXT
+             
+             )''')
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             environment_id INTEGER NOT NULL,
+             node_id INTEGER NOT NULL,
+             connector_id,
+             type TEXT NOT NULL ,
+             name TEXT,          
+             description TEXT
+             
              )''')
         defer.returnValue(None)
 #             

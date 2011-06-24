@@ -25,12 +25,7 @@ class EnvironmentHandler(DefaultRestHandler):
         self.valid_contentTypes.append("application/pollapli.environment+json")   
         self.putChild("nodes",NodesHandler(self.rootUri+"/environments/"+str(self.envId),self.exceptionConverter,self.environmentManager,self.envId)  
 )
-#    def getChild(self, request):
-#        try:
-#            return EnvironmentHandler(self.rootUri+"/environments/"+self.envId,self.exceptionConverter,self.environmentManager,self.envId)  
-#        except ValueError :
-#             return self#no id , so return self
-#    
+
     
     def render_GET(self, request):
         """

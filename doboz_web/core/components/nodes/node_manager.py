@@ -17,9 +17,9 @@ from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNo
 from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
-from doboz_web.core.components.nodes.exceptions import UnknownNodeType
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.tools.wrapper_list import WrapperList
+from doboz_web.core.components.nodes.exceptions import UnknownNodeType,NodeNotFound
 
 
 class NodeManager(object):
@@ -56,7 +56,6 @@ class NodeManager(object):
             node=yield NodeManager.nodeTypes[type](name,description).save()
             node.environment.set(self.parentEnv)
             self.nodes[node.id]=node
-            
             log.msg("Added  node ",name," of type ",type," with id set to ",str(node.id), logLevel=logging.CRITICAL)
             defer.returnValue(node)
         else:
@@ -89,7 +88,15 @@ class NodeManager(object):
         return d
     
     def get_node(self,id):
+        if not id in self.nodes.keys():
+            raise NodeNotFound()
         return self.nodes[id]
+    
+    def update_node(self,id,name,description):
+        """Method for node update"""
+        print("updating node")
+        return self.nodes[id]
+        #self.nodes[id].update()
     
     def delete_node(self,id):
         """
@@ -121,8 +128,6 @@ class NodeManager(object):
     ####################################################################################
     Helper Methods    
     """
-    
-       
     def set_connector(self,nodeId,*args,**kwargs):
         """Method to set a nodes connector 
         Params:

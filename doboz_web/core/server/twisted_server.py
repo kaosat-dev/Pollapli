@@ -12,9 +12,10 @@ from twisted.internet import reactor
 from twisted.enterprise import adbapi
 
 from doboz_web.core.server.rest.environments_handler import EnvironmentsHandler
-from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.core.server.rest.exceptions import ParameterParseException,UnhandledContentTypeException
+from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists,EnvironmentNotFound
+from doboz_web.core.components.nodes.exceptions import UnknownNodeType,NodeNotFound
 
     
 
@@ -25,8 +26,11 @@ class MainServer():
         
         self.exceptionConverter=ExceptionConverter()
         self.exceptionConverter.add_exception(ParameterParseException,400 ,1,"Params parse error")
-        self.exceptionConverter.add_exception(UnhandledContentTypeException,415 ,2,"bad content type")
-        self.exceptionConverter.add_exception(EnvironmentAlreadyExists,409 ,3,"environment already exists")
+        self.exceptionConverter.add_exception(UnhandledContentTypeException,415 ,2,"Bad content type")
+        self.exceptionConverter.add_exception(EnvironmentAlreadyExists,409 ,3,"Environment already exists")
+        self.exceptionConverter.add_exception(EnvironmentNotFound,404 ,4,"Environment not found")
+        self.exceptionConverter.add_exception(UnknownNodeType,500 ,5,"Unknown node type")
+        self.exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
     
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")

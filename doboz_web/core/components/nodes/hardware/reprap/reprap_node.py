@@ -2,18 +2,21 @@
 .. py:module:: reprap_node
    :synopsis: hardware node for reprap handling.
 """
-
 import logging
 import time
 import datetime
 import sys
 import os
-
-
-
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
+from twisted.python import log,failure
+from twisted.python.log import PythonLoggingObserver
 
 from doboz_web.core.tools.event_sys import *
-from ..hardware_node import HardwareNode
+from doboz_web.core.components.nodes.hardware.hardware_node import HardwareNode
 
 """TODO: Make tasks in tasks be weak refs""" 
 class ReprapManagerEvents(Events):
@@ -21,26 +24,17 @@ class ReprapManagerEvents(Events):
 
 class ReprapNode(HardwareNode):
     """
-    A reprap node : hardware node (ie "Arduino or similar with attached components such as sensors and actors: ie in the case of a reprap: endstops, temperature sensors, steppers, heaters")
+    A reprap node : hardware node  in the case of a reprap: endstops, temperature sensors, steppers, heaters
     """
-    def __init__(self,name="ReprapNode"):
-        self.logger=logging.getLogger("dobozweb.core.ReprapNode")
-        self.logger.setLevel(logging.ERROR)
-        HardwareNode.__init__(self,name)
- 
-        
+    def __init__(self,name="A reprap node",description="reprap node bla bla",type="reprap"):
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.hardware.ReprapNode")
+        HardwareNode.__init__(self,name,description,type)
         self.startTime=time.time()
-
         self.rootPath=None
         self.events=ReprapManagerEvents() 
         self.gcodeSuffix="\n"
+        log.msg("Reprap Node Init Done", logLevel=logging.CRITICAL)
         
-            
-        self.logger.critical("Reprap Node Init Done")
-        
-    
-         
-         
     def set_paths(self,rootPath):
         """
         Configure paths
@@ -63,13 +57,13 @@ class ReprapNode(HardwareNode):
         self.isStarted=True
         self.totalTime=0
         self.startTime=time.time()  
-        self.logger.critical("Starting Reprap Node")
+        log.msg("Starting Reprap Node", logLevel=logging.CRITICAL)
     
     def stop(self):
         """
         Stops the current task and shuts down
         """
-        self.logger.critical("Stopped")
+        log.msg("stopped Reprap Node", logLevel=logging.CRITICAL)
         self.isPaused=True
         self.serial.tearDown()
         #self.totalTime+=time.time()-self.startTime
@@ -91,7 +85,7 @@ class ReprapNode(HardwareNode):
                     self.headTemp=float(raw[0].split(':')[1])
                     self.bedTemp=float(raw[1].split(':')[1])
                 except Exception as inst:
-                    self.logger.critical("Error in temperature readout %s"%str(inst))
+                    log.msg("Error in temperature readout",str(inst), logLevel=logging.CRITICAL)
         except:
             pass
        

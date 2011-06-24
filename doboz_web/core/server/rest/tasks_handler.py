@@ -15,35 +15,34 @@ from doboz_web.core.server.rest.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-from doboz_web.core.server.rest.node_handler import NodeHandler
 
-class NodesHandler(DefaultRestHandler):
+class TasksHandler(DefaultRestHandler):
     """
     Resource in charge of handling the environments (plural) so :
     Adding a new environment
     Listing all environments
     """
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None):
+    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,nodeId=None):
         DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.nodesHandler")
+        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.tasksHandler")
         self.environmentManager=environmentManager
-        
         self.envId=envId
-        self.valid_contentTypes.append("application/pollapli.nodesList+json")   
+        self.nodeId=nodeId
+        self.valid_contentTypes.append("application/pollapli.tasksList+json")   
         self.validGetParams.append('id')
-        self.validGetParams.append('type')
+        #self.validGetParams.append('type')
       
     def getChild(self, id, request):
         try:
-            return NodeHandler(self.rootUri,self.exceptionConverter,self.environmentManager,self.envId,int(id))  
+            return TaskHandler(self.rootUri,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId,int(id))  
         except ValueError :
              return self#no id , so return self
     
     def render_POST(self,request):  
         """
-        Handler for POST requests of nodes
-        extract the data from the request body to add a new node
+        Handler for POST requests of tasks
+        extract the data from the request body to add a new task
         """ 
         print("in nodes handler post")
         @defer.inlineCallbacks
@@ -53,8 +52,8 @@ class NodesHandler(DefaultRestHandler):
             type=result.get("type") 
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_node(name=name,description=description,type=type)))
              
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.node+json",resource="node")
-        d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.task+json",resource="node")
+        d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
         return NOT_DONE_YET

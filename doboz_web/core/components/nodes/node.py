@@ -47,9 +47,9 @@ class Node(DBObject):
             raise AttributeError(attr_name) 
            
     def _toDict(self):
-        return {"node":{"id":self.id,"name":self.name,"description":self.description,"type":self.__class__.__name__,"link":{"rel":"node"}}}
+        return {"node":{"id":self.id,"name":self.name,"description":self.description,"type":self.type,"link":{"rel":"node"}}}
    
-    def set_connector(self,connectorType="Serial",driverType="Default",driverParams={},*args,**kwargs):
+    def set_connector(self,type="Serial",driverType="Default",driverParams={},*args,**kwargs):
         """
         Method to set this node's connector 
         Params:
@@ -69,18 +69,24 @@ class Node(DBObject):
         else :
             raise Exception("Incorrect driver")
         
-        self.logger.critical("Set connector of node %d to serial plus, and driver of type %s and params: %s",self.id,driverType,str(driverParams))
+        log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
+
         if hasattr(self.connector, 'events'):    
              self.connector.events.disconnected+=self._on_connector_disconnected
              self.connector.events.reconnected+=self._on_connector_reconnected  
              self.connector.events.OnDataRecieved+=self._on_data_recieved
         #self.taskManager.connector=self.connector
-    def remove_connector(self):
+        
+    def get_connector(self):
+        return self.connector
+    
+    def delete_connector(self):
         if self.connector:
             self.connector.disconnect()     
             self.connector=None
-        self.logger.info("Disconnected and removed connector")  
-         
+            
+        log.msg("Disconnected and removed connector", logLevel=logging.CRITICAL)
+   
     def set_driver(self): 
         """Method to set a this nodes connector's driver 
         Params:

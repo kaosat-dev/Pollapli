@@ -2,11 +2,17 @@
 .. py:module:: hardware_node
    :synopsis: hardware node for reprap handling.
 """
-
 import logging
 import time
 import datetime
 import uuid
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
+from twisted.python import log,failure
+from twisted.python.log import PythonLoggingObserver
 
 from doboz_web.core.components.nodes.node import Node
 
@@ -14,10 +20,10 @@ class HardwareNode(Node):
     """
     Base class for all hardware nodes: a hardware node is a software component handling a physical device such as a webcam, reprap , arduino etc
     """
-    def __init__(self,name="HardwareNode"):
-        Node.__init__(self,name)
-        self.logger=logging.getLogger("dobozweb.core.components.nodes.hardware.hardwareNode")
-        
+    def __init__(self,name="HardwareNode",description="hardware node",type="hardwarenode"):
+        Node.__init__(self,name,description,type)
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.hardware.hardwareNode")
+       
 #    def add_task(self,task):
 #        """
 #        Adds the task to the tasklist, and if there are not tasks running, starts it

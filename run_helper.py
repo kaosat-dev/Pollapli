@@ -12,7 +12,7 @@ def helper():
     except:
         pass
     try:
-        client.post('rest/environments/0/nodes',headers={'Content-Type': 'application/pollapli.nodesList+json'},payload='{"name":"testNode","type":"node","description":"just a test node"}')
+        client.post('rest/environments/0/nodes',headers={'Content-Type': 'application/pollapli.nodesList+json'},payload='{"name":"testNode","type":"reprap","description":"just a test node"}')
     except:
         pass
 #    try:
