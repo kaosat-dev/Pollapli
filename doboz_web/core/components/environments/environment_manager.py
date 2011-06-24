@@ -21,28 +21,19 @@ from twisted.python.log import PythonLoggingObserver
 
 from doboz_web.core.components.environments.environment import Environment
 from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists
+from doboz_web.core.components.nodes.node import Node
+from doboz_web.core.tools.wrapper_list import WrapperList
 
 
+Registry.register(Environment, Node)
 
-
-class WrapperList(list):
-    def __init__(self, data=[],rootType="environments"):
-        list.__init__(self,data)
-        self.rootType=rootType
-        
-    def _toDict(self):
-        envDict={}
-        envDict[self.rootType]={}
-        envDict[self.rootType]["items"]=[item._toDict() for item in self]
-
-        return envDict
 
 class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
     """
     def __init__(self,envPath):
-        self.logger=log.PythonLoggingObserver("dobozweb.core.components.environmentManager")
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.environments.environmentManager")
         #self.environments={}
         self.environments=[]
         self.path=envPath
@@ -65,7 +56,6 @@ class EnvironmentManager(object):
                 id=self.environments.index(env)
                 self.environments[id].id=id
                 #temporary: this should be recalled from db from within the environments ?
-        #self.logger.critical("Environment manager setup correctly")
         log.msg("Environment manager setup correctly", logLevel=logging.CRITICAL)
         
     def __getattr__(self, attr_name):
@@ -109,6 +99,8 @@ class EnvironmentManager(object):
             env=Environment(path="toto",name=name,description=description,status=status)
             self.environments.append(env)
             yield self._generateDatabase()
+            
+
             yield env.save()
             #env.setup()
             #self.environments[id].id=int(env.id)
@@ -178,6 +170,9 @@ class EnvironmentManager(object):
         
     @defer.inlineCallbacks
     def clear_environments(self):
+        """
+        Removes & deletes ALL the environments, should be used with care
+        """
         print(self.environments)
         for env in self.environments:
             yield self.remove_environment(env.id-1)        
@@ -205,12 +200,13 @@ class EnvironmentManager(object):
             
         yield Registry.DBPOOL.runQuery('''CREATE TABLE nodes(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             env_id INTEGER NOT NULL,
-             type_id INTEGER NOT NULL ,
+             environment_id INTEGER NOT NULL,
+             type TEXT NOT NULL ,
              name TEXT,          
-             description TEXT,
-             FOREIGN KEY(env_id) REFERENCES Environments(id)
+             description TEXT
+             
              )''')
+       #FOREIGN KEY(environment_id) REFERENCES Environments(id)
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE tasks(
              id INTEGER PRIMARY KEY AUTOINCREMENT,

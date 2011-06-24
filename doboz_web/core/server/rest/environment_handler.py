@@ -1,3 +1,7 @@
+"""
+.. py:module:: environment_handler
+   :synopsis: rest handler for single environment interaction.
+"""
 import logging
 from twisted.internet import reactor, defer
 from twisted.web.resource import Resource,NoResource

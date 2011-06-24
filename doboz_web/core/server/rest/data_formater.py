@@ -4,10 +4,8 @@ class DataFormater(object):
         self.rootUri=rootUri
         
     def format(self,data):  
-       # print("data",data)
         if self.resource.endswith('s'):
             data[self.resource]["link"]={"rel":self.resource,"href":self.rootUri}
-            
             singleResource=self.resource[:-1]
             for item in data[self.resource]["items"]:
                 item[singleResource]["link"]["href"]=self.rootUri+"/"+str(item[singleResource]["id"])

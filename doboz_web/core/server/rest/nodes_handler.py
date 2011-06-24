@@ -1,3 +1,7 @@
+"""
+.. py:module:: environments_handler
+   :synopsis: rest handler for environments interaction.
+"""
 import logging
 from twisted.internet import reactor, defer
 from twisted.web.resource import Resource,NoResource
@@ -28,28 +32,29 @@ class NodesHandler(DefaultRestHandler):
         self.envId=envId
         self.valid_contentTypes.append("application/pollapli.nodesList+json")   
         self.validGetParams.append('id')
-        #self.validGetParams.append('status')
+        self.validGetParams.append('type')
       
-    def getChild(self, id, request):
-        try:
-            return NodeHandler(self.rootUri,self.exceptionConverter,self.environmentManager,self.envId,int(id))  
-        except ValueError :
-             return self#no id , so return self
+#    def getChild(self, id, request):
+#        try:
+#            return NodeHandler(self.rootUri,self.exceptionConverter,self.environmentManager,self.envId,int(id))  
+#        except ValueError :
+#             return self#no id , so return self
     
     def render_POST(self,request):  
         """
-        Handler for POST requests of environments
-        extract the data from the request body to add a new environment
+        Handler for POST requests of nodes
+        extract the data from the request body to add a new node
         """ 
+        print("in nodes handler post")
         @defer.inlineCallbacks
         def extract_args(result):
             name=result["name"] or ""
             description=result.get("description") or ""
-            status=result.get("status") or "live"
-            defer.returnValue((yield self.environmentManager.add_environment(name=name,description=description,status=status)))
+            type=result.get("type") 
+            defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_node(name=name,description=description,type=type)))
              
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.environment+json",resource="environment")
-        d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.node+json",resource="node")
+        d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
         return NOT_DONE_YET
@@ -58,9 +63,9 @@ class NodesHandler(DefaultRestHandler):
         """
         Handler for GET requests of environments
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environmentsList+json",resource="environments")
-        d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
-        d.addCallbacks(self.environmentManager.get_environments,errback=r._build_response)
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.nodesList+json",resource="nodes")
+        d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
+        d.addCallbacks(self.environmentManager.get_environment(self.envId).get_nodes,errback=r._build_response)
         d.addBoth(r._build_response)
         return NOT_DONE_YET
     
@@ -71,6 +76,6 @@ class NodesHandler(DefaultRestHandler):
         environments
         """
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
-        d= self.environmentManager.clear_environments()
+        d= self.environmentManager.get_environment(self.envId).clear_nodes()
         d.addBoth(r._build_response)
         return NOT_DONE_YET   

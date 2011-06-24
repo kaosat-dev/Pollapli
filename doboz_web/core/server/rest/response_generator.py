@@ -1,4 +1,6 @@
 import json
+import sys
+import traceback
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.web import resource, http
@@ -39,7 +41,9 @@ class ResponseGenerator(object):
                 payload=payload._toDict() or ''  
                 payload=DataFormater(self.resource,self.request.path).format(payload)
             except Exception as inst:
-                payload=""     
+                payload=""  
+                print("response error",str(inst))   
+                traceback.print_exc(file=sys.stdout)
             
         if callback:
             payload= callback+"("+payload+")" 

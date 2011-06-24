@@ -6,17 +6,18 @@ import logging
 import time
 import datetime
 import uuid
-
-from doboz_web.core.components.automation.task_manager import TaskManager
-from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
-from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
-from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
-
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
+from twisted.python import log,failure
+from twisted.python.log import PythonLoggingObserver
+from doboz_web.core.components.automation.task_manager import TaskManager
+from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
+from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
+from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
+
 
 class Node(DBObject):
     """
@@ -25,15 +26,17 @@ class Node(DBObject):
     """
     BELONGSTO = ['environment']
 
-    def __init__(self,name="node",description="",*args,**kwargs):
+    def __init__(self,name="node",description="base node",type="node",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
-        self.logger=logging.getLogger("dobozweb.core.components.nodes.node")
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.node")
         self.name=name
+        self.type=type
+        self.description=description
         self.isRunning=False  
         self.connector=None 
         self.taskManager=TaskManager()
         self.components=[]
-       
+        
         """For Uptime calculation"""
         self.startTime=time.time()
     
@@ -41,8 +44,11 @@ class Node(DBObject):
         if hasattr(self.taskManager, attr_name):
             return getattr(self.taskManager, attr_name)
         else:
-            raise AttributeError(attr_name)    
-    
+            raise AttributeError(attr_name) 
+           
+    def _toDict(self):
+        return {"node":{"id":self.id,"name":self.name,"description":self.description,"type":self.__class__.__name__,"link":{"rel":"node"}}}
+   
     def set_connector(self,connectorType="Serial",driverType="Default",driverParams={},*args,**kwargs):
         """
         Method to set this node's connector 
