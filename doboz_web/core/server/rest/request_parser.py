@@ -38,7 +38,7 @@ class RequestParser(object):
         """
         d=defer.Deferred()
         params={}
-        if self.request.method=="POST":
+        if self.request.method=="POST" or self.request.method=="PUT":
             data=self.request.content.getvalue()
             if data != None or data != '':
                 """ In python pre 2.6.5, bug in unicode dict keys"""

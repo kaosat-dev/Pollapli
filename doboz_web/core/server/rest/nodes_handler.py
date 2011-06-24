@@ -11,27 +11,28 @@ from doboz_web.core.server.rest.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-from doboz_web.core.server.rest.environment_handler import EnvironmentHandler
+from doboz_web.core.server.rest.node_handler import NodeHandler
 
-class EnvironmentsHandler(DefaultRestHandler):
+class NodesHandler(DefaultRestHandler):
     """
     Resource in charge of handling the environments (plural) so :
     Adding a new environment
     Listing all environments
     """
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None):
+    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None):
         DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.environmentsHandler")
         self.environmentManager=environmentManager
         
-        self.valid_contentTypes.append("application/pollapli.environmentsList+json")   
+        self.envId=envId
+        self.valid_contentTypes.append("application/pollapli.nodesList+json")   
         self.validGetParams.append('id')
-        self.validGetParams.append('status')
+        #self.validGetParams.append('status')
       
     def getChild(self, id, request):
         try:
-            return EnvironmentHandler(self.rootUri+"/environments",self.exceptionConverter,self.environmentManager,int(id))  
+            return NodeHandler(self.rootUri,self.exceptionConverter,self.environmentManager,self.envId,int(id))  
         except ValueError :
              return self#no id , so return self
     

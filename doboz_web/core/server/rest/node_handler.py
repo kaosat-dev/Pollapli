@@ -9,24 +9,24 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.server.rest.nodes_handler import NodesHandler
 
-class EnvironmentHandler(DefaultRestHandler):
+
+class NodeHandler(DefaultRestHandler):
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None):
+    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,nodeId=None):
         DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.environmentsHandler")
         self.environmentManager=environmentManager
         self.envId=envId   
+        self.nodeId=nodeId
         self.valid_contentTypes.append("application/pollapli.environment+json")   
-        self.putChild("nodes",NodesHandler(self.rootUri+"/environments/"+str(self.envId),self.exceptionConverter,self.environmentManager,self.envId)  
-)
+    
 #    def getChild(self, request):
 #        try:
-#            return EnvironmentHandler(self.rootUri+"/environments/"+self.envId,self.exceptionConverter,self.environmentManager,self.envId)  
+#            return EnvironmentHandler(self.rootUri+"/environments/"+self.envId,self.exceptionConverter,self.environmentManager,int(id))  
 #        except ValueError :
 #             return self#no id , so return self
-#    
+    
     
     def render_GET(self, request):
         """

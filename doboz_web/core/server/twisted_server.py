@@ -37,7 +37,7 @@ class MainServer():
         restRoot=Resource()
         root.putChild("rest",restRoot)
         try:
-            restRoot.putChild("environments", EnvironmentsHandler(None,self.exceptionConverter,self.environmentManager))
+            restRoot.putChild("environments", EnvironmentsHandler("http://localhost",self.exceptionConverter,self.environmentManager))
         except Exception as inst:
             print("error in  resource creation",inst)
          

@@ -25,8 +25,7 @@ class Environment(DBObject):
         self.description=description
         self.status=status
         self.nodeManager=NodeManager()
-        
-                
+                 
     """
     ####################################################################################
     Configuration and shutdown methods
@@ -65,7 +64,7 @@ class Environment(DBObject):
     
     def _toDict(self):
         #result={}
-        result={"environment":{"id":self.id,"name":self.name,"status":self.status,"link":{"rel":"environment"}}}
+        result={"environment":{"id":self.id,"name":self.name,"description":self.description,"status":self.status,"link":{"rel":"environment"}}}
 #        result["id"]=self.id
 #        result["name"]=self.name
 #        result["status"]=self.status
@@ -78,6 +77,12 @@ class Environment(DBObject):
                 return getattr(self.nodeManager, attr_name)
 #       # else:
        #     raise AttributeError(attr_name)
+
+    def update(self,name,description,status):
+        print("update in env")
+        self.status=status
+        self.description=description
+        return self
     """
     ####################################################################################
     The following functions are typically hardware manager/hardware nodes and sensors related, pass through methods for the most part

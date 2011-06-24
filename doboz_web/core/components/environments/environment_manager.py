@@ -139,9 +139,7 @@ class EnvironmentManager(object):
                 #return [env for env in self.environments if getattr(env, "id") in filter["id"]]
                 #return [env for env in self.environments if [True for key in filter.keys() if getattr(env, key)in filter[key]]]
               
-                
                 return WrapperList(data=[env for env in envsList if filter_check(env,filter)],rootType="environments")
-                return []
             else:
                 return WrapperList(data=envsList,rootType="environments")
             
@@ -153,7 +151,8 @@ class EnvironmentManager(object):
         return self.environments[envId]
     
     def update_environment(self,id,name,description,status):
-        pass
+        #print("updating env",id,name,description,status)
+        return self.environments[id].update(name,description,status)
     
     def remove_environment(self,id):
         """
