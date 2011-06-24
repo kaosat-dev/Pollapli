@@ -27,39 +27,44 @@ from doboz_web.core.tools.wrapper_list import WrapperList
 
 Registry.register(Environment, Node)
 
-
 class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
     """
     def __init__(self,envPath):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.environments.environmentManager")
-        #self.environments={}
-        self.environments=[]
+        self.environments={}
         self.path=envPath
-        self.setup()
+        self.idCounter=1
     
+    @defer.inlineCallbacks
     def setup(self):
-        pass
-    def setup_old(self):
         #self.scan_plugins()
         self.startTime = time.time()
         """Retrieve all existing environments from disk"""
-        for fileDir in os.listdir(self.path):    
+        maxFoundId=1
+        for fileDir in os.listdir(self.path): 
             if os.path.isdir(os.path.join(self.path,fileDir)):           
                 envName= fileDir
                 envPath=os.path.join(self.path,envName)
-                env=Environment(envPath,envName,"")    
-                env.setup()
-                #self.environments[envName]=env
-                self.environments.append(env)
-                id=self.environments.index(env)
-                self.environments[id].id=id
+                dbPath=os.path.join(envPath,envName)+".db"
+                Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbPath,check_same_thread=False)
+                                
+                def addEnv(env,maxFoundId):
+                    self.environments[env[0].id]=env[0]
+                    env[0].setup()
+                    if env[0].id>maxFoundId:
+                        maxFoundId=env[0].id
+                    
+                    return maxFoundId
+                
+                maxFoundId=yield Environment.find().addCallback(addEnv,maxFoundId)
                 #temporary: this should be recalled from db from within the environments ?
+        self.idCounter=maxFoundId+1
         log.msg("Environment manager setup correctly", logLevel=logging.CRITICAL)
         
     def __getattr__(self, attr_name):
-        for env in self.environments:
+        for env in self.environments.values():
             if hasattr(env, attr_name):
                 return getattr(env, attr_name)
         raise AttributeError(attr_name)
@@ -88,23 +93,29 @@ class EnvironmentManager(object):
         """
         envPath=os.path.join(self.path,name)  
         #if such an environment does not exist, add it
-        if not name in self.environments:
-            if os.path.exists(envPath):
-                 raise EnvironmentAlreadyExists()
+        
+        if not name in os.listdir(self.path):
             os.mkdir(envPath)
-            #env=Environment(envPath,name,description)
             dbpath=os.path.join(envPath,name)+".db"
             Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbpath,check_same_thread=False)
             
-            env=Environment(path="toto",name=name,description=description,status=status)
-            self.environments.append(env)
-            yield self._generateDatabase()
             
-
-            yield env.save()
-            #env.setup()
-            #self.environments[id].id=int(env.id)
-            log.msg("Adding environment named:",name ," description:",description, logLevel=logging.CRITICAL)
+            env=Environment(path="toto",name=name,description=description,status=status)
+            yield self._generateDatabase()
+            yield env.save()  
+            
+            """rather horrid hack of sorts, required to have different, sequential id in the different dbs"""
+            self.force_id(self.idCounter)  
+            Registry.DBPOOL.close()
+            Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbpath,check_same_thread=False)
+            
+            def addEnv(env):
+                self.environments[env[0].id]=env[0]
+                self.idCounter+=1
+            yield Environment.find().addCallback(addEnv)
+            
+            env=self.environments[self.idCounter-1]
+            log.msg("Adding environment named:",name ," description:",description,"with id",env.id, logLevel=logging.CRITICAL)
             defer.returnValue(env)
         else:
             raise EnvironmentAlreadyExists()
@@ -135,7 +146,7 @@ class EnvironmentManager(object):
             else:
                 return WrapperList(data=envsList,rootType="environments")
             
-        d.addCallback(get,self.environments)
+        d.addCallback(get,self.environments.values())
         reactor.callLater(0.5,d.callback,filter)
         return d
     
@@ -155,14 +166,19 @@ class EnvironmentManager(object):
         """
         d=defer.Deferred()
         def remove(id,envs,path):
-            Registry.DBPOOL.close()
-            envName=envs[id].name
-            envPath=os.path.join(path,envName)    
-            #self.environments[envName].shutdown()
-            del envs[id]
-            if os.path.isdir(envPath): 
-                shutil.rmtree(envPath)
-            log.msg("Removed environment ",envName,"with id ",id,logLevel=logging.CRITICAL)
+            try:
+                Registry.DBPOOL.close()
+                envName=envs[id].name
+                envPath=os.path.join(path,envName)    
+                #self.environments[envName].shutdown()
+                del envs[id]
+                if os.path.isdir(envPath): 
+                    shutil.rmtree(envPath)
+                    log.msg("Removed environment ",envName,"with id ",id,logLevel=logging.CRITICAL)
+            except:
+                pass
+                #should raise  specific exception
+                #raise Exception("failed to delete env")
         d.addCallback(remove,self.environments,self.path)
         reactor.callLater(0,d.callback,id)
         return d
@@ -174,17 +190,27 @@ class EnvironmentManager(object):
         Removes & deletes ALL the environments, should be used with care
         """
         print(self.environments)
-        for env in self.environments:
-            yield self.remove_environment(env.id-1)        
+        for env in self.environments.values():
+            yield self.remove_environment(env.id)        
         defer.returnValue(None)
     """
     ####################################################################################
     Helper Methods    
     """
     @defer.inlineCallbacks
+    def force_id(self,id):     
+        query=   '''UPDATE environments SET id ='''+str(id)+''' where id=1'''
+        yield Registry.DBPOOL.runQuery(query)
+#        yield Registry.DBPOOL.runQuery('''UPDATE environments
+#             SET id =%id where id=1
+#             ''')
+        defer.returnValue(None)
+  
+    
+    @defer.inlineCallbacks
     def _generateMasterDatabase(self):
         yield Registry.DBPOOL.runQuery('''CREATE TABLE environments(
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             id INTEGER PRIMARY KEY ,
              name TEXT,
              status TEXT NOT NULL DEFAULT "Live",
              description TEXT
@@ -192,7 +218,7 @@ class EnvironmentManager(object):
     @defer.inlineCallbacks
     def _generateDatabase(self):
         yield Registry.DBPOOL.runQuery('''CREATE TABLE environments(
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             id INTEGER PRIMARY KEY,
              name TEXT,
              status TEXT NOT NULL DEFAULT "Live",
              description TEXT

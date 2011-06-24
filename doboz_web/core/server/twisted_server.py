@@ -11,6 +11,7 @@ from twisted.internet import selectreactor
 from twisted.internet import reactor
 from twisted.enterprise import adbapi
 
+from doboz_web.core.components.environments.environment_manager import EnvironmentManager
 from doboz_web.core.server.rest.environments_handler import EnvironmentsHandler
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.core.server.rest.exceptions import ParameterParseException,UnhandledContentTypeException
@@ -20,9 +21,13 @@ from doboz_web.core.components.nodes.exceptions import UnknownNodeType,NodeNotFo
     
 
 class MainServer():
-    def __init__(self,port,filepath):
+    def __init__(self,port,filepath,dataPath):
         self.port=port
         self.filePath=filepath
+        self.dataPath=dataPath
+        
+        self.environmentManager=EnvironmentManager(self.dataPath)
+        reactor.callWhenRunning(self.environmentManager.setup)
         
         self.exceptionConverter=ExceptionConverter()
         self.exceptionConverter.add_exception(ParameterParseException,400 ,1,"Params parse error")

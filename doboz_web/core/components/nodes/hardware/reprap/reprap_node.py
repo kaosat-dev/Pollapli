@@ -22,13 +22,14 @@ from doboz_web.core.components.nodes.hardware.hardware_node import HardwareNode
 class ReprapManagerEvents(Events):
     __events__=('OnLineParsed','OnTotalLinesSet','OnTotalLayersSet','OnPathSet','OnPositionChanged')
 
-class ReprapNode(HardwareNode):
+class ReprapNode(HardwareNode,DBObject):
+    BELONGSTO = ['environment']
     """
     A reprap node : hardware node  in the case of a reprap: endstops, temperature sensors, steppers, heaters
     """
-    def __init__(self,name="A reprap node",description="reprap node bla bla",type="reprap"):
+    def __init__(self,name="A reprap node",description="reprap node bla bla",type="reprap",*args,**kwargs):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.hardware.ReprapNode")
-        HardwareNode.__init__(self,name,description,type)
+        HardwareNode.__init__(self,name,description,type,*args,**kwargs)
         self.startTime=time.time()
         self.rootPath=None
         self.events=ReprapManagerEvents() 

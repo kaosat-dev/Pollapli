@@ -18,7 +18,6 @@ from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
-from doboz_web.core.components.environments.environment_manager import EnvironmentManager
 from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNode
 from doboz_web.core.server.twisted_server import *
@@ -50,7 +49,6 @@ def configure_all():
     envPath=os.path.join(rootPath,"data")
     if not os.path.exists(envPath):
         os.makedirs(envPath)
-    environmentManager=EnvironmentManager(envPath)
     
     """"""""""""""""""""""""""""""""""""
     """Reprap config elements"""
@@ -97,8 +95,7 @@ def configure_all():
     
     """"""""""""""""""""""""""""""""""""
     """Twisted server setup"""
-    server=MainServer(port,rootPath)
-    server.environmentManager=environmentManager
+    server=MainServer(port,rootPath,envPath)
     
     """
     starts all server components

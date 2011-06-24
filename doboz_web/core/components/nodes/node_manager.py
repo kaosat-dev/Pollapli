@@ -40,7 +40,19 @@ class NodeManager(object):
         self.parentEnv=parentEnv
         self.nodes={}
         self.lastNodeId=0
-        
+    
+    @defer.inlineCallbacks    
+    def setup(self):
+        def addNode(nodes):
+            print(nodes)
+            for node in nodes:
+                print(node)
+                node.environment.set(self.parentEnv)
+                self.nodes[node.id]=node 
+            print("node mgr",self.nodes)
+                
+        #yield Node.all().addCallback(addNode)
+        yield ReprapNode.all().addCallback(addNode)
         
     """
     ####################################################################################
@@ -54,6 +66,7 @@ class NodeManager(object):
         node=None
         if type in NodeManager.nodeTypes.iterkeys():
             node=yield NodeManager.nodeTypes[type](name,description).save()
+            print("node class",node.__class__.__name__)
             node.environment.set(self.parentEnv)
             self.nodes[node.id]=node
             log.msg("Added  node ",name," of type ",type," with id set to ",str(node.id), logLevel=logging.CRITICAL)

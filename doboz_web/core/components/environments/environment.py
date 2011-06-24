@@ -37,7 +37,7 @@ class Environment(DBObject):
         Function to instanciate the whole environment from disk (db)
         This is usually called at first start or after a server restart
         """
-        self.logger.debug("Starting Configuring Environment '%s' ",self.name)
+        self.nodeManager.setup()
         #create db if not existent else just connect to it
 #        dbPath=self.path+os.sep+self.name+"_db"
 #        if not os.path.exists(dbPath):    
@@ -47,8 +47,7 @@ class Environment(DBObject):
 #            self.db=db_manager_SQLLITE(dbPath)
             
       
-
-        self.logger.info("Configuring Environment '%s': successfull",self.name)
+        log.msg("Environment ",self.name ,"with id", self.id," setup correctly", logLevel=logging.CRITICAL)
         
     def tearDown(self):
         """

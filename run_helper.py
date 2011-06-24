@@ -8,11 +8,11 @@ def helper():
     """
     client=Resource('http://127.0.0.1:8000')
     try:
-        client.post('rest/environments',headers={'Content-Type': 'application/pollapli.environmentsList+json'},payload='{"name":"fablab","status":"frozen","description":"blabla"}')
+        client.post('rest/environments',headers={'Content-Type': 'application/pollapli.environmentsList+json'},payload='{"name":"home","status":"frozen","description":"blabla"}')
     except:
         pass
     try:
-        client.post('rest/environments/0/nodes',headers={'Content-Type': 'application/pollapli.nodesList+json'},payload='{"name":"testNode","type":"reprap","description":"just a test node"}')
+        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodesList+json'},payload='{"name":"testNode","type":"reprap","description":"just a test node"}')
     except:
         pass
 #    try:

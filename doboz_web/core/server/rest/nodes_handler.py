@@ -45,7 +45,6 @@ class NodesHandler(DefaultRestHandler):
         Handler for POST requests of nodes
         extract the data from the request body to add a new node
         """ 
-        print("in nodes handler post")
         @defer.inlineCallbacks
         def extract_args(result):
             name=result["name"] or ""
