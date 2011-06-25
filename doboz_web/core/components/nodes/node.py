@@ -18,6 +18,8 @@ from doboz_web.core.components.connectors.hardware.serial.serial_plus import Ser
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
 
+from doboz_web.core.components.connectors.exceptions import UnknownDriver
+
 
 class Node(DBObject):
     """
@@ -25,6 +27,7 @@ class Node(DBObject):
     or some software node (pachube etc)
     """
     BELONGSTO = ['environment']
+    HASONE =["reprap_capability"]
 
     def __init__(self,name="node",description="base node",type="node",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
@@ -94,6 +97,14 @@ class Node(DBObject):
         connector
         """
         
+    def start(self):
+        """
+        start this node
+        """
+        pass
+    def stop(self):
+        """stop this node
+        """
         
     def add_component(self,component,*args,**kwargs):
         pass

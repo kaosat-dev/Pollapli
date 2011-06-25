@@ -17,13 +17,16 @@ from twisted.python.log import PythonLoggingObserver
 
 from doboz_web.core.tools.event_sys import *
 from doboz_web.core.components.nodes.hardware.hardware_node import HardwareNode
+from doboz_web.core.components.nodes.node import Node
 
 """TODO: Make tasks in tasks be weak refs""" 
 class ReprapManagerEvents(Events):
     __events__=('OnLineParsed','OnTotalLinesSet','OnTotalLayersSet','OnPathSet','OnPositionChanged')
 
+
 class ReprapNode(HardwareNode,DBObject):
     BELONGSTO = ['environment']
+    #HASONE = ['node']
     """
     A reprap node : hardware node  in the case of a reprap: endstops, temperature sensors, steppers, heaters
     """
@@ -115,3 +118,4 @@ class ReprapNode(HardwareNode,DBObject):
 #            self.reconnectionCommand="G1 "+self.lastLine[2:-1]
 #            print("RE INIT COMMAND",self.reconnectionCommand)     
 #            self.connector.send_command(self.reconnectionCommand) 
+#Registry.register(Node, ReprapNode)

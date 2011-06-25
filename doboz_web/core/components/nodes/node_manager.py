@@ -12,7 +12,8 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
+#from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
+
 from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNode
 from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
@@ -21,6 +22,8 @@ from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.tools.wrapper_list import WrapperList
 from doboz_web.core.components.nodes.exceptions import UnknownNodeType,NodeNotFound
 
+from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
+from doboz_web.core.components.nodes.dummy_capability import DummyCapability
 
 class NodeManager(object):
     """
@@ -29,7 +32,8 @@ class NodeManager(object):
     (for future plugin based system)
     """
     nodeTypes={}
-    nodeTypes["reprap"]=ReprapNode
+    nodeTypes["reprap"]=ReprapCapability
+    nodeTypes["dummy"]=DummyCapability
     nodeTypes["webcam"]=WebcamNode
     nodeTypes["node"]=Node #this is just a dummy node as it is a base class
     
@@ -51,8 +55,8 @@ class NodeManager(object):
                 self.nodes[node.id]=node 
             print("node mgr",self.nodes)
                 
-        #yield Node.all().addCallback(addNode)
-        yield ReprapNode.all().addCallback(addNode)
+        yield Node.all().addCallback(addNode)
+        #yield ReprapNode.all().addCallback(addNode)
         
     """
     ####################################################################################
@@ -62,14 +66,24 @@ class NodeManager(object):
     def add_node(self,name="node",description="",type=None,connector=None,driver=None,*args,**kwargs):
         """
         Add a new node to the list of nodes of the current environment
+        Params:
+        name: the name of the node
+        Desciption: short description of node
+        type: the type of the node : very important , as it will be used to instanciate the correct class
+        instance
+        Connector:the connector to use for this node
+        Driver: the driver to use for this node's connector
         """
-        node=None
+            
         if type in NodeManager.nodeTypes.iterkeys():
-            node=yield NodeManager.nodeTypes[type](name,description).save()
-            print("node class",node.__class__.__name__)
+            node= yield Node(name,description,type).save()
             node.environment.set(self.parentEnv)
             self.nodes[node.id]=node
-            log.msg("Added  node ",name," of type ",type," with id set to ",str(node.id), logLevel=logging.CRITICAL)
+            capability= yield NodeManager.nodeTypes[type](name,description).save()
+            capability.environment.set(self.parentEnv)
+            capability.node.set(node)
+            
+            log.msg("Added  node ",name," of capability ",type," with id set to ",str(node.id), logLevel=logging.CRITICAL)
             defer.returnValue(node)
         else:
             log.msg("unknown node type",logLevel=logging.CRITICAL)
@@ -141,16 +155,6 @@ class NodeManager(object):
     ####################################################################################
     Helper Methods    
     """
-    def set_connector(self,nodeId,*args,**kwargs):
-        """Method to set a nodes connector 
-        Params:
-        nodeId: the id of the node
-        WARNING: cheap hack for now, always defaults to serial
-        connector
-        """
-        self.nodes[nodeId].set_connector(SerialPlus())
-        self.logger.critical("Set connector of node %d",nodeId)
-        print("in connector for node",str(self.nodes[nodeId].connector))
         
     def set_driver(self,nodeId,**kwargs):
         """Method to set a nodes connector's driver 

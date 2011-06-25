@@ -24,7 +24,10 @@ from doboz_web.core.components.environments.exceptions import EnvironmentAlready
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.tools.wrapper_list import WrapperList
 
-
+#from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
+#from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
+from doboz_web.core.components.nodes.dummy_capability import DummyCapability
+#Registry.register(Environment, ReprapCapability)
 Registry.register(Environment, Node)
 
 class EnvironmentManager(object):
@@ -59,8 +62,9 @@ class EnvironmentManager(object):
                     return maxFoundId
                 
                 maxFoundId=yield Environment.find().addCallback(addEnv,maxFoundId)
+                self.idCounter=maxFoundId+1
                 #temporary: this should be recalled from db from within the environments ?
-        self.idCounter=maxFoundId+1
+        
         log.msg("Environment manager setup correctly", logLevel=logging.CRITICAL)
         
     def __getattr__(self, attr_name):
@@ -223,7 +227,7 @@ class EnvironmentManager(object):
              status TEXT NOT NULL DEFAULT "Live",
              description TEXT
              )''')
-            
+        
         yield Registry.DBPOOL.runQuery('''CREATE TABLE nodes(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              environment_id INTEGER NOT NULL,
@@ -233,14 +237,24 @@ class EnvironmentManager(object):
             FOREIGN KEY(environment_id) REFERENCES environments(id) 
              )''')
         
-        yield Registry.DBPOOL.runQuery('''CREATE TABLE reprap_nodes(
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE reprap_capabilities(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
-             FOREIGN KEY(environment_id) REFERENCES environments(id),
+             info TEXT,
+             FOREIGN KEY(environment_id) REFERENCES environments(id)
              FOREIGN KEY(node_id) REFERENCES nodes(id)  
              )''')
-      
+        
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE dummy_capabilities(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             environment_id INTEGER NOT NULL,
+             node_id INTEGER NOT NULL,
+             info TEXT,
+             FOREIGN KEY(environment_id) REFERENCES environments(id)
+             FOREIGN KEY(node_id) REFERENCES nodes(id)  
+             )''')
+      #FOREIGN KEY(node_id) REFERENCES nodes(id)  
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE tasks(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -281,7 +295,7 @@ class EnvironmentManager(object):
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
-             connector_id,
+             connector_id INTEGER NOT NULL,
              type TEXT NOT NULL ,
              name TEXT,          
              description TEXT
@@ -322,110 +336,11 @@ class EnvironmentManager(object):
 #             )''').addCallback(self._dbGeneratedOk) 
     
     
-    """
-    ####################################################################################
-    The following functions are typically hardware manager/hardware nodes and sensors related, pass through methods for the most part
-    """
-    def add_node(self,id,type,name,description="Add description here",params=None):
-        """
-        Add a hardware node to the specified environment
-        Params:
-        envName: the name of the environement
-        title:the name of the node
-        Desciption: short description of node
-        NodeType: nodetype id
-        """
-        self.environments[id].add_node(type,params)
-        
-    def remove_node(self,id,nodeId):
-        """
-        Remove a hardware node from the specified environment
-        Params:nodeId : the id of the node we want removed
-        """
-        self.environments[id].remove_node(nodeId)
-        
-    def add_actor(self,envId,type,port):
-        pass
-    def remove_actor(self,envId):
-        pass
+ 
+                
     
-    def add_sensor(self,id,node,params):
-        """
-        Add a sensor to an environment 
-        Params:
-        EnvName: the name of the environment
-        Title: title of the sensor
-        """
-        self.environments[id].add_sensor(node,params)
-       
-    def remove_sensor(self,id,sensorId):
-        """
-        Remove a sensor from an environment 
-        Params:
-        EnvName: the name of the environment
-        sensorId: id of the sensor to remove
-        """
-        self.environments[id]   
-    
-    def add_sensorType(self,envName,title, description):
-        """
-        Add a sensor type to an environment 
-        Params:
-        EnvName: the name of the environment
-        Title: title of the sensorType
-        Description: short description of the sensor type
-        """
-        self.environments[envName].add_sensorType(title, description)
-        
-    def remove_sensorType(self,envName,sensorTypeId):
-        """
-        Remove a sensor type from an environment 
-        Params:
-        EnvName: the name of the environment
-        sensorTypeId: id of the sensor type to remove
-        """
-        self.environments[envName].remove_sensorType(sensorTypeId)
-        
-    def get_sensorData(self,criteria,startDate,endDate):
-        """
-        returns the data from a specific sensor in a specific node, in a specific environment
-        collected between the two specified dates
-        envName, nodeId , sensorId can be lists
-        pass it a list of dictionaries
-        as such {'envName':envName,'nodeId':nodeId,'sensorId':sensorId,'startDate':startDate,'endDate':endDate}
-        {envName:{nodeId:(sensorId,sensorId2,...),nodeId2:(sensorId,sensorId2},envName2:}
-        """
-        for elem in criteria:
-           self.environments[elem['envName']].get_sensorData(elem['nodeId'],elem['sensorId'],starDate,endDate)
-    """
-    ####################################################################################
-    The following methods are typically  scheduler related
-    """       
-    
-    """Keeping things seperate or not ???? """
-    def add_sensorSchedule(self,envName,target,targetParams,startTime,function,functionparams="",interval="",name="",description=""):
-        self.environments[envName].add_sensorSchedule(target,targetParams,startTime,function,functionparams,interval,name,description)
-        
-    def add_sensorTrigger(self,envName,target,targetParams,params):
-        pass
-    
-    def schedule_Node(self):
-        self.environments[envName].add_task(target,targetParams,startTime,function,functionparams,interval,title,description)
-    
-    def add_task(self,envName,target,targetParams,startTime,function,functionparams="",interval="",name="",description=""):
-        """
-        Add task
-        """
-        self.environments[envName].add_task(target,targetParams,startTime,function,functionparams,interval,name,description)
-    
-    def remove_task(self,envId):
-        pass
  
 
-if __name__=="__main__":
-    test=EnvironmentManager()
-    test.setup()
-    creationTest()
 
     
     

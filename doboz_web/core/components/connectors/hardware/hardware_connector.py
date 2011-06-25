@@ -14,8 +14,8 @@ class HardwareConnectorEvents(Events):
     __events__=('OnDataRecieved','connected', 'disconnected', 'reconnected')
 
 
-  
-class HardwareConnector(object):
+class HardwareConnector(DBObject):
+    BELONGSTO = ['node']
     def __init__(self,driver=None):
         self.isConnected=False
         self.currentErrors=0
