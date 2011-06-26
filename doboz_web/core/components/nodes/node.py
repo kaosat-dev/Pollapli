@@ -15,7 +15,7 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.automation.task_manager import TaskManager
 #from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
-from doboz_web.core.components.connectors.hardware.serial.serial_twisted import SerialTwistedBasic
+from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
 
@@ -63,18 +63,20 @@ class Node(DBObject):
         WARNING: cheap hack for now, always defaults to serial
         connector
         """
-        self.connector=SerialTwistedBasic()#SerialPlus()
+        
+        self.connector=SerialConnector()
+        #self.connector=SerialTwisted()#SerialPlus()
         driver=None
+        print(driverType)
         if driverType== "teacup":
             driver=TeacupDriver(**driverParams)
         elif driverType=="fived":
             driver=FiveDDriver(**driverParams)
         if driver:
-            pass
-            #self.connector.set_driver(driver) 
+            self.connector.set_driver(driver) 
         else :
             raise Exception("Incorrect driver")
-        print("lkjjlkjl")
+        self.connector.connect()
         log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
 
 #        if hasattr(self.connector, 'events'):    

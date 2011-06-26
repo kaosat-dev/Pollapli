@@ -16,6 +16,7 @@ class TeacupDriver(Driver):
         datablock=datablock.strip()
         datablock=datablock.replace(' ','')
         datablock=datablock.replace("\t",'')
+        print("here")
 
         return datablock+ "\n"
     
