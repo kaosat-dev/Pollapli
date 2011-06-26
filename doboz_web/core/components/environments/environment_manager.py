@@ -262,6 +262,8 @@ class EnvironmentManager(object):
              node_id INTEGER NOT NULL,
              name TEXT,          
              description TEXT,
+             type TEXT,
+             params TEXT,
              FOREIGN KEY(environment_id) REFERENCES Environments(id)
              FOREIGN KEY(node_id) REFERENCES nodes(id)  
              )''')

@@ -11,6 +11,9 @@ class DataFormater(object):
                 item[singleResource]["link"]["href"]=self.rootUri+"/"+str(item[singleResource]["id"])
                 #print("terf",item[singleResource]["link"])
         else:
-            data[self.resource]["link"]={"rel":self.resource,"href":self.rootUri+"/"+ str(data[self.resource]["id"])}
+            try:
+                data[self.resource]["link"]={"rel":self.resource,"href":self.rootUri+"/"+ str(data[self.resource]["id"])}
+            except:
+                data[self.resource]["link"]={"rel":self.resource,"href":self.rootUri}
         return data
         

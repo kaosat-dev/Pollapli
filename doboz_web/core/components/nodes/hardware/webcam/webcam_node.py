@@ -7,7 +7,7 @@
 import logging
 
 from doboz_web.core.tools.event_sys import *
-from ..hardware_node import HardwareNode
+#from ..hardware_node import HardwareNode
 
 class WebcamNode(HardwareNode):
     """

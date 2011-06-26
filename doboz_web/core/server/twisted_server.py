@@ -7,7 +7,7 @@ from twisted.web.server import Site
 from twisted.web.resource import Resource
 from twisted.web.resource import NoResource
 
-from twisted.internet import selectreactor
+#
 from twisted.internet import reactor
 from twisted.enterprise import adbapi
 
@@ -16,9 +16,10 @@ from doboz_web.core.server.rest.environments_handler import EnvironmentsHandler
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.core.server.rest.exceptions import ParameterParseException,UnhandledContentTypeException
 from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists,EnvironmentNotFound
-from doboz_web.core.components.nodes.exceptions import UnknownNodeType,NodeNotFound
+from doboz_web.core.components.nodes.exceptions import UnknownNodeType,NodeNotFound,NoConnectorSet
 
-    
+
+
 
 class MainServer():
     def __init__(self,port,filepath,dataPath):
@@ -36,6 +37,7 @@ class MainServer():
         self.exceptionConverter.add_exception(EnvironmentNotFound,404 ,4,"Environment not found")
         self.exceptionConverter.add_exception(UnknownNodeType,500 ,5,"Unknown node type")
         self.exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
+        self.exceptionConverter.add_exception(NoConnectorSet,404,7,"Node has no connector")
     
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")

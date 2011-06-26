@@ -14,12 +14,13 @@ from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.automation.task_manager import TaskManager
-from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
+#from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
+from doboz_web.core.components.connectors.hardware.serial.serial_twisted import SerialTwistedBasic
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
 
 from doboz_web.core.components.connectors.exceptions import UnknownDriver
-
+from doboz_web.core.components.nodes.exceptions import NoConnectorSet
 
 class Node(DBObject):
     """
@@ -62,27 +63,32 @@ class Node(DBObject):
         WARNING: cheap hack for now, always defaults to serial
         connector
         """
-        self.connector=SerialPlus()
+        self.connector=SerialTwistedBasic()#SerialPlus()
         driver=None
         if driverType== "teacup":
             driver=TeacupDriver(**driverParams)
         elif driverType=="fived":
             driver=FiveDDriver(**driverParams)
         if driver:
-            self.connector.set_driver(driver) 
+            pass
+            #self.connector.set_driver(driver) 
         else :
             raise Exception("Incorrect driver")
-        
+        print("lkjjlkjl")
         log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
 
-        if hasattr(self.connector, 'events'):    
-             self.connector.events.disconnected+=self._on_connector_disconnected
-             self.connector.events.reconnected+=self._on_connector_reconnected  
-             self.connector.events.OnDataRecieved+=self._on_data_recieved
-        #self.taskManager.connector=self.connector
-        
-    def get_connector(self):
+#        if hasattr(self.connector, 'events'):    
+#             self.connector.events.disconnected+=self._on_connector_disconnected
+#             self.connector.events.reconnected+=self._on_connector_reconnected  
+#             self.connector.events.OnDataRecieved+=self._on_data_recieved
+#        #self.taskManager.connector=self.connector
         return self.connector
+    def get_connector(self):
+        if self.connector:
+            return self.connector 
+        else: 
+            raise NoConnectorSet()
+
     
     def delete_connector(self):
         if self.connector:

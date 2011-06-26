@@ -10,19 +10,7 @@ import ConfigParser
 import logging
 import os
 import socket
-from twisted.python import log
-from twisted.python.log import PythonLoggingObserver
-
-
-
-from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
-from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
-from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
-from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
-from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNode
-from doboz_web.core.server.twisted_server import *
-   
-
+from twisted.python.runtime import platform
 
 def configure_all():
     """
@@ -65,15 +53,15 @@ def configure_all():
     useWebcam = Config.getboolean("WebCam", "use")
     webcamDriver = Config.get("WebCam", "driver")
     #server.webcamsEnabled = useWebcam
-    if useWebcam:
-         from doboz_web.core.components.connectors.webcam.gstreamer_cam import GStreamerCam
-         webcamNode = WebcamNode()
-         webcamNode.filePath = os.path.join(rootPath, "core", "print_server", "files", "static", "img", "test")
-         webcamConnector = GStreamerCam(driver=webcamDriver)
-         webcamNode.set_connector(webcamConnector)
-         webcamNode.start()
-         """"""
-         testBottle.webcam = webcamNode
+#    if useWebcam:
+#         from doboz_web.core.components.connectors.webcam.gstreamer_cam import GStreamerCam
+#         webcamNode = WebcamNode()
+#         webcamNode.filePath = os.path.join(rootPath, "core", "print_server", "files", "static", "img", "test")
+#         webcamConnector = GStreamerCam(driver=webcamDriver)
+#         webcamNode.set_connector(webcamConnector)
+#         webcamNode.start()
+#         """"""
+#         testBottle.webcam = webcamNode
 
     """"""""""""""""""""""""""""""""""""
     """Web Server config elements"""
@@ -95,6 +83,18 @@ def configure_all():
     
     """"""""""""""""""""""""""""""""""""
     """Twisted server setup"""
+    
+
+    if platform.isWindows():
+        from twisted.internet import win32eventreactor
+        reactor=win32eventreactor        
+    else:
+        from twisted.internet import selectreactor
+        reactor=selectreactor
+    reactor.install()
+        
+    
+    from doboz_web.core.server.twisted_server import MainServer
     server=MainServer(port,rootPath,envPath)
     
     """

@@ -15,7 +15,7 @@ from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.automation.print_task import PrintTask
-from doboz_web.core.components.automation.timer_task import TimerTask
+#from doboz_web.core.components.automation.timer_task import TimerTask
 from doboz_web.core.components.automation.task import Task
 from doboz_web.core.tools.wrapper_list import WrapperList
 
@@ -23,7 +23,7 @@ from doboz_web.core.tools.wrapper_list import WrapperList
 class TaskManager(object):
     taskTypes={}
     taskTypes["print"]=PrintTask
-    taskTypes["timer"]=TimerTask
+ #   taskTypes["timer"]=TimerTask
     taskTypes["task"]=Task
     
     def __init__(self,parentNode):
@@ -44,7 +44,7 @@ class TaskManager(object):
     """
     
     @defer.inlineCallbacks
-    def add_task(self,name="task",description="",type=None,taskParams={},*args,**kwargs):
+    def add_task(self,name="task",description="",type=None,params={},*args,**kwargs):
         """
         Add a new node to the list of nodes of the current environment
         Params:
@@ -57,15 +57,17 @@ class TaskManager(object):
         """
             
         if type in self.taskTypes.iterkeys():
-            
-            task= yield Task(name,description).save()
-            #task=yield TaskManager.taskTypes[type](name,**taskParams)
-            
+            print("type",type,"params",params)
+            task= yield Task(name,description,type,params).save()
+            task.specialty=TaskManager.taskTypes[type](**params)
+            #task= yield TaskManager.taskTypes[type](name,description,**taskParams).save()
+            print("added task",task, "with specialty",task.specialty)
             task.node.set(self.parentNode)         
             def getEnv(env,task):
                 task.environment.set(env)
             self.parentNode.environment.get().addCallback(getEnv,task)
             
+            task.start()
             self.tasks[task.id]=task
             
             print("tasks",self.tasks)

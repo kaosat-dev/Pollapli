@@ -15,31 +15,29 @@ from doboz_web.core.server.rest.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-from doboz_web.core.server.rest.task_handler import TaskHandler
+from doboz_web.core.server.rest.task_status_handler import TaskStatusHandler
 
-class TasksHandler(DefaultRestHandler):
+class TaskHandler(DefaultRestHandler):
     """
     Resource in charge of handling the tasks (plural) so :
     Adding a new task
     Listing all tasks
     """
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,nodeId=None):
+    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,nodeId=None,taskId=None):
         DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.tasksHandler")
+        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.taskHandler")
         self.environmentManager=environmentManager
         self.envId=envId
         self.nodeId=nodeId
-        self.valid_contentTypes.append("application/pollapli.taskList+json")   
+        self.taskId=taskId
+        self.valid_contentTypes.append("application/pollapli.task+json")   
         self.validGetParams.append('id')
         #self.validGetParams.append('type')
-       
-      
-    def getChild(self, id, request):
-        try:
-            return TaskHandler(self.rootUri,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId,int(id))  
-        except ValueError :
-             return self#no id , so return self
+        subPath=self.rootUri+"/status"
+        self.putChild("status",TaskStatusHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId,self.taskId)  
+)
+
     
     def render_POST(self,request):  
         """
@@ -64,7 +62,7 @@ class TasksHandler(DefaultRestHandler):
         """
         Handler for GET requests of tasks
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.taskList+json",resource="tasks")
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.task+json",resource="task")
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_tasks,errback=r._build_response)
         d.addBoth(r._build_response)

@@ -81,8 +81,6 @@ class SerialPlus(Thread,HardwareConnector):
         self.isConnected=False
         
     def _connect(self):
-        
-            
         """Port connection/reconnection procedure"""    
         try:
             serial.blockedPorts.remove(self.port)

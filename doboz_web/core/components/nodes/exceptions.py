@@ -6,4 +6,6 @@ class UnknownNodeType(Exception):
 class NodeNotFound(Exception):
     pass
 
+class NoConnectorSet(Exception):
+    pass
 

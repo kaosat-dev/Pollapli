@@ -3,22 +3,27 @@ import time
 import datetime
 import sys
 import os
-
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
+from twisted.python import log,failure
 
 from doboz_web.core.tools.event_sys import *
 from doboz_web.core.components.automation.task import Task, AutomationEvents
 from doboz_web.core.tools.point_cloud import Point,PointCloud
 from doboz_web.core.tools.point_cloud_builder import PointCloudBuilder
-from doboz_web.core.components.automation.gcode_parser import GCodeParser
+from doboz_web.core.tools.gcode_parser import GCodeParser
 
-class PrintTask(Task):
+class PrintTask(object):
     """ A task for printing gcode files"""
-    def __init__(self,name="printTask",filePath=None):
-        Task.__init__(self,name)
-        self.logger=logging.getLogger("dobozweb.core.Automation.PrintTask")
-        self.logger.setLevel(logging.ERROR)
-        
-        self.filePath=filePath
+    def __init__(self,filepath=None,*args,**kwargs):
+        #Task.__init__(self,name,description,*args,**kwargs)
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.printtask")
+        #self.logger.setLevel(logging.ERROR)
+        print("in print specialty",filepath)
+        self.filePath=filepath
         
         self.totalLines=1
         self.lastLine=None
@@ -81,7 +86,8 @@ class PrintTask(Task):
             self._do_action_step()
             
         except Exception as inst:
-            self.logger.critical("invalid gcode file %s",str(inst))
+            log.msg("invalid gcode file ",str(inst), logLevel=logging.CRITICAL)
+            #self.logger.critical("invalid gcode file %s",str(inst))
         
         
    
@@ -108,8 +114,8 @@ class PrintTask(Task):
         This function sets the current sourceFile, parses it for line numbers
         and layer count, sets everything up, and sends adapted events
         """ 
-        self.logger.critical("setting filePath: %s",self.filePath)
-
+        log.msg("setting filePath ",self.filePath, logLevel=logging.CRITICAL)
+        
         try:
             self.source=open(self.filePath,"r")
             if not self.recoveryMode:
@@ -142,18 +148,18 @@ class PrintTask(Task):
             #self.events.OnTotalLayersSet(self,str(self.totalLayers))
             
             self.progressFraction=float(100/float(self.totalLines))
-            self.logger.info("totalLines  %s",str(self.totalLines))
-            self.logger.info("ProgressFraction set %s",str(self.progressFraction))
+            log.msg("totalLines ",self.totalLines, logLevel=logging.INFO)
+            log.msg("ProgressFraction set ",self.progressFraction, logLevel=logging.INFO)
+            
             self.progress=0
             
-            self.logFile=open("log.txt",'w')
-            self.logFile.write("path="+str(self.filePath))  
-            self.logFile.close()
+            #self.logFile=open("log.txt",'w')
+            #self.logFile.write("path="+str(self.filePath))  
+            #self.logFile.close()
             
         except Exception  as inst:
-            self.logger.critical("can't load file %s",str(inst))
-
-     
+            log.msg("can't load file set ",str(inst), logLevel=logging.CRITICAL)
+            
     def _set_filePath_fromLog(self):
         """
         This function is for recovery mode exclusively: it gets the params of the 

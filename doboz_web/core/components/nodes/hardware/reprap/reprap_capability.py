@@ -16,7 +16,7 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 
 from doboz_web.core.tools.event_sys import *
-from doboz_web.core.components.nodes.hardware.hardware_node import HardwareNode
+from doboz_web.core.components.nodes.hardware.hardware_node_capability import HardwareNodeCapability
 from doboz_web.core.components.nodes.node import Node
 
 """TODO: Make tasks in tasks be weak refs""" 

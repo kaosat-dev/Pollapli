@@ -21,17 +21,16 @@ class Task(DBObject):
     """
     Base class for tasks (printing , scanning etc
     """
-    def __init__(self,name="task",description="a task",*args,**kwargs):
+    def __init__(self,name="task",description="a task",type="task",params={},*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.task")
         #self.logger=logging.getLogger("dobozweb.core.components.automation.task")
-       
         self.connector=None
         self.name=name
         self.description=description
-        
+        self.type=type
         self.isRunning=False
-            
+        self.params=params
         self.startTime=time.time()        
         self.totalTime=0#for total print/scan time count
         
@@ -40,10 +39,14 @@ class Task(DBObject):
         self.status="NP" #can be : NP: not started, paused , SP: started, paused, SR:started, running
 
         self.events=AutomationEvents()
-        self.startPause()
+        
     def _toDict(self):
-        return {"task":{"id":self.id,"name":self.name,"description":self.description,"status":self.status,"link":{"rel":"task"}}}
+        return {"task":{"id":self.id,"name":self.name,"description":self.description,"status":self.status,"progress":self.progress,"link":{"rel":"task"}}}
     
+    def start(self):
+        if hasattr(self,"specialty"):
+            self.specialty.start()
+        
     def startPause(self):
         """
         Switches between active and inactive mode, or starts the task if not already done so
@@ -78,3 +81,10 @@ class Task(DBObject):
         do sub action in task
         """
         raise NotImplementedException("This needs to be implemented in a subclass")
+
+    def check_task_conditions(self):
+        """
+        method in charge of verifying all of the tasks conditions
+        for a task to start/continue running, all of its conditions must evaluate to True 
+        """
+        [condtion.check() for condition in self.conditions]

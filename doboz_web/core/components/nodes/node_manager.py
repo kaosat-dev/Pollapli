@@ -14,7 +14,7 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 #from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 
-from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNode
+#from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNode
 from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
@@ -61,7 +61,7 @@ class NodeManager(object):
                             node.capability=caps[0]
                         
                     capability.find(where=['environment_id = ? AND node_id = ?',node.environment_id, node.id]).addCallback(addCapabilities,node)
-            print("node mgr",self.nodes)
+            #print("node mgr",self.nodes)
                 
         yield Node.all().addCallback(addNode,self.nodeTypes)
         #yield ReprapNode.all().addCallback(addNode)

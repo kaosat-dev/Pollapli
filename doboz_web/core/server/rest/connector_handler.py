@@ -9,11 +9,12 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
+from doboz_web.core.server.rest.connector_status_handler import ConnectorStatusHandler
 
 
 
 class ConnectorHandler(DefaultRestHandler):
-    isLeaf=True
+    isLeaf=False
     def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,nodeId=None):
         DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.connectorHandler")
@@ -21,7 +22,9 @@ class ConnectorHandler(DefaultRestHandler):
         self.envId=envId   
         self.nodeId=nodeId
         self.valid_contentTypes.append("application/pollapli.connector+json")   
-    
+        subPath=self.rootUri+"/status"
+        self.putChild("status",ConnectorStatusHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
+)
     
     def render_POST(self,request):
         """
@@ -40,8 +43,9 @@ class ConnectorHandler(DefaultRestHandler):
     
     def render_GET(self, request):
         """
-        Handler for GET requests of node
+        Handler for GET requests of connector
         """
+        
         def extract_args(result):
             return(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_connector())            
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.connector+json",resource="connector")
