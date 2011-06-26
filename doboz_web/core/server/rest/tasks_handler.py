@@ -49,9 +49,9 @@ class TasksHandler(DefaultRestHandler):
             name=result["name"] or ""
             description=result.get("description") or ""
             type=result.get("type") 
-            defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_node(name=name,description=description,type=type)))
+            defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).add_task(name=name,description=description,type=type)))
              
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.task+json",resource="node")
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.task+json",resource="task")
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -61,9 +61,9 @@ class TasksHandler(DefaultRestHandler):
         """
         Handler for GET requests of tasks
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.taskList+json",resource="nodes")
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.taskList+json",resource="tasks")
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
-        d.addCallbacks(self.environmentManager.get_environment(self.envId).get_nodes,errback=r._build_response)
+        d.addCallbacks(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_tasks,errback=r._build_response)
         d.addBoth(r._build_response)
         return NOT_DONE_YET
     

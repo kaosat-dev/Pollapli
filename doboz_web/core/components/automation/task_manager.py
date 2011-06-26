@@ -7,47 +7,105 @@ import logging
 import time
 import datetime
 import uuid
-
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
+from twisted.python import log,failure
+from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.automation.print_task import PrintTask
 from doboz_web.core.components.automation.timer_task import TimerTask
- 
+from doboz_web.core.components.automation.task import Task
+from doboz_web.core.tools.wrapper_list import WrapperList
+
 
 class TaskManager(object):
     taskTypes={}
     taskTypes["print"]=PrintTask
     taskTypes["timer"]=TimerTask
+    taskTypes["task"]=Task
     
-    def __init__(self,connector=None):
-        self.logger=logging.getLogger("dobozweb.core.components.automation.taskManager")
-        self.tasks=[]
-        self.connector=connector
+    def __init__(self,parentNode):
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.taskmanager")
+        self.tasks={}
+        self.parentNode=parentNode
+        self.connector=parentNode.connector
         
 #    def __getattr__(self, attr_name):
 #        if hasattr(self.tasksById[id], attr_name):
 #                return getattr(self.tasksById, attr_name)
 #        else:
 #            raise AttributeError(attr_name)
-        
-    def add_task(self,name,type,taskParams={},*args,**kwargs):
+    
+    """
+    ####################################################################################
+    The following are the "CRUD" (Create, read, update,delete) methods for the general handling of tasks
+    """
+    
+    @defer.inlineCallbacks
+    def add_task(self,name="task",description="",type=None,taskParams={},*args,**kwargs):
         """
-        Adds the task to the tasklist
-        TODO add weakref to task
+        Add a new node to the list of nodes of the current environment
+        Params:
+        name: the name of the node
+        Desciption: short description of node
+        type: the type of the node : very important , as it will be used to instanciate the correct class
+        instance
+        Connector:the connector to use for this node
+        Driver: the driver to use for this node's connector
         """
-        print("task",name,"params",taskParams)
-        task=None
-        if type in TaskManager.taskTypes.iterkeys():
             
-            task=TaskManager.taskTypes[type](name,**taskParams)
-            self.tasks.append(task)
-            id=self.tasks.index(task)
-            self.tasks[id].id=id
-            task.events.OnExited+=self._on_task_exited
-            self.logger.critical("Added  task %s of type %s with id set to %s",name,type,str(task.id))
-            #self.logger.critical ("Task %s added , %d remaining tasks before starting",task.id,len(self.tasks)-1)        
+        if type in self.taskTypes.iterkeys():
+            
+            task= yield Task(name,description).save()
+            #task=yield TaskManager.taskTypes[type](name,**taskParams)
+            
+            task.node.set(self.parentNode)         
+            def getEnv(env,task):
+                task.environment.set(env)
+            self.parentNode.environment.get().addCallback(getEnv,task)
+            
+            self.tasks[task.id]=task
+            
+            print("tasks",self.tasks)
+#            capability= yield NodeManager.nodeTypes[type](name,description).save()
+#            capability.environment.set(self.parentEnv)
+#            capability.node.set(node)
+#            node.capability=capability
+            #task.events.OnExited+=self._on_task_exited
+            log.msg("Added  task ",name," of type ",type," with id set to ",str(task.id), logLevel=logging.CRITICAL)
+            defer.returnValue(task)
         else:
-            self.logger.critical("unknown task type")
-        #task.id=str(uuid.uuid4()) 
-        return task
+            log.msg("unknown node type",logLevel=logging.CRITICAL)
+            raise(UnknownNodeType())
+        defer.returnValue(None)
+        
+    def get_tasks(self,filter=None):
+        """
+        Returns the list of tasks, filtered by  the filter param
+        the filter is a dictionary of list, with each key beeing an attribute
+        to check, and the values in the list , values of that param to check against
+        """
+        d=defer.Deferred()
+        
+        def filter_check(task,filter):
+            for key in filter.keys():
+                if not getattr(task, key) in filter[key]:
+                    return False
+            return True
+      
+        def get(filter,tasksList):
+            print("taskList",tasksList)
+            if filter:
+                
+                return WrapperList(data=[task for task in nodesList if filter_check(task,filter)],rootType="tasks")
+            else:               
+                return WrapperList(data=tasksList,rootType="tasks")
+            
+        d.addCallback(get,self.tasks.values())
+        reactor.callLater(0.5,d.callback,filter)
+        return d
             
     def remove_task(self,id,forceStop=False):
         """Removes the task with id==id 

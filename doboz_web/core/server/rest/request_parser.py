@@ -42,8 +42,11 @@ class RequestParser(object):
             data=self.request.content.getvalue()
             if data != None or data != '':
                 """ In python pre 2.6.5, bug in unicode dict keys"""
-                params=json.loads(data,encoding='utf8')
-                params=self._stringify_data(params)
+                try:
+                    params=json.loads(data,encoding='utf8')
+                    params=self._stringify_data(params)
+                except ValueError:
+                    raise ParameterParseException()
         elif self.request.method=="GET":
             for key in self.request.args.keys():         
                     params[key]=[int(elem) if elem.isdigit()  else elem for elem in self.request.args[key] ]    

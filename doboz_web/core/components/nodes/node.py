@@ -27,8 +27,7 @@ class Node(DBObject):
     or some software node (pachube etc)
     """
     BELONGSTO = ['environment']
-    HASONE =["reprap_capability"]
-
+   # HASONE =['reprap_capability']
     def __init__(self,name="node",description="base node",type="node",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.node")
@@ -37,11 +36,13 @@ class Node(DBObject):
         self.description=description
         self.isRunning=False  
         self.connector=None 
-        self.taskManager=TaskManager()
+        self.taskManager=TaskManager(self)
         self.components=[]
-        
         """For Uptime calculation"""
         self.startTime=time.time()
+    
+    def setup(self):
+        pass
     
     def __getattr__(self, attr_name):
         if hasattr(self.taskManager, attr_name):

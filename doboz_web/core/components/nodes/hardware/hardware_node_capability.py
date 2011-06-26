@@ -14,14 +14,14 @@ from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 
-from doboz_web.core.components.nodes.node import Node
+#from doboz_web.core.components.nodes.node import Node
 
-class HardwareNode(Node):
+class HardwareNodeCapability(object):
     """
     Base class for all hardware nodes: a hardware node is a software component handling a physical device such as a webcam, reprap , arduino etc
     """
     def __init__(self,name="HardwareNode",description="hardware node",type="hardwarenode",*args,**kwargs):
-        Node.__init__(self,name,description,type,*args,**kwargs)
+        #Node.__init__(self,name,description,type,*args,**kwargs)
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.hardware.hardwareNode")
        
 #    def add_task(self,task):

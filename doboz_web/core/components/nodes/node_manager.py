@@ -22,8 +22,8 @@ from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.tools.wrapper_list import WrapperList
 from doboz_web.core.components.nodes.exceptions import UnknownNodeType,NodeNotFound
 
-from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
-from doboz_web.core.components.nodes.dummy_capability import DummyCapability
+from doboz_web.core.components.nodes.hardware.reprap.reprap_capability import ReprapCapability
+from doboz_web.core.components.nodes.hardware.dummy_capability import DummyCapability
 
 class NodeManager(object):
     """
@@ -34,8 +34,8 @@ class NodeManager(object):
     nodeTypes={}
     nodeTypes["reprap"]=ReprapCapability
     nodeTypes["dummy"]=DummyCapability
-    nodeTypes["webcam"]=WebcamNode
-    nodeTypes["node"]=Node #this is just a dummy node as it is a base class
+    #nodeTypes["webcam"]=WebcamNode
+   # nodeTypes["node"]=Node #this is just a dummy node as it is a base class
     
     
     def __init__(self,parentEnv):
@@ -47,15 +47,23 @@ class NodeManager(object):
     
     @defer.inlineCallbacks    
     def setup(self):
-        def addNode(nodes):
-            print(nodes)
+        def addNode(nodes,nodeTypes):
+            #print("nodes",nodes,"nodeTypes",nodeTypes)
             for node in nodes:
-                print(node)
+                #print(node)
                 node.environment.set(self.parentEnv)
-                self.nodes[node.id]=node 
+                self.nodes[node.id]=node
+                for capability in nodeTypes.values():
+                    
+                    def addCapabilities(caps,node):
+                        #print("capability",caps)
+                        if len(caps)>0:
+                            node.capability=caps[0]
+                        
+                    capability.find(where=['environment_id = ? AND node_id = ?',node.environment_id, node.id]).addCallback(addCapabilities,node)
             print("node mgr",self.nodes)
                 
-        yield Node.all().addCallback(addNode)
+        yield Node.all().addCallback(addNode,self.nodeTypes)
         #yield ReprapNode.all().addCallback(addNode)
         
     """
@@ -75,13 +83,14 @@ class NodeManager(object):
         Driver: the driver to use for this node's connector
         """
             
-        if type in NodeManager.nodeTypes.iterkeys():
+        if type in self.nodeTypes.iterkeys():
             node= yield Node(name,description,type).save()
             node.environment.set(self.parentEnv)
             self.nodes[node.id]=node
             capability= yield NodeManager.nodeTypes[type](name,description).save()
             capability.environment.set(self.parentEnv)
             capability.node.set(node)
+            node.capability=capability
             
             log.msg("Added  node ",name," of capability ",type," with id set to ",str(node.id), logLevel=logging.CRITICAL)
             defer.returnValue(node)

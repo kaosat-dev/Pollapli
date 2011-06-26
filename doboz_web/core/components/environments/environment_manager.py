@@ -22,14 +22,15 @@ from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.environments.environment import Environment
 from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists
 from doboz_web.core.components.nodes.node import Node
+from doboz_web.core.components.automation.task import Task
 from doboz_web.core.tools.wrapper_list import WrapperList
 
 #from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 #from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
-from doboz_web.core.components.nodes.dummy_capability import DummyCapability
-#Registry.register(Environment, ReprapCapability)
-Registry.register(Environment, Node)
 
+Registry.register(Environment, Node)
+Registry.register(Node, Task)
+Registry.register(Environment, Task)
 class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
@@ -209,7 +210,6 @@ class EnvironmentManager(object):
 #             SET id =%id where id=1
 #             ''')
         defer.returnValue(None)
-  
     
     @defer.inlineCallbacks
     def _generateMasterDatabase(self):
@@ -258,10 +258,12 @@ class EnvironmentManager(object):
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE tasks(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             env_id INTEGER NOT NULL,
+             environment_id INTEGER NOT NULL,
+             node_id INTEGER NOT NULL,
              name TEXT,          
              description TEXT,
-             FOREIGN KEY(env_id) REFERENCES Environments(id)
+             FOREIGN KEY(environment_id) REFERENCES Environments(id)
+             FOREIGN KEY(node_id) REFERENCES nodes(id)  
              )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE actions(
              id INTEGER PRIMARY KEY AUTOINCREMENT,

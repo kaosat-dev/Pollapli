@@ -23,21 +23,36 @@ from doboz_web.core.components.nodes.node import Node
 class ReprapManagerEvents(Events):
     __events__=('OnLineParsed','OnTotalLinesSet','OnTotalLayersSet','OnPathSet','OnPositionChanged')
 
-
-class ReprapNode(HardwareNode,DBObject):
-    BELONGSTO = ['environment']
-    #HASONE = ['node']
+class ReprapCapability(DBObject):
+    BELONGSTO   = ['node','environment']      
     """
     A reprap node : hardware node  in the case of a reprap: endstops, temperature sensors, steppers, heaters
     """
-    def __init__(self,name="A reprap node",description="reprap node bla bla",type="reprap",*args,**kwargs):
-        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.hardware.ReprapNode")
-        HardwareNode.__init__(self,name,description,type,*args,**kwargs)
+    def __init__(self,info="mk",*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
+        self.info=info
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.hardware.reprap")
+        #HardwareNode.__init__(self,name,description,type,*args,**kwargs)
         self.startTime=time.time()
         self.rootPath=None
         self.events=ReprapManagerEvents() 
         self.gcodeSuffix="\n"
-        log.msg("Reprap Node Init Done", logLevel=logging.CRITICAL)
+        log.msg("Reprap Capability Init Done", logLevel=logging.CRITICAL)
+    
+    def __getattr__(self, attr_name):
+        print("in getattr",attr_name)
+        try:
+            if hasattr(self.node, attr_name) :
+                
+                return getattr(self.node, attr_name)
+            else:
+                #return getattr(self,attr_name)
+                pass#raise AttributeError(attr_name) 
+        except Exception as inst:
+            #TODO : only catch ReferenceNotSavedError
+            #else: raise AttributeError
+            print("error",inst)
+            pass
         
     def set_paths(self,rootPath):
         """
@@ -118,4 +133,5 @@ class ReprapNode(HardwareNode,DBObject):
 #            self.reconnectionCommand="G1 "+self.lastLine[2:-1]
 #            print("RE INIT COMMAND",self.reconnectionCommand)     
 #            self.connector.send_command(self.reconnectionCommand) 
-#Registry.register(Node, ReprapNode)
+
+Registry.register(Node, ReprapCapability)
