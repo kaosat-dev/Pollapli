@@ -39,6 +39,13 @@ class TaskStatusHandler(DefaultRestHandler):
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
         return NOT_DONE_YET
+#     if params["enabled"]:
+#                self.logger.critical("Enabling task %d",self.taskId)
+#                self.environmentManager.get_environment(self.envId).get_node(self.nodeId).start_task(self.taskId)
+#            else:
+#                self.logger.critical("Disabling task %d",self.taskId)
+#                self.environmentManager.get_environment(self.envId).get_node(self.nodeId).stop_task(self.taskId)
+#           
     
     def render_GET(self, request):
         """

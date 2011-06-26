@@ -39,6 +39,14 @@ class ConnectorStatusHandler(DefaultRestHandler):
         d.addBoth(r._build_response)
         return NOT_DONE_YET
     
+#    if params["connected"]:
+#                self.logger.critical("Connecting node %d",self.nodeId)
+#                self.environmentManager.get_environment(self.envId).get_node(self.nodeId).connect()
+#            else:
+#                self.logger.critical("Disconnecting node %d",self.nodeId)
+#                self.environmentManager.get_environment(self.envId).get_node(self.nodeId).disconnect()
+#     
+    
     def render_GET(self, request):
         """
         Handler for GET requests of connector status

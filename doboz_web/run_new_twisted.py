@@ -94,7 +94,7 @@ def configure_all():
     reactor.install()
         
     
-    from doboz_web.core.server.twisted_server import MainServer
+    from doboz_web.core.server.server import MainServer
     server=MainServer(port,rootPath,envPath)
     
     """

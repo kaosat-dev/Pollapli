@@ -6,40 +6,6 @@ class FilesRestHandler(BaseRestHandler):
         BaseRestHandler.__init__(self)
         self.rootUri=rootUri
         
-    def render_GET(self, request):
-        self.logger.critical("Using files GET handler")
-        callback=request.GET.get('callback', '').strip()
-        response=callback+"()"
-        fileList=os.listdir(os.path.join(server.rootPath,"files","machine","printFiles"))
-        try:     
-            finalFileList=map(self.fullPrintFileInfo, fileList)
-            data={"files": finalFileList }
-            response=callback+"("+str(data)+")"
-        except Exception as inst:    
-            self.logger.critical("error in file list generation  %s",str(inst))
-            self.logger.critical("response %s",str(response))
-        return response  
-#        if request.headers.get("Content-Type")=="application/json":
-#            callback=request.GET.get('callback', '').strip()
-#            resp=""
-#            #response=callback+"()"
-#            try:
-#                envData=self.environmentManager.get_environments()
-#                thingy=[]
-#                for env in envData:
-#                    
-#                    lnk='{"link" : {"href":"'+self.rootUri+str(env.id)+'", "rel": "environment"},'
-#                    thingy.append(lnk+env._toJson()+'}')
-##                   
-#                resp=callback+'{"Environments List":{"link":{"href":"'+self.rootUri+'", "rel": "environments"}},"items":['+','.join(thingy)+']}'
-#            except Exception as inst:
-#                self.logger.exception("Error in envs get %s",str(inst))
-#                abort(500,"error in getting environments")
-#            response.content_type = 'application/json'
-#            return resp
-#        else:
-#            abort(501,"Not Implemented")
-            
     def render_POST(self,request):
         try:       
             datafile = request.params["datafile"]
