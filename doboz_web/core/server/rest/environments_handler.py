@@ -29,7 +29,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.environmentsHandler")
         self.environmentManager=environmentManager
         
-        self.valid_contentTypes.append("application/pollapli.environmentsList+json")   
+        self.valid_contentTypes.append("application/pollapli.environmentList+json")   
         self.validGetParams.append('id')
         self.validGetParams.append('status')
       
@@ -61,7 +61,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         """
         Handler for GET requests of environments
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environmentsList+json",resource="environments")
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environmentList+json",resource="environments")
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environments,errback=r._build_response)
         d.addBoth(r._build_response)

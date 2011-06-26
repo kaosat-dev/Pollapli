@@ -30,7 +30,7 @@ class NodesHandler(DefaultRestHandler):
         self.environmentManager=environmentManager
         
         self.envId=envId
-        self.valid_contentTypes.append("application/pollapli.nodesList+json")   
+        self.valid_contentTypes.append("application/pollapli.nodeList+json")   
         self.validGetParams.append('id')
         self.validGetParams.append('type')
       
@@ -62,7 +62,7 @@ class NodesHandler(DefaultRestHandler):
         """
         Handler for GET requests of nodes
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.nodesList+json",resource="nodes")
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.nodeList+json",resource="nodes")
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environment(self.envId).get_nodes,errback=r._build_response)
         d.addBoth(r._build_response)
