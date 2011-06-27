@@ -52,8 +52,9 @@ class Node(DBObject):
             raise AttributeError(attr_name) 
            
     def _toDict(self):
-        return {"node":{"id":self.id,"name":self.name,"description":self.description,"type":self.type,"link":{"rel":"node"}}}
+        return {"node":{"id":self.id,"name":self.name,"description":self.description,"type":self.type,"connector":{"status":{"connected":True},"type":None,"driver":None},"link":{"rel":"node"}}}
    
+    @defer.inlineCallbacks
     def set_connector(self,type="Serial",driverType="Default",driverParams={},*args,**kwargs):
         """
         Method to set this node's connector 
@@ -64,10 +65,10 @@ class Node(DBObject):
         connector
         """
         
-        self.connector=SerialConnector()
-        #self.connector=SerialTwisted()#SerialPlus()
+        self.connector=yield SerialConnector().save()
+        self.connector.node.set(self)
+        
         driver=None
-        print(driverType)
         if driverType== "teacup":
             driver=TeacupDriver(**driverParams)
         elif driverType=="fived":
@@ -75,8 +76,10 @@ class Node(DBObject):
         if driver:
             self.connector.set_driver(driver) 
         else :
-            raise Exception("Incorrect driver")
-        self.connector.connect()
+            raise UnknownDriver()
+        
+        self.connector.save()
+        
         log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
 
 #        if hasattr(self.connector, 'events'):    
@@ -84,7 +87,9 @@ class Node(DBObject):
 #             self.connector.events.reconnected+=self._on_connector_reconnected  
 #             self.connector.events.OnDataRecieved+=self._on_data_recieved
 #        #self.taskManager.connector=self.connector
-        return self.connector
+         
+        defer.returnValue(self.connector) 
+        
     def get_connector(self):
         if self.connector:
             return self.connector 
@@ -121,12 +126,26 @@ class Node(DBObject):
     def remove_component(self,component,*args,**kwargs):
         pass
     
+    
     def connect(self):
-        self.connector.connect()  
-               
+        d=defer.Deferred()
+        def doConnect(connector):
+            connector.connect()
+            return self.connector
+        d.addCallback(doConnect)
+        d.callback(self.connector)
+        return d
+    
+           
     def disconnect(self):
-        self.connector.disconnect()
-        
+        d=defer.Deferred()
+        def doDisconnect(connector):
+            connector.disconnect()
+            return self.connector
+        d.addCallback(doDisconnect)
+        d.callback(self.connector)
+        return d
+    
     def _on_connector_connected(self,args,kargs):
         raise NotImplementedError, "This methods needs to be implemented in your node subclass"  
     
@@ -136,9 +155,3 @@ class Node(DBObject):
     def _on_connector_reconnected(self,args,kargs):
         raise NotImplementedError, "This methods needs to be implemented in your node subclass"  
 
-    def _toJson(self):
-        """
-        return a json representation of the node
-        """
-        return '"id":'+ str(self.id)+',"name":"'+self.name+'","active":"'+str(self.isRunning)+'"'
-    

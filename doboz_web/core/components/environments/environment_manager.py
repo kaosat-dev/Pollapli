@@ -24,13 +24,17 @@ from doboz_web.core.components.environments.exceptions import EnvironmentAlready
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.components.automation.task import Task
 from doboz_web.core.tools.wrapper_list import WrapperList
-
+from doboz_web.core.components.connectors.hardware.hardware_connector import HardwareConnector
+from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
 #from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 #from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
 
 Registry.register(Environment, Node)
 Registry.register(Node, Task)
 Registry.register(Environment, Task)
+#Registry.register(Environment, HardwareConnector)
+Registry.register(Node, HardwareConnector)
+Registry.register(Node, SerialConnector)
 class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
@@ -286,14 +290,23 @@ class EnvironmentManager(object):
              FOREIGN KEY(task_id) REFERENCES Environments(id)
              )''')
         
-        yield Registry.DBPOOL.runQuery('''CREATE TABLE connectors(
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE hardware_connectors(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
-             type TEXT NOT NULL ,
-             name TEXT,          
-             description TEXT
-             
+             seperator TEXT NOT NULL ,
+             speed INTEGER NOT NULL,
+             FOREIGN KEY(environment_id) REFERENCES Environments(id),
+             FOREIGN KEY(node_id) REFERENCES Environments(id)        
+             )''')
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE serial_connectors(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             environment_id INTEGER NOT NULL,
+             node_id INTEGER NOT NULL,
+             seperator TEXT NOT NULL ,
+             speed INTEGER NOT NULL,          
+             FOREIGN KEY(environment_id) REFERENCES Environments(id),
+             FOREIGN KEY(node_id) REFERENCES Environments(id)       
              )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
              id INTEGER PRIMARY KEY AUTOINCREMENT,

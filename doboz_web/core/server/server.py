@@ -17,6 +17,7 @@ from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.core.server.rest.exceptions import ParameterParseException,UnhandledContentTypeException
 from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists,EnvironmentNotFound
 from doboz_web.core.components.nodes.exceptions import UnknownNodeType,NodeNotFound,NoConnectorSet
+from doboz_web.core.components.connectors.exceptions import UnknownDriver,UnknownConnector
 
 
 
@@ -38,6 +39,8 @@ class MainServer():
         self.exceptionConverter.add_exception(UnknownNodeType,500 ,5,"Unknown node type")
         self.exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
         self.exceptionConverter.add_exception(NoConnectorSet,404,7,"Node has no connector")
+        self.exceptionConverter.add_exception(UnknownConnector,500,8,"Unknown connector type")
+        self.exceptionConverter.add_exception(UnknownDriver,500,9,"Unknown connector driver type")
     
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")

@@ -19,6 +19,10 @@ def helper():
         client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"testNode","type":"dummy","description":"just a test node"}')
     except:
         pass
+    try:
+        client.post('rest/environments/1/nodes/1/connector',headers={'Content-Type': 'application/pollapli.connector+json'},payload='{"driverType":"teacup","driverParams":{"speed":115200}}')
+    except:
+        pass
 #    try:
 #        client.post('/environments/0/nodes/0/tasks',headers={'Content-Type': 'application/json'},payload='{"name":"testTask","type":"print","taskParams":{"filePath":"test.gcode"}}')
 #    except:

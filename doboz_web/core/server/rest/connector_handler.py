@@ -32,7 +32,7 @@ class ConnectorHandler(DefaultRestHandler):
         """
         @defer.inlineCallbacks
         def extract_args(result):
-            print("in extract args",result)
+           # print("in extract args",result)
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).set_connector(**result)))
         
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.connector+json",resource="connector")

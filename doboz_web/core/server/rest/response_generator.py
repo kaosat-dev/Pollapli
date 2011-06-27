@@ -42,8 +42,8 @@ class ResponseGenerator(object):
                 payload=DataFormater(self.resource,self.request.path).format(payload)
             except Exception as inst:
                 payload=""  
-                print("response error",str(inst))   
-                traceback.print_exc(file=sys.stdout)
+                #print("response error",str(inst))   
+                #traceback.print_exc(file=sys.stdout)
             
         if callback:
             payload= callback+"("+payload+")" 

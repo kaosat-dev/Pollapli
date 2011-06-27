@@ -16,7 +16,8 @@ class HardwareConnectorEvents(Events):
 
 class HardwareConnector(DBObject):
     BELONGSTO = ['node']
-    def __init__(self,driver=None):
+    def __init__(self,driver=None,*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
         self.isConnected=False
         self.currentErrors=0
         self.maxErrors=5

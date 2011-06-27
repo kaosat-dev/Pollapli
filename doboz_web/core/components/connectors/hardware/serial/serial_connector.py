@@ -21,24 +21,53 @@ import itertools
 import traceback
 
 class PortWrapper(SerialPort):
-      def connectionLost(self, reason):
-        SerialPort.connectionLost(self, reason)
-        self.protocol.connectionLost(reason)
+      def __init__(self,*args,**kwargs):
+          SerialPort.__init__(self,*args,**kwargs)
+          self._tempDataBuffer=[]
+      def writeSomeData(self,*args,**kwargs):
+          pass
+      #def connectionLost(self, reason):
+      #  SerialPort.connectionLost(self, reason)
+      #  self.protocol.connectionLost(reason)
+        
 
-class SerialConnector(HardwareConnector):
+class SerialConnector(HardwareConnector,DBObject):
     blockedPorts=["COM3"]
-    def __init__(self,port=None,isBuffering=True,seperator='\r\n',speed=115200,bannedPorts=None,maxErrors=5,waitForAnswer=False):
+    BELONGSTO = ['node']
+    def __init__(self,port=None,seperator='\r\n',isBuffering=True,speed=115200,bannedPorts=None,maxErrors=5,waitForAnswer=False,*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
+        HardwareConnector.__init__(self)
         self.serial=None    
         self.protocol=SerialTwisted()
         self.speed=speed
+        self.seperator=seperator
         self.port="Com4"#port
+        
     def __getattr__(self,attrname):
-        if hasattr(self.protocol,attrname):
-            return getattr(self.protocol,attrname)
+        try:
+            if hasattr(self.protocol,attrname):
+                return getattr(self.protocol,attrname)
+        except:
+            print("error in serial connector")
+            
+            
     def connect(self):
-        self.serial=PortWrapper(self.protocol,"Com4",reactor,baudrate=self.speed)
+        try:
+            self.serial=PortWrapper(self.protocol,"Com4",reactor,baudrate=self.speed)
+        except:
+            print("failed to connect to port")
+    def disconnect(self):
+        #print("disconnecting")
+        try:
+            if self.serial:
+                self.serial.loseConnection()
+                self.serial=None
+        except Exception as inst:
+            print("error in serial disconnection",str(inst))
+            
     def _toDict(self):
-        return {"connector":{"type":"SerialTwisted","params":{"speed":self.speed,"port":self.port},"link":{"rel":"connector"}}}
+        return {"connector":{"type":"SerialTwisted","status":{"connected":self.protocol.isConnected},"type":None,"driver":None,"params":{"speed":self.speed,"port":self.port}},"link":{"rel":"connector"}}
+   
     def set_driver(self,driver):
         """Sets what driver to use : a driver formats the data sent to the connector !!
         And may also contain additional settings for the connector"""
@@ -85,7 +114,7 @@ class SerialTwisted(Protocol):
         self.reset_seperator()
         self.driver=None
         self.nextCommand=None
-        
+        self.isConnected=False
         reactor.callLater(3,self._checkForCommands)
     def _toDict(self):
         return {"connector":{"type":"SerialTwisted","params":{"speed":self.speed,"port":self.port},"link":{"rel":"connector"}}}
@@ -180,6 +209,10 @@ class SerialTwisted(Protocol):
         #    print " %s" % (n)
         return available
     
+    def connectionLost(self,reason="connectionLost"):
+        print("serial port disconnected")
+        self.isConnected=False
+    
     def connectionMade(self):
         self._validate_connection(self)
         
@@ -200,7 +233,6 @@ class SerialTwisted(Protocol):
         """
         cheap hack, for test
         """
-        print("here")
         self.add_command("a")
         self.nextCommand="a"#self.driver.get_next_command()
         
@@ -217,7 +249,6 @@ class SerialTwisted(Protocol):
             
             #nextCommand=None
             if self.nextCommand:
-                print("command",self.nextCommand)
                 self.send_command(self.nextCommand)
             try:
                 if data:

@@ -40,18 +40,16 @@ class ReprapCapability(DBObject):
         log.msg("Reprap Capability Init Done", logLevel=logging.CRITICAL)
     
     def __getattr__(self, attr_name):
-        print("in getattr",attr_name)
         try:
             if hasattr(self.node, attr_name) :
                 
                 return getattr(self.node, attr_name)
             else:
-                #return getattr(self,attr_name)
                 pass#raise AttributeError(attr_name) 
         except Exception as inst:
             #TODO : only catch ReferenceNotSavedError
             #else: raise AttributeError
-            print("error",inst)
+            #print("error",inst)
             pass
         
     def set_paths(self,rootPath):

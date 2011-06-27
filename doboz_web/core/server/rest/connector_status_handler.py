@@ -28,24 +28,18 @@ class ConnectorStatusHandler(DefaultRestHandler):
         Handler for POST requests of connector status
         """
         @defer.inlineCallbacks
-        def extract_args(result):
-            re
-            print("in extract args",result)
-            defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).set_connector(**result)))
-        
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.connector.status+json",resource="connectorstatus")
+        def extract_args(result):  
+            if result["connected"]:
+                defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).connect()))
+            else:
+                defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).disconnect()))
+
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.connector.status+json",resource="connector")
         d=RequestParser(request,"connector status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
         return NOT_DONE_YET
-    
-#    if params["connected"]:
-#                self.logger.critical("Connecting node %d",self.nodeId)
-#                self.environmentManager.get_environment(self.envId).get_node(self.nodeId).connect()
-#            else:
-#                self.logger.critical("Disconnecting node %d",self.nodeId)
-#                self.environmentManager.get_environment(self.envId).get_node(self.nodeId).disconnect()
-#     
+   
     
     def render_GET(self, request):
         """

@@ -58,10 +58,7 @@ class Environment(DBObject):
 
     def get_environmentInfo(self):
         return self.name
-       
-    def _toJson(self):
-        return '"id":'+ str(self.id)+',"name":"'+self.name+'","status":"'+self.status+'"'
-    
+        
     def _toDict(self):
         result={"environment":{"id":self.id,"name":self.name,"description":self.description,"status":self.status,"link":{"rel":"environment"}}}
         return result
@@ -69,8 +66,8 @@ class Environment(DBObject):
     def __getattr__(self, attr_name):
         if hasattr(self.nodeManager, attr_name):
                 return getattr(self.nodeManager, attr_name)
-#       # else:
-       #     raise AttributeError(attr_name)
+        else:
+            raise AttributeError(attr_name)
 
     def update(self,name,description,status):
         print("update in env")
