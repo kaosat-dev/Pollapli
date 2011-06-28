@@ -1,4 +1,4 @@
-from doboz_web.core.components.drivers.driver import Driver
+from doboz_web.core.components.connectors.driver import Driver
 
 class TeacupDriver(Driver):
     """Driver class: intermediary element that formats commands according to a spec before they get sent to the connector"""

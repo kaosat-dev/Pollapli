@@ -45,10 +45,11 @@ class ConnectorStatusHandler(DefaultRestHandler):
         """
         Handler for GET requests of connector status
         """
-        print("pouet")
         def extract_args(result):
+            print(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_connector())            
+
             return(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_connector())            
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.connector.status+json",resource="connector status")
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.connector.status+json",resource="connector")
         d=RequestParser(request,"connector status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
         d.addBoth(r._build_response)     

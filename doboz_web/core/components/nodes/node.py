@@ -16,11 +16,11 @@ from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.automation.task_manager import TaskManager
 #from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
-from doboz_web.core.components.drivers.reprap.Teacup.teacup_driver import TeacupDriver
-from doboz_web.core.components.drivers.reprap.FiveD.fived_driver import FiveDDriver
+from doboz_web.core.components.connectors.hardware.drivers.reprap.Teacup.teacup_driver import TeacupDriver
+from doboz_web.core.components.connectors.hardware.drivers.reprap.FiveD.fived_driver import FiveDDriver
 
-from doboz_web.core.components.connectors.exceptions import UnknownDriver
-from doboz_web.core.components.nodes.exceptions import NoConnectorSet
+from doboz_web.exceptions import UnknownDriver,NoConnectorSet
+ 
 
 class Node(DBObject):
     """

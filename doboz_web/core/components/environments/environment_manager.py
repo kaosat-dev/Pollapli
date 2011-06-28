@@ -20,7 +20,7 @@ from twisted.python.log import PythonLoggingObserver
 
 
 from doboz_web.core.components.environments.environment import Environment
-from doboz_web.core.components.environments.exceptions import EnvironmentAlreadyExists
+from doboz_web.exceptions import EnvironmentAlreadyExists
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.components.automation.task import Task
 from doboz_web.core.tools.wrapper_list import WrapperList

@@ -2,7 +2,7 @@ import json
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.web import resource, http
-from doboz_web.core.server.rest.exceptions import ParameterParseException,UnhandledContentTypeException
+from doboz_web.exceptions import ParameterParseException,UnhandledContentTypeException
 
 class RequestParser(object):
     def __init__(self,request,resource,validContentTypes,validGetParams):
