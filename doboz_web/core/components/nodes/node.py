@@ -43,7 +43,16 @@ class Node(DBObject):
         self.startTime=time.time()
     
     def setup(self):
-        pass
+        def addConnector(connectors,node):
+            if len(connectors)>0:
+                node.connector=connectors[0] 
+                #just a cheap hack for now
+                node.connector.set_driver(TeacupDriver(speed=115200))
+                log.msg("Node with id",self.id,", connector",self.connector.__class__.__name__, "setup successfully", logLevel=logging.CRITICAL)
+
+        SerialConnector.find(where=['node_id = ?', self.id]).addCallback(addConnector,self)
+        
+    
     
     def __getattr__(self, attr_name):
         if hasattr(self.taskManager, attr_name):

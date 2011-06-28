@@ -31,8 +31,7 @@ from doboz_web.core.components.connectors.hardware.serial.serial_connector impor
 
 Registry.register(Environment, Node)
 Registry.register(Node, Task)
-Registry.register(Environment, Task)
-#Registry.register(Environment, HardwareConnector)
+#Registry.register(Environment, Task)
 Registry.register(Node, HardwareConnector)
 Registry.register(Node, SerialConnector)
 class EnvironmentManager(object):
@@ -243,74 +242,59 @@ class EnvironmentManager(object):
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE reprap_capabilities(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
              info TEXT,
-             FOREIGN KEY(environment_id) REFERENCES environments(id)
              FOREIGN KEY(node_id) REFERENCES nodes(id)  
              )''')
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE dummy_capabilities(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
              info TEXT,
-             FOREIGN KEY(environment_id) REFERENCES environments(id)
              FOREIGN KEY(node_id) REFERENCES nodes(id)  
              )''')
       #FOREIGN KEY(node_id) REFERENCES nodes(id)  
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE tasks(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
              name TEXT,          
              description TEXT,
              type TEXT,
              params TEXT,
-             FOREIGN KEY(environment_id) REFERENCES Environments(id)
              FOREIGN KEY(node_id) REFERENCES nodes(id)  
              )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE actions(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             env_id INTEGER NOT NULL,
              task_id INTEGER NOT NULL,
              name TEXT,          
              description TEXT,
-             FOREIGN KEY(env_id) REFERENCES Environments(id),
-             FOREIGN KEY(task_id) REFERENCES Environments(id)
+             FOREIGN KEY(task_id) REFERENCES tasks(id)
              )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE conditions(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             env_id INTEGER NOT NULL,
              task_id INTEGER NOT NULL,
              name TEXT,          
              description TEXT,
-             FOREIGN KEY(env_id) REFERENCES Environments(id),
-             FOREIGN KEY(task_id) REFERENCES Environments(id)
+             FOREIGN KEY(task_id) REFERENCES tasks(id)
              )''')
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE hardware_connectors(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
              seperator TEXT NOT NULL ,
              speed INTEGER NOT NULL,
-             FOREIGN KEY(environment_id) REFERENCES Environments(id),
-             FOREIGN KEY(node_id) REFERENCES Environments(id)        
+             FOREIGN KEY(node_id) REFERENCES nodes(id)        
              )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE serial_connectors(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
              seperator TEXT NOT NULL ,
              speed INTEGER NOT NULL,          
-             FOREIGN KEY(environment_id) REFERENCES Environments(id),
-             FOREIGN KEY(node_id) REFERENCES Environments(id)       
+             FOREIGN KEY(node_id) REFERENCES nodes(id)       
              )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             environment_id INTEGER NOT NULL,
              node_id INTEGER NOT NULL,
              connector_id INTEGER NOT NULL,
              type TEXT NOT NULL ,

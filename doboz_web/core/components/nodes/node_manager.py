@@ -50,21 +50,17 @@ class NodeManager(object):
         def addNode(nodes,nodeTypes):
             #print("nodes",nodes,"nodeTypes",nodeTypes)
             for node in nodes:
-                #print(node)
                 node.environment.set(self.parentEnv)
                 self.nodes[node.id]=node
-                for capability in nodeTypes.values():
-                    
+                node.setup()
+                for capability in nodeTypes.values():            
                     def addCapabilities(caps,node):
-                        #print("capability",caps)
                         if len(caps)>0:
-                            node.capability=caps[0]
-                        
-                    capability.find(where=['environment_id = ? AND node_id = ?',node.environment_id, node.id]).addCallback(addCapabilities,node)
-            #print("node mgr",self.nodes)
+                            node.capability=caps[0] 
+                    capability.find(where=['node_id = ?', node.id]).addCallback(addCapabilities,node)
+                
                 
         yield Node.all().addCallback(addNode,self.nodeTypes)
-        #yield ReprapNode.all().addCallback(addNode)
         
     """
     ####################################################################################
@@ -88,7 +84,6 @@ class NodeManager(object):
             node.environment.set(self.parentEnv)
             self.nodes[node.id]=node
             capability= yield NodeManager.nodeTypes[type](name,description).save()
-            capability.environment.set(self.parentEnv)
             capability.node.set(node)
             node.capability=capability
             
