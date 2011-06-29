@@ -70,7 +70,6 @@ class Driver(object):
             if self.commandSlots>1:
                 self.commandSlots-=1
 
-        
     def get_next_command(self):
         """Returns next avalailable command in command queue """
         cmd=None

@@ -57,7 +57,7 @@ class TaskManager(object):
         """
             
         if type in self.taskTypes.iterkeys():
-            print("type",type,"params",params)
+            
             task= yield Task(name,description,type,params).save()
             task.specialty=TaskManager.taskTypes[type](**params)
             #task= yield TaskManager.taskTypes[type](name,description,**taskParams).save()

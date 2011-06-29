@@ -15,6 +15,7 @@ class ConditionEvents(Events):
 
        
 class Condition(DBObject):
+    BELONGSTO   = ['task']  
     """A condition is similar to a boolean expression: it must return
     true or false in its call method """
     def __init__(self,name="defaultCondition",description="",critical=False,*args,**kwargs):

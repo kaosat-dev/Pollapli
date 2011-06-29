@@ -12,7 +12,7 @@ from twisted.internet import reactor
 from twisted.enterprise import adbapi
 
 from doboz_web.core.components.environments.environment_manager import EnvironmentManager
-from doboz_web.core.server.rest.environments_handler import EnvironmentsHandler
+from doboz_web.core.server.rest.handlers.environment_handlers import EnvironmentsHandler
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 
 from doboz_web.exceptions import *
@@ -51,12 +51,10 @@ class MainServer():
         try:
             restRoot.putChild("environments", EnvironmentsHandler("http://localhost",self.exceptionConverter,self.environmentManager))
         except Exception as inst:
-            print("error in  resource creation",inst)
+            log.msg("Error in environments resource creation",str(inst), logLevel=logging.CRITICAL)
          
-        
         factory = Site(root)
         reactor.listenTCP(self.port, factory)
-        #webbrowser.open("http://192.168.0.12:8000")
         log.msg("Server started!", logLevel=logging.CRITICAL)
         reactor.run()
          #s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

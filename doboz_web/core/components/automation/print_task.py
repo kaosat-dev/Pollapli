@@ -153,10 +153,6 @@ class PrintTask(object):
             
             self.progress=0
             
-            #self.logFile=open("log.txt",'w')
-            #self.logFile.write("path="+str(self.filePath))  
-            #self.logFile.close()
-            
         except Exception  as inst:
             log.msg("can't load file set ",str(inst), logLevel=logging.CRITICAL)
             
@@ -203,14 +199,12 @@ class PrintTask(object):
             line = self.source.readline()
             self.line=line
             self.lastLine=line
-            
         except :
             pass
         
         if line is not None: 
             if line!= "":# and line !="\n" and line != "\r\n" and line != "\n\r":
-                self.connector.add_command(line,answerRequired=True)
-                
+                self.connector.add_command(line,answerRequired=True)             
                 try:
                     self.gcodeHistory.insert(self.gcodeHistoryIndex, line)
                     if len(self.gcodeHistory)>self.gcodeHistoryMaxSize:
@@ -282,12 +276,7 @@ class PrintTask(object):
 #                tmpAnswLine=tmpAnsw.rstrip()
 #     
 #                if tmpLastLine == tmpAnswLine:#did we recieve the right answer
-                     
-
-            
-       
-      
-            
+     
 
     def stop(self):
         """
@@ -298,6 +287,6 @@ class PrintTask(object):
             self.source.close()
         except:
             pass
-        self.logFile=open("log.txt","a")
-        self.logFile.write(", shutdown=ok") 
+#        self.logFile=open("log.txt","a")
+#        self.logFile.write(", shutdown=ok") 
         self.events.OnExited(self,"OnExited")

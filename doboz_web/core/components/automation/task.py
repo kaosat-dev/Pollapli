@@ -17,7 +17,7 @@ class AutomationEvents(Events):
     
 
 class Task(DBObject):
-    BELONGSTO   = ['node','environment']      
+    BELONGSTO   = ['node']      
     """
     Base class for tasks (printing , scanning etc
     """
@@ -46,7 +46,9 @@ class Task(DBObject):
     def start(self):
         if hasattr(self,"specialty"):
             self.specialty.start()
-        
+    def pause(self):
+        pass
+    
     def startPause(self):
         """
         Switches between active and inactive mode, or starts the task if not already done so
@@ -73,16 +75,14 @@ class Task(DBObject):
         When taks is exited
         """
         self.events.OnExited(self,"Exited")
-    def _toJson(self):
-        return '"id":'+ str(self.id)+',"progress":"'+str(self.progress)+'","status":"'+self.status+'"'
-    
-    def _do_action_step(self):
+ 
+    def _do_action(self):
         """
         do sub action in task
         """
         raise NotImplementedException("This needs to be implemented in a subclass")
 
-    def check_task_conditions(self):
+    def check_conditions(self):
         """
         method in charge of verifying all of the tasks conditions
         for a task to start/continue running, all of its conditions must evaluate to True 
