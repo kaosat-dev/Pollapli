@@ -64,6 +64,10 @@ class Node(DBObject):
         return {"node":{"id":self.id,"name":self.name,"description":self.description,"type":self.type,"connector":{"status":{"connected":True},"type":None,"driver":None},"link":{"rel":"node"}}}
    
     @defer.inlineCallbacks
+    def set_driver(self,driverType="Default",driverParams={},*args,**kwargs):
+        pass
+    
+    @defer.inlineCallbacks
     def set_connector(self,type="Serial",driverType="Default",driverParams={},*args,**kwargs):
         """
         Method to set this node's connector 

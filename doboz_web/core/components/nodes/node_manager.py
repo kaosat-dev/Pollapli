@@ -40,7 +40,6 @@ class NodeManager(object):
     
     def __init__(self,parentEnv):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.nodeManager")
-        #self.nodes={}#dictionary of list of nodes, by nodeType
         self.parentEnv=parentEnv
         self.nodes={}
         self.lastNodeId=0
@@ -48,7 +47,6 @@ class NodeManager(object):
     @defer.inlineCallbacks    
     def setup(self):
         def addNode(nodes,nodeTypes):
-            #print("nodes",nodes,"nodeTypes",nodeTypes)
             for node in nodes:
                 node.environment.set(self.parentEnv)
                 self.nodes[node.id]=node

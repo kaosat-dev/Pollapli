@@ -15,6 +15,9 @@ from doboz_web.core.components.automation.task import Task, AutomationEvents
 from doboz_web.core.tools.point_cloud import Point,PointCloud
 from doboz_web.core.tools.point_cloud_builder import PointCloudBuilder
 from doboz_web.core.tools.gcode_parser import GCodeParser
+from doboz_web.core.file_manager import FileManager
+
+
 
 class PrintTask(object):
     """ A task for printing gcode files"""
@@ -22,8 +25,10 @@ class PrintTask(object):
         #Task.__init__(self,name,description,*args,**kwargs)
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.printtask")
         #self.logger.setLevel(logging.ERROR)
-        print("in print specialty",filepath)
-        self.filePath=filepath
+        
+        print("filemanager rootPath",FileManager.getRootDir())
+        self.filePath=os.path.join(FileManager.getRootDir(),filepath)
+        print("in print specialty",self.filePath)
         
         self.totalLines=1
         self.lastLine=None

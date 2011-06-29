@@ -63,10 +63,6 @@ class TaskManager(object):
             #task= yield TaskManager.taskTypes[type](name,description,**taskParams).save()
             print("added task",task, "with specialty",task.specialty)
             task.node.set(self.parentNode)         
-            def getEnv(env,task):
-                task.environment.set(env)
-            self.parentNode.environment.get().addCallback(getEnv,task)
-            
             task.start()
             self.tasks[task.id]=task
             

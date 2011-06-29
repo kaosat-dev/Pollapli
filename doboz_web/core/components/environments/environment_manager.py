@@ -51,23 +51,25 @@ class EnvironmentManager(object):
         """Retrieve all existing environments from disk"""
         maxFoundId=1
         for fileDir in os.listdir(self.path): 
-            if os.path.isdir(os.path.join(self.path,fileDir)):           
+            if os.path.isdir(os.path.join(self.path,fileDir)):        
+                   
                 envName= fileDir
                 envPath=os.path.join(self.path,envName)
                 dbPath=os.path.join(envPath,envName)+".db"
-                Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbPath,check_same_thread=False)
-                                
-                def addEnv(env,maxFoundId):
-                    self.environments[env[0].id]=env[0]
-                    env[0].setup()
-                    if env[0].id>maxFoundId:
-                        maxFoundId=env[0].id
+                if os.path.exists(dbPath):
+                    Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbPath,check_same_thread=False)
+                                    
+                    def addEnv(env,maxFoundId):
+                        self.environments[env[0].id]=env[0]
+                        env[0].setup()
+                        if env[0].id>maxFoundId:
+                            maxFoundId=env[0].id
+                        
+                        return maxFoundId
                     
-                    return maxFoundId
-                
-                maxFoundId=yield Environment.find().addCallback(addEnv,maxFoundId)
-                self.idCounter=maxFoundId+1
-                #temporary: this should be recalled from db from within the environments ?
+                    maxFoundId=yield Environment.find().addCallback(addEnv,maxFoundId)
+                    self.idCounter=maxFoundId+1
+                    #temporary: this should be recalled from db from within the environments ?
         
         log.msg("Environment manager setup correctly", logLevel=logging.CRITICAL)
         

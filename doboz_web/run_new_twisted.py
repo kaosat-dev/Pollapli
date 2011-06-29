@@ -72,7 +72,7 @@ def configure_all():
     
     #server.chosenServer = servertype
     #server.chosenPort = port
-    rootPath=os.path.join(rootPath,"core","server")
+    filePath=os.path.join(rootPath,"core","server","static")
 #    server.printFilesPath=os.path.join(server.rootPath,"files","machine","printFiles")
 #    server.scanFilesPath=os.path.join(server.rootPath,"files","machine","scanFiles")
 #    if not os.path.exists(server.printFilesPath):
@@ -95,7 +95,7 @@ def configure_all():
         
     
     from doboz_web.core.server.server import MainServer
-    server=MainServer(port,rootPath,envPath)
+    server=MainServer(port,filePath,envPath)
     
     """
     starts all server components

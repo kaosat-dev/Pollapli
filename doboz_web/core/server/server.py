@@ -16,7 +16,7 @@ from doboz_web.core.server.rest.handlers.environment_handlers import Environment
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 
 from doboz_web.exceptions import *
-
+from doboz_web.core.file_manager import FileManager
 
 
 
@@ -25,6 +25,7 @@ class MainServer():
         self.port=port
         self.filePath=filepath
         self.dataPath=dataPath
+        FileManager.setRootDir(self.dataPath)
         
         self.environmentManager=EnvironmentManager(self.dataPath)
         reactor.callWhenRunning(self.environmentManager.setup)
@@ -43,9 +44,8 @@ class MainServer():
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")
         observer.start()
-        #root = File(self.filePath)
-        #print(self.filePath)
-        root=Resource()
+        
+        root = File(self.filePath)
         restRoot=Resource()
         root.putChild("rest",restRoot)
         try:
