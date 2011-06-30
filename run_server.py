@@ -1,3 +1,3 @@
-from doboz_web.run_new_twisted import *
+from doboz_web.run import *
 
 configure_all()

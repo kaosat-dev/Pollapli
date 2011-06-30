@@ -25,7 +25,6 @@ from doboz_web import idoboz_web
 
 import imp
 
-import doboz_web.plugins as  plugins
 from zope.interface import Interface, Attribute,implements
 from twisted.plugin import IPlugin
 
@@ -51,24 +50,21 @@ class MainServer():
         self.exceptionConverter.add_exception(UnknownConnector,500,8,"Unknown connector type")
         self.exceptionConverter.add_exception(UnknownDriver,500,9,"Unknown connector driver type")
     
-        print(sys.path)
-        for testplugin in getPlugins(idoboz_web.ITestPlugin,plugins):
-            print("testplugin:",testplugin)
         
-        mainPath=os.path.join(self.rootPath,"plugins")
-        for dir in os.listdir(mainPath):
-            if os.path.isdir(os.path.join(mainPath,dir)):
-                print(dir)
-                
-            for testplugin in getPlugins(idoboz_web.IDriver,plugins):
-                print("testplugin:",testplugin)
-#        turu=imp.find_module("doboz_web.plugins")
-#        print("tutu",turu)
-#        import pkgutil
-#        import  doboz_web.plugins
-#        turu=[name for _, name, _ in pkgutil.iter_modules(["doboz_web"])]
-#        print(turu)
         
+        mainPath=os.path.join(self.rootPath,"addons")
+        import pkgutil
+        truc=pkgutil.walk_packages(path=[mainPath], prefix='')
+        for loader,name,isPkg in truc:
+            if isPkg:
+                #subPackages=
+                mod = pkgutil.get_loader(name).load_module(name)
+                try:
+                    for testplugin in getPlugins(idoboz_web.IDriver,mod):
+                        print("testplugin:",testplugin)
+                except:
+                    pass
+                        
         
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")

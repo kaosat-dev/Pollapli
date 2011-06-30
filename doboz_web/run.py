@@ -40,7 +40,7 @@ def configure_all():
     if not os.path.exists(envPath):
         os.makedirs(envPath)
     
-    sys.path.insert(0, os.path.join(rootPath, "plugins"))
+    sys.path.insert(0, os.path.join(rootPath, "addons"))
     sys.path.insert(0, os.path.join(rootPath))
     """"""""""""""""""""""""""""""""""""
     """Reprap config elements"""
