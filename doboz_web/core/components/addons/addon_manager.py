@@ -5,6 +5,7 @@
 """
 import logging
 import uuid
+import pkgutil
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
@@ -12,6 +13,8 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
+from twisted.plugin import getPlugins,IPlugin
+
 
 from doboz_web.core.components.addons.addon import AddOn
 from doboz_web.core.tools.wrapper_list import WrapperList
@@ -23,17 +26,11 @@ class AddOnManager(object):
     Class for managing addons: works as a container, a handler
     and a central managment point for the list of avalailable addons
     """
-    nodeTypes={}
-    nodeTypes["reprap"]=ReprapCapability
-    nodeTypes["dummy"]=DummyCapability
-    
-    
-    def __init__(self,parentEnv):
+    addons={}
+    addOnPath=None
+    def __init__(self):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.addonManager")
-        self.parentEnv=parentEnv
-        self.nodes={}
-        self.lastNodeId=0
-    
+        
     @defer.inlineCallbacks    
     def setup(self):
         def addAddOn(nodes,nodeTypes):
@@ -55,7 +52,7 @@ class AddOnManager(object):
     The following are the "CRUD" (Create, read, update,delete) methods for the general handling of nodes
     """
     @defer.inlineCallbacks
-    def add_node(self,name="node",description="",type=None,connector=None,driver=None,*args,**kwargs):
+    def add_addOn(self,name="node",description="",type=None,connector=None,driver=None,*args,**kwargs):
         """
         Add a new node to the list of nodes of the current environment
         Params:
@@ -143,6 +140,21 @@ class AddOnManager(object):
             yield self.delete_node(node.id)        
         defer.returnValue(None)
    
+    @classmethod
+    @defer.inlineCallbacks
+    def get_plugins(cls,interface=None,addon=None):
+        """
+        method to get specific plugins
+        """        
+        plugins=[]
+        addonpackages=pkgutil.walk_packages(path=[AddOnManager.addOnPath], prefix='')
+        for loader,name,isPkg in addonpackages:            
+            mod = pkgutil.get_loader(name).load_module(name)
+            try:
+                plugins.extend((yield getPlugins(interface,mod)))
+            except Exception as inst:
+                print("error in fetching plugin: %s"%str(inst))
+        defer.returnValue(plugins)
     """
     ####################################################################################
     Helper Methods    

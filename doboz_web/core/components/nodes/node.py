@@ -16,12 +16,13 @@ from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.automation.task_manager import TaskManager
 #from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
-from doboz_web.core.components.connectors.hardware.drivers.reprap.Teacup.teacup_driver import TeacupDriver
-from doboz_web.core.components.connectors.hardware.drivers.reprap.FiveD.fived_driver import FiveDDriver
+
 from doboz_web.exceptions import UnknownDriver,NoConnectorSet
 
 from twisted.plugin import getPlugins
 from doboz_web import idoboz_web
+from doboz_web.core.components.addons.addon_manager import AddOnManager
+
 
 class Node(DBObject):
     """
@@ -48,8 +49,8 @@ class Node(DBObject):
             if len(connectors)>0:
                 node.connector=connectors[0] 
                 #just a cheap hack for now
-                node.connector.set_driver(TeacupDriver(speed=115200))
-                log.msg("Node with id",self.id,", connector",self.connector.__class__.__name__, "setup successfully", logLevel=logging.CRITICAL)
+                #node.connector.set_driver(TeacupDriver(speed=115200))
+                #log.msg("Node with id",self.id,", connector",self.connector.__class__.__name__, "setup successfully", logLevel=logging.CRITICAL)
 
         SerialConnector.find(where=['node_id = ?', self.id]).addCallback(addConnector,self)
         
@@ -83,33 +84,28 @@ class Node(DBObject):
         self.connector.node.set(self)
         
         driver=None
-        if driverType== "teacup":
-            driver=TeacupDriver(**driverParams)
-        elif driverType=="fived":
-            driver=FiveDDriver(**driverParams)
-        if driver:
-            self.connector.set_driver(driver) 
-        else :
+        for driverKlass in (yield AddOnManager.get_plugins(idoboz_web.IDriver)):
+            if driverType==driverKlass.__name__.lower():
+                driver=driverKlass(**driverParams)
+                self.connector.set_driver(driver)
+                self.connector.save()  
+                log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
+                break
+        if not driver:
             raise UnknownDriver()
         
-        self.connector.save()
+        defer.returnValue(self.connector)
         
-        log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
-
 #        if hasattr(self.connector, 'events'):    
 #             self.connector.events.disconnected+=self._on_connector_disconnected
 #             self.connector.events.reconnected+=self._on_connector_reconnected  
 #             self.connector.events.OnDataRecieved+=self._on_data_recieved
 #        #self.taskManager.connector=self.connector
 
-        print("plugin test")
-        import doboz_web.plugins as plugins
-        for driver in getPlugins(idoboz_web.IDriver,plugins):
-            print("driver",driver)
-            print("params",driverParams)
-            driverInstance=driver(**driverParams)
-            print(driverInstance)
-            print(driverInstance.tutu())
+        
+        
+
+            
         
         
     def get_connector(self):

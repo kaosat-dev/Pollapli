@@ -17,16 +17,8 @@ from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 
 from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
+from doboz_web.core.components.addons.addon_manager import AddOnManager
 
-
-
-from twisted.plugin import getPlugins
-from doboz_web import idoboz_web
-
-import imp
-
-from zope.interface import Interface, Attribute,implements
-from twisted.plugin import IPlugin
 
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
@@ -51,19 +43,27 @@ class MainServer():
         self.exceptionConverter.add_exception(UnknownDriver,500,9,"Unknown connector driver type")
     
         
-        
+        AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
         mainPath=os.path.join(self.rootPath,"addons")
-        import pkgutil
-        truc=pkgutil.walk_packages(path=[mainPath], prefix='')
-        for loader,name,isPkg in truc:
-            if isPkg:
-                #subPackages=
-                mod = pkgutil.get_loader(name).load_module(name)
-                try:
-                    for testplugin in getPlugins(idoboz_web.IDriver,mod):
-                        print("testplugin:",testplugin)
-                except:
-                    pass
+#        print(sys.path)
+#        
+#        
+#        from twisted.plugin import getPlugins
+#        from zope.interface import implements
+#        from twisted.plugin import IPlugin
+#        from doboz_web import idoboz_web
+#        import pkgutil
+#        truc=pkgutil.walk_packages(path=[mainPath], prefix='')
+#        for loader,name,isPkg in truc:
+#            if isPkg:
+#                #subPackages=
+#                mod = pkgutil.get_loader(name).load_module(name)
+#                print("mod")
+#                try:
+#                    for testplugin in getPlugins(idoboz_web.IDriver,mod):
+#                        print("testplugin:",testplugin)
+#                except Exception as inst:
+#                    print("error in fetch plugin",inst)
                         
         
     def start(self):

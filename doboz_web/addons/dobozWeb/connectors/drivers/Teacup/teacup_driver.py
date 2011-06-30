@@ -7,8 +7,8 @@ from doboz_web.core.components.connectors.driver import Driver
 class TeacupDriver(Driver):
     classProvides(IPlugin, idoboz_web.IDriver)
     """Driver class: intermediary element that formats commands according to a spec before they get sent to the connector"""
-    def __init__(self,category="reprap",speed=115200,seperator="\n",bufferSize=8):
-        Driver.__init__(self,category,speed,seperator,bufferSize)
+    def __init__(self,type="reprap",speed=115200,seperator="\n",bufferSize=8):
+        Driver.__init__(self,type,speed,seperator,bufferSize)
     def _handle_machineInit(self,datablock):
         if "start" in datablock  :
             self.remoteInitOk=True

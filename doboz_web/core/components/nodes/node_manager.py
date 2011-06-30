@@ -16,8 +16,7 @@ from twisted.python.log import PythonLoggingObserver
 
 #from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNode
 from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
-from doboz_web.core.components.connectors.hardware.drivers.reprap.Teacup.teacup_driver import TeacupDriver
-from doboz_web.core.components.connectors.hardware.drivers.reprap.FiveD.fived_driver import FiveDDriver
+
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.tools.wrapper_list import WrapperList
 from doboz_web.exceptions import UnknownNodeType,NodeNotFound
