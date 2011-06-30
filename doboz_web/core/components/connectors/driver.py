@@ -10,6 +10,7 @@ from zope.interface import Interface, Attribute,implements
 from twisted.plugin import IPlugin
 
 
+
 class Command(object):
     """Base command class, encapsulate all request and answer commands, also has a 'special' flag for commands that do no participate in normal flow of gcodes : i
     ie for example , regular poling of temperatures for display (the "OK" from those commands MUST not affect the line by line sending/answering of gcodes)
@@ -54,15 +55,16 @@ class Driver(DBObject):
         self.logger = logging.getLogger("dobozweb.core.components.driver")      
         self.logger.setLevel(logging.INFO)
         self.type=type
+        self.connectionType=connectionType
         self.speed=speed
         self.seperator=seperator    
         self.bufferSize=bufferSize
         self.remoteInitOk=False
         self.answerableCommandBuffer=[]
         self.commandBuffer=[]
-        self.commandSlots=bufferSize
-        self.connectionType=connectionType
+        self.commandSlots=bufferSize 
         
+        self.connection=None
         
     def _format_data(self,datablock,*args,**kwargs):
         """
@@ -134,6 +136,8 @@ class Driver(DBObject):
             else:
                 cmd=Command(answer=datablock)
                 cmd.answerComplete=True
+                
+                
             self.logger.debug("%d elements in commandBuffer",len(self.commandBuffer))
         return cmd
      

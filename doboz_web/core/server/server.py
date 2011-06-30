@@ -19,7 +19,8 @@ from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
 from doboz_web.core.components.addons.addon_manager import AddOnManager
 
-
+from doboz_web.core.signal_system import SignalHander,TestChannel
+from louie import dispatcher,error,Any,All
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
         self.port=port
@@ -44,27 +45,16 @@ class MainServer():
     
         
         AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
-        mainPath=os.path.join(self.rootPath,"addons")
-#        print(sys.path)
-#        
-#        
-#        from twisted.plugin import getPlugins
-#        from zope.interface import implements
-#        from twisted.plugin import IPlugin
-#        from doboz_web import idoboz_web
-#        import pkgutil
-#        truc=pkgutil.walk_packages(path=[mainPath], prefix='')
-#        for loader,name,isPkg in truc:
-#            if isPkg:
-#                #subPackages=
-#                mod = pkgutil.get_loader(name).load_module(name)
-#                print("mod")
-#                try:
-#                    for testplugin in getPlugins(idoboz_web.IDriver,mod):
-#                        print("testplugin:",testplugin)
-#                except Exception as inst:
-#                    print("error in fetch plugin",inst)
-                        
+        
+        def tutu(*args,**kwargs):
+            print("tutu")
+        bob=SignalHander("bob")
+        bab=SignalHander("bab",[("doboz_web.connector",Any,[tutu]),("toto",Any,[tutu])])
+        
+        
+        bob.send_message("doboz_web.connector",{"data":25})
+        bob.send_message("toto",{"data":"grosse madame"})
+        bob.send_message("pouet",{"data":42})
         
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")
@@ -83,6 +73,6 @@ class MainServer():
         log.msg("Server started!", logLevel=logging.CRITICAL)
         reactor.run()
          #s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #s.connect(('google.com', 0))
-    #hostIp=s.getsockname()[0]
+         #s.connect(('google.com', 0))
+         #hostIp=s.getsockname()[0]
     

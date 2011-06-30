@@ -54,8 +54,8 @@ class SerialConnector(HardwareConnector,DBObject):
     def connect(self):
         try:
             self.serial=PortWrapper(self.protocol,"Com4",reactor,baudrate=self.speed)
-        except:
-            print("failed to connect to port")
+        except Exception as inst:
+            print("failed to connect to port",str(inst))
     def disconnect(self):
         #print("disconnecting")
         try:
