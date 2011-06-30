@@ -6,10 +6,10 @@ from twisted.web.static import File
 from twisted.web.server import Site
 from twisted.web.resource import Resource
 from twisted.web.resource import NoResource
-
-#
 from twisted.internet import reactor
 from twisted.enterprise import adbapi
+from twisted.plugin import pluginPackagePaths
+
 
 from doboz_web.core.components.environments.environment_manager import EnvironmentManager
 from doboz_web.core.server.rest.handlers.environment_handlers import EnvironmentsHandler
@@ -20,10 +20,20 @@ from doboz_web.core.file_manager import FileManager
 
 
 
+from twisted.plugin import getPlugins
+from doboz_web import idoboz_web
+
+import imp
+
+import doboz_web.plugins as  plugins
+from zope.interface import Interface, Attribute,implements
+from twisted.plugin import IPlugin
+
 class MainServer():
-    def __init__(self,port,filepath,dataPath):
+    def __init__(self,port,rootPath,filePath,dataPath):
         self.port=port
-        self.filePath=filepath
+        self.rootPath=rootPath
+        self.filePath=filePath
         self.dataPath=dataPath
         FileManager.setRootDir(self.dataPath)
         
@@ -41,6 +51,25 @@ class MainServer():
         self.exceptionConverter.add_exception(UnknownConnector,500,8,"Unknown connector type")
         self.exceptionConverter.add_exception(UnknownDriver,500,9,"Unknown connector driver type")
     
+        print(sys.path)
+        for testplugin in getPlugins(idoboz_web.ITestPlugin,plugins):
+            print("testplugin:",testplugin)
+        
+        mainPath=os.path.join(self.rootPath,"plugins")
+        for dir in os.listdir(mainPath):
+            if os.path.isdir(os.path.join(mainPath,dir)):
+                print(dir)
+                
+            for testplugin in getPlugins(idoboz_web.IDriver,plugins):
+                print("testplugin:",testplugin)
+#        turu=imp.find_module("doboz_web.plugins")
+#        print("tutu",turu)
+#        import pkgutil
+#        import  doboz_web.plugins
+#        turu=[name for _, name, _ in pkgutil.iter_modules(["doboz_web"])]
+#        print(turu)
+        
+        
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")
         observer.start()

@@ -6,6 +6,9 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
+from zope.interface import Interface, Attribute,implements
+from twisted.plugin import IPlugin
+
 
 class Command(object):
     """Base command class, encapsulate all request and answer commands, also has a 'special' flag for commands that do no participate in normal flow of gcodes : i
@@ -35,11 +38,18 @@ class Command(object):
         #return "Special:"+ str(self.special)+", TwoStep:"+str(self.twoStep) +", Answer Required:"+str(self.answerRequired)+", Request:"+ str(self.request)+", Answer:"+ str(self.answer) 
 
 
+
+
+
+
+
+
 class Driver(DBObject):
     """
     Driver class: intermediary element that formats outgoing and incoming commands according to a spec before they get sent to the connector
     """
     BELONGSTO = ['node']
+    
     def __init__(self,type="base driver",connectionType="serial",speed=19200,seperator="\n",bufferSize=8):
         self.logger = logging.getLogger("dobozweb.core.components.driver")      
         self.logger.setLevel(logging.INFO)

@@ -18,9 +18,10 @@ from doboz_web.core.components.automation.task_manager import TaskManager
 from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
 from doboz_web.core.components.connectors.hardware.drivers.reprap.Teacup.teacup_driver import TeacupDriver
 from doboz_web.core.components.connectors.hardware.drivers.reprap.FiveD.fived_driver import FiveDDriver
-
 from doboz_web.exceptions import UnknownDriver,NoConnectorSet
- 
+
+from twisted.plugin import getPlugins
+from doboz_web import idoboz_web
 
 class Node(DBObject):
     """
@@ -100,8 +101,16 @@ class Node(DBObject):
 #             self.connector.events.reconnected+=self._on_connector_reconnected  
 #             self.connector.events.OnDataRecieved+=self._on_data_recieved
 #        #self.taskManager.connector=self.connector
-         
-        defer.returnValue(self.connector) 
+
+        print("plugin test")
+        import doboz_web.plugins as plugins
+        for driver in getPlugins(idoboz_web.IDriver,plugins):
+            print("driver",driver)
+            print("params",driverParams)
+            driverInstance=driver(**driverParams)
+            print(driverInstance)
+            print(driverInstance.tutu())
+        
         
     def get_connector(self):
         if self.connector:

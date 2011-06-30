@@ -226,11 +226,17 @@ class EnvironmentManager(object):
              )''')
     @defer.inlineCallbacks
     def _generateDatabase(self):
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE addons(
+             id INTEGER PRIMARY KEY,
+             name TEXT,
+             description TEXT,
+             active boolean NOT NULL default true           
+             )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE environments(
              id INTEGER PRIMARY KEY,
              name TEXT,
-             status TEXT NOT NULL DEFAULT "Live",
-             description TEXT
+             description TEXT,
+             status TEXT NOT NULL DEFAULT "Live"
              )''')
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE nodes(

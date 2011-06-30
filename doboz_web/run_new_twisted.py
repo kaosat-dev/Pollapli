@@ -10,12 +10,14 @@ import ConfigParser
 import logging
 import os
 import socket
+#from doboz_web import plugins
 from twisted.python.runtime import platform
 
 def configure_all():
     """
     Setup all pre required elements for reprap , webcam handling and webserver 
     """ 
+    
     
     logger = logging.getLogger("dobozweb.core")
     logger.setLevel(logging.ERROR)
@@ -34,10 +36,12 @@ def configure_all():
     
     """"""""""""""""""""""""""""""""""""
     """Environment manager elements"""
-    envPath=os.path.join(rootPath,"data")
+    envPath=os.path.join(rootPath,"data","environments")
     if not os.path.exists(envPath):
         os.makedirs(envPath)
     
+    sys.path.insert(0, os.path.join(rootPath, "plugins"))
+    sys.path.insert(0, os.path.join(rootPath))
     """"""""""""""""""""""""""""""""""""
     """Reprap config elements"""
     #reprapNode = ReprapNode()
@@ -95,7 +99,7 @@ def configure_all():
         
     
     from doboz_web.core.server.server import MainServer
-    server=MainServer(port,filePath,envPath)
+    server=MainServer(port,rootPath,filePath,envPath)
     
     """
     starts all server components
