@@ -6,6 +6,10 @@
 import logging
 import uuid
 import pkgutil
+import zipfile 
+from zipfile import ZipFile
+import os
+import sys
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
@@ -114,32 +118,60 @@ class AddOnManager(object):
         return self.nodes[id]
         #self.nodes[id].update()
     
-    def delete_node(self,id):
+    def delete_addOn(self,id):
         """
-        Remove a node : this needs a whole set of checks, 
-        as it would delete an node completely 
+        Remove an addOn : this needs a whole set of checks, 
+        as it would delete an addOn completely 
         Params:
-        id: the id of the node
+        id: the id of the addOn
         """
         d=defer.Deferred()
-        def remove(id,nodes):
-            nodeName=nodes[id].name
-            nodes[id].delete()
-            del nodes[id]
-            log.msg("Removed node ",nodeName,"with id ",id,logLevel=logging.CRITICAL)
-        d.addCallback(remove,self.nodes)
+        def remove(id,addOns):
+            addOnName=addOns[id].name
+            addOns[id].delete()
+            del addOns[id]
+            log.msg("Removed addOn ",addOnName,"with id ",id,logLevel=logging.CRITICAL)
+        d.addCallback(remove,self.addOns)
         reactor.callLater(0,d.callback,id)
         return d
             
     @defer.inlineCallbacks
     def clear_addons(self):
         """
-        Removes & deletes ALL the nodes, should be used with care
+        Removes & deletes ALL the addons, should be used with care,as well as checks on client side
         """
-        for node in self.nodes.values():
-            yield self.delete_node(node.id)        
+        for addOns in self.addons.values():
+            yield self.delete_addOn(addOn.id)        
         defer.returnValue(None)
    
+    def find_addons(self):
+        d=defer.Deferred()   
+        def scan(addOnList):
+            dirs=os.listdir(AddOnManager.addOnPath)
+            for dir in dirs:
+                fullpath=os.path.join(AddOnManager.addOnPath,dir)           
+                if os.path.isdir(fullpath):
+                  addOnList.append(AddOn(name=dir,description="",path=fullPath))  
+            
+    
+    def extract_addons(self):
+        d=defer.Deferred()      
+        def extract():
+            dirs=os.listdir(AddOnManager.addOnPath)
+            for dir in dirs:
+                baseName,ext= os.path.splitext(dir)
+                baseName=baseName.replace('-','_')
+                baseName=baseName.replace('.','_') 
+                if ext==".egg":
+                    eggFilePath=os.path.join(AddOnManager.addOnPath,dir)
+                    eggfile=ZipFile(eggFilePath, 'r')
+                    eggfile.extractall(path=os.path.join(AddOnManager.addOnPath,baseName))
+                    eggfile.close()
+                    os.remove(eggFilePath)
+        d.addCallback(extract)
+        reactor.callLater(1,d.callback)
+        return d
+    
     @classmethod
     @defer.inlineCallbacks
     def get_plugins(cls,interface=None,addon=None):
@@ -147,14 +179,47 @@ class AddOnManager(object):
         method to get specific plugins
         """        
         plugins=[]
-        addonpackages=pkgutil.walk_packages(path=[AddOnManager.addOnPath], prefix='')
-        for loader,name,isPkg in addonpackages:            
-            mod = pkgutil.get_loader(name).load_module(name)
+        
+        @defer.inlineCallbacks
+        def scan(path):
+            plugins=[]
+            if not path in sys.path:
+                print("adding ",path,"to sys path")
+                sys.path.insert(0, path) 
             try:
-                plugins.extend((yield getPlugins(interface,mod)))
+                addonpackages=pkgutil.walk_packages(path=[path], prefix='')
+                for loader,name,isPkg in addonpackages: 
+                    mod = pkgutil.get_loader(name).load_module(name)               
+                    try:
+                        plugins.extend((yield getPlugins(interface,mod)))
+                    except Exception as inst:
+                        print("error in fetching plugin: %s"%str(inst))
             except Exception as inst:
-                print("error in fetching plugin: %s"%str(inst))
+                print("error2 in fetching plugin: %s"%str(inst))
+            
+            defer.returnValue(plugins)
+                    
+        ###egg extraction , as a temporary hack 
+        dirs=os.listdir(AddOnManager.addOnPath)
+        for dir in dirs:
+            baseName,ext= os.path.splitext(dir)
+            baseName=baseName.replace('-','_')
+            baseName=baseName.replace('.','_') 
+            if ext==".egg":
+                eggFilePath=os.path.join(AddOnManager.addOnPath,dir)
+                eggfile=ZipFile(eggFilePath, 'r')
+                eggfile.extractall(path=os.path.join(AddOnManager.addOnPath,baseName))
+                eggfile.close()
+                os.remove(eggFilePath)
+        dirs=os.listdir(AddOnManager.addOnPath)
+        for dir in dirs:
+            fullpath=os.path.join(AddOnManager.addOnPath,dir)           
+            if os.path.isdir(fullpath):
+                plugins.extend((yield scan(fullpath)))
+                
+          
         defer.returnValue(plugins)
+        
     """
     ####################################################################################
     Helper Methods    

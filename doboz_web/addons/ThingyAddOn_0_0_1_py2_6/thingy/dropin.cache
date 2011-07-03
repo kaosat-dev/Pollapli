@@ -1,5 +1,5 @@
 (dp1
-S'teacup_driver'
+S'thingy_driver'
 p2
 ccopy_reg
 _reconstructor
@@ -14,7 +14,7 @@ NtRp6
 (dp7
 S'moduleName'
 p8
-S'dobozWeb.connectors.drivers.Teacup.teacup_driver'
+S'thingy.thingy_driver'
 p9
 sS'description'
 p10
@@ -42,7 +42,7 @@ p20
 g6
 sS'name'
 p21
-S'TeacupDriver'
+S'ThingyDriver'
 p22
 sg10
 Nsbasbs.

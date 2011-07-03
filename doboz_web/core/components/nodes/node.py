@@ -84,13 +84,17 @@ class Node(DBObject):
         self.connector.node.set(self)
         
         driver=None
-        for driverKlass in (yield AddOnManager.get_plugins(idoboz_web.IDriver)):
+        plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        print("plugin list",plugins)
+        
+        for driverKlass in plugins:#(yield AddOnManager.get_plugins(idoboz_web.IDriver)):
+            #log.msg("found driver",driverKlass, logLevel=logging.CRITICAL)
             if driverType==driverKlass.__name__.lower():
                 driver=driverKlass(**driverParams)
                 self.connector.set_driver(driver)
                 self.connector.save()  
                 log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
-                break
+                #break
         if not driver:
             raise UnknownDriver()
         

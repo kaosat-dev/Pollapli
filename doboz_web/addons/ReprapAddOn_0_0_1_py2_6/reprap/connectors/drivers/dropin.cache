@@ -14,7 +14,7 @@ NtRp6
 (dp7
 S'moduleName'
 p8
-S'dobozWeb.connectors.drivers'
+S'reprap.connectors.drivers'
 p9
 sS'description'
 p10

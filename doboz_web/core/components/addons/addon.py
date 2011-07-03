@@ -7,5 +7,9 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 
 class AddOn(DBObject):
-     def __init__(self,name="node",description="add on",*args,**kwargs):
+    def __init__(self,name="node",description="add on",path="",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
+        self.active=True
+        
+    def _toDict(self):
+        return {"AddOn":{"name":self.name,"description":"","active":self.active}}

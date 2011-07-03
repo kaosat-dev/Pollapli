@@ -14,7 +14,7 @@ NtRp6
 (dp7
 S'moduleName'
 p8
-S'dobozWeb.connectors.drivers.FiveD.fived_driver'
+S'reprap.connectors.drivers.FiveD.fived_driver'
 p9
 sS'description'
 p10

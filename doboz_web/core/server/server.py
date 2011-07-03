@@ -46,15 +46,15 @@ class MainServer():
         
         AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
         
-        def tutu(*args,**kwargs):
-            print("tutu")
-        bob=SignalHander("bob")
-        bab=SignalHander("bab",[("doboz_web.connector",Any,[tutu]),("toto",Any,[tutu])])
-        
-        
-        bob.send_message("doboz_web.connector",{"data":25})
-        bob.send_message("toto",{"data":"grosse madame"})
-        bob.send_message("pouet",{"data":42})
+#        def tutu(*args,**kwargs):
+#            print("tutu")
+#        bob=SignalHander("bob")
+#        bab=SignalHander("bab",[("doboz_web.connector",Any,[tutu]),("toto",Any,[tutu])])
+#        
+#        
+#        bob.send_message("doboz_web.connector",{"data":25})
+#        bob.send_message("toto",{"data":"grosse madame"})
+#        bob.send_message("pouet",{"data":42})
         
     def start(self):
         observer = log.PythonLoggingObserver("dobozweb.core.server")
