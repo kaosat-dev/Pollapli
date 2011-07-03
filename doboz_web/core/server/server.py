@@ -45,6 +45,8 @@ class MainServer():
     
         
         AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
+        AddOnManager.update_addOns()
+        #AddOnManager.set_addon_state(name="ReprapAddOn",activate=True)
         
 #        def tutu(*args,**kwargs):
 #            print("tutu")

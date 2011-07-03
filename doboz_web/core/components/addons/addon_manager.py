@@ -144,48 +144,73 @@ class AddOnManager(object):
             yield self.delete_addOn(addOn.id)        
         defer.returnValue(None)
    
-    def find_addons(self):
-        d=defer.Deferred()   
-        def scan(addOnList):
-            dirs=os.listdir(AddOnManager.addOnPath)
-            for dir in dirs:
-                fullpath=os.path.join(AddOnManager.addOnPath,dir)           
-                if os.path.isdir(fullpath):
-                  addOnList.append(AddOn(name=dir,description="",path=fullPath))  
-            
     
-    def extract_addons(self):
+        
+    """
+    ####################################################################################
+    Helper Methods    
+    """
+    @classmethod
+    def extract_addons(cls):
+        """
+        helper "hack" function to extract egg/zip files into their adapted directories
+        """
         d=defer.Deferred()      
-        def extract():
-            dirs=os.listdir(AddOnManager.addOnPath)
+        def extract(addOnPath):
+            dirs=os.listdir(addOnPath)
             for dir in dirs:
                 baseName,ext= os.path.splitext(dir)
                 baseName=baseName.replace('-','_')
                 baseName=baseName.replace('.','_') 
-                if ext==".egg":
-                    eggFilePath=os.path.join(AddOnManager.addOnPath,dir)
+                if ext==".egg" or ext==".zip":
+                    eggFilePath=os.path.join(addOnPath,dir)
                     eggfile=ZipFile(eggFilePath, 'r')
-                    eggfile.extractall(path=os.path.join(AddOnManager.addOnPath,baseName))
+                    eggfile.extractall(path=os.path.join(addOnPath,baseName))
                     eggfile.close()
                     os.remove(eggFilePath)
         d.addCallback(extract)
-        reactor.callLater(1,d.callback)
+        reactor.callLater(1,d.callback,AddOnManager.addOnPath)
         return d
     
     @classmethod
-    @defer.inlineCallbacks
-    def get_plugins(cls,interface=None,addon=None):
+    def list_addons(cls):
         """
-        method to get specific plugins
-        """        
+        Scans the addOns' path for addons , and adds them to the list of currently available addOns
+        """
+        d=defer.Deferred()   
+        def scan(addOnList,addOnPath,*args,**kwargs):
+            dirs=os.listdir(addOnPath)
+            index=0
+            for dir in dirs:
+                fullpath=os.path.join(addOnPath,dir)           
+                if os.path.isdir(fullpath):
+                    if not fullpath in sys.path:
+                        print("adding ",fullpath,"to sys path")
+                        sys.path.insert(0, fullpath) 
+                    addOnList[index]=AddOn(name=dir,description="",path=fullpath) 
+                    index+=1
+            print(addOnList)
+        d.addCallback(scan,AddOnManager.addOnPath)
+        reactor.callLater(0,d.callback,AddOnManager.addons)
+        return d  
+    
+    @classmethod
+    def update_addOns(cls):
+        """
+        wrapper method, for extraction+ list update in case of newly installed addons
+        """
+        AddOnManager.extract_addons()
+        AddOnManager.list_addons()
+    @classmethod
+    @defer.inlineCallbacks
+    def get_plugins(cls,interface=None,addOnName=None):
+        """
+        find a specific plugin in the list of available addOns, by interface and/or addOn
+        """
         plugins=[]
-        
         @defer.inlineCallbacks
         def scan(path):
             plugins=[]
-            if not path in sys.path:
-                print("adding ",path,"to sys path")
-                sys.path.insert(0, path) 
             try:
                 addonpackages=pkgutil.walk_packages(path=[path], prefix='')
                 for loader,name,isPkg in addonpackages: 
@@ -196,36 +221,31 @@ class AddOnManager(object):
                         print("error in fetching plugin: %s"%str(inst))
             except Exception as inst:
                 print("error2 in fetching plugin: %s"%str(inst))
-            
             defer.returnValue(plugins)
-                    
-        ###egg extraction , as a temporary hack 
-        dirs=os.listdir(AddOnManager.addOnPath)
-        for dir in dirs:
-            baseName,ext= os.path.splitext(dir)
-            baseName=baseName.replace('-','_')
-            baseName=baseName.replace('.','_') 
-            if ext==".egg":
-                eggFilePath=os.path.join(AddOnManager.addOnPath,dir)
-                eggfile=ZipFile(eggFilePath, 'r')
-                eggfile.extractall(path=os.path.join(AddOnManager.addOnPath,baseName))
-                eggfile.close()
-                os.remove(eggFilePath)
-        dirs=os.listdir(AddOnManager.addOnPath)
-        for dir in dirs:
-            fullpath=os.path.join(AddOnManager.addOnPath,dir)           
-            if os.path.isdir(fullpath):
-                plugins.extend((yield scan(fullpath)))
+        
+ 
+        for addOn in AddOnManager.addons.itervalues():
+            if addOnName:
+                if addOn.name==addOnName and addOn.enabled:
+                    plugins.extend((yield scan(addOn.path)))
+            else:
+                if  addOn.enabled:
+                    plugins.extend((yield scan(addOn.path)))
                 
-          
         defer.returnValue(plugins)
         
-    """
-    ####################################################################################
-    Helper Methods    
-    """
-    def enable_addon(self):
-        pass
-    
-    def disable_addon(self):
-        pass
+    @classmethod
+    def set_addon_state(cls,id=None,name=None,activate=False):
+        d=defer.Deferred()
+        def activate(addOns):
+            if id:
+                addOns[id].enabled=activate
+            elif name:
+                for addOn in addOns.itervalues():
+                    if addOn.name==name:
+                        addOn.enabled=activate
+                    
+        d.addCallback(activate)
+        reactor.callLater(2,d.callback,AddOnManager.addons)
+        return d
+   

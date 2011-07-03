@@ -9,7 +9,10 @@ from twisted.python.log import PythonLoggingObserver
 class AddOn(DBObject):
     def __init__(self,name="node",description="add on",path="",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
-        self.active=True
+        self.enabled=False
+        self.name=name
+        self.description=description
+        self.path=path
         
     def _toDict(self):
-        return {"AddOn":{"name":self.name,"description":"","active":self.active}}
+        return {"AddOn":{"name":self.name,"description":"","active":self.enabled,"path":self.path}}
