@@ -1,7 +1,6 @@
 """
 .. py:module:: addon_manager
-   :synopsis: manager of addons : add ons are packages of plugins + extras, and this manager handles the references
-   to all of them
+   :synopsis: manager of addons : add ons are packages of plugins + extras, and this manager handles the references to all of them
 """
 import logging
 import uuid
@@ -83,7 +82,7 @@ class AddOnManager(object):
             raise(UnknownNodeType())
         defer.returnValue(None)
     
-    def get_nodes(self,filter=None):
+    def get_addOns(self,filter=None):
         """
         Returns the list of nodes, filtered by  the filter param
         the filter is a dictionary of list, with each key beeing an attribute
@@ -107,14 +106,13 @@ class AddOnManager(object):
         reactor.callLater(0.5,d.callback,filter)
         return d
     
-    def get_node(self,id):
+    def get_addOn(self,id):
         if not id in self.nodes.keys():
             raise NodeNotFound()
         return self.nodes[id]
     
-    def update_node(self,id,name,description):
-        """Method for node update"""
-        print("updating node")
+    def update_addOn(self,id,name,description):
+        """Method for addOn update"""
         return self.nodes[id]
         #self.nodes[id].update()
     

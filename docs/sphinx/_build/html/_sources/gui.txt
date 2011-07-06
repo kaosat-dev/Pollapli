@@ -1,0 +1,5 @@
+The interface
+=============
+
+Environments are the base elements of Doboz_web.
+

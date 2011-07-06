@@ -1,7 +1,6 @@
 """
 .. py:module:: node_manager
-   :synopsis: manager of nodes : handles global list of available node types
-   as well as the individual nodes it contains
+   :synopsis: manager of nodes : handles global list of available node typesas well as the individual nodes it contains
 """
 import logging
 import uuid

@@ -19,7 +19,7 @@ GCode Parser
 
 parser used to isolate components (X,Y,Z,E etc) in gcode files
 
-.. automodule:: doboz_web.core.tools.gcodeparser
+.. automodule:: doboz_web.core.tools.gcode_parser
  :members:
  :show-inheritance:
  :undoc-members:
@@ -42,7 +42,13 @@ Point cloud builder
  :show-inheritance:
  :undoc-members:
  
+Wrapper List
+===============================
 
+.. automodule:: doboz_web.core.tools.wrapper_list
+ :members:
+ :show-inheritance:
+ :undoc-members:
 
 
 """

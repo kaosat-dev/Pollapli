@@ -1,0 +1,237 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>AddOns &mdash; Doboz-web v0.5.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Doboz-web v0.5.0 documentation" href="index.html" />
+    <link rel="up" title="Components" href="components.html" />
+    <link rel="next" title="Tools" href="tools.html" />
+    <link rel="prev" title="Automation (tasks)" href="automation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tools.html" title="Tools"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="automation.html" title="Automation (tasks)"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Doboz-web v0.5.0 documentation</a> &raquo;</li>
+          <li><a href="components.html" accesskey="U">Components</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="addons">
+<h1>AddOns<a class="headerlink" href="#addons" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.5.0.</span></p>
+<p>Pollapli is expandable (additional functionalities, different drivers/nodes etc) via a system of addOns, that
+are in effect groups of plugins + additional data.</p>
+<span class="target" id="module-doboz_web.core.components.addons"></span><div class="section" id="module-doboz_web.core.components.addons.addon">
+<span id="addon"></span><h2>AddOn<a class="headerlink" href="#module-doboz_web.core.components.addons.addon" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="doboz_web.core.components.addons.addon.AddOn">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.addons.addon.</tt><tt class="descname">AddOn</tt><big>(</big><em>name='node'</em>, <em>description='add on'</em>, <em>path=''</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon.AddOn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">twistar.dbobject.DBObject</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-doboz_web.core.components.addons.addon_manager">
+<span id="addon-manager"></span><h2>Addon Manager<a class="headerlink" href="#module-doboz_web.core.components.addons.addon_manager" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-addon_manager"></span><dl class="class">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.addons.addon_manager.</tt><tt class="descname">AddOnManager</tt><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Class for managing addons: works as a container, a handler
+and a central managment point for the list of avalailable addons</p>
+<dl class="method">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.add_addOn">
+<tt class="descname">add_addOn</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.add_addOn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new node to the list of nodes of the current environment
+Params:
+name: the name of the node
+Desciption: short description of node
+type: the type of the node : very important , as it will be used to instanciate the correct class
+instance
+Connector:the connector to use for this node
+Driver: the driver to use for this node&#8217;s connector</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.clear_addons">
+<tt class="descname">clear_addons</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.clear_addons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes &amp; deletes ALL the addons, should be used with care,as well as checks on client side</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.delete_addOn">
+<tt class="descname">delete_addOn</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.delete_addOn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an addOn : this needs a whole set of checks, 
+as it would delete an addOn completely 
+Params:
+id: the id of the addOn</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.extract_addons">
+<em class="property">classmethod </em><tt class="descname">extract_addons</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.extract_addons" title="Permalink to this definition">¶</a></dt>
+<dd><p>helper &#8220;hack&#8221; function to extract egg/zip files into their adapted directories</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.get_addOn">
+<tt class="descname">get_addOn</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.get_addOn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.get_addOns">
+<tt class="descname">get_addOns</tt><big>(</big><em>filter=None</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.get_addOns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the list of nodes, filtered by  the filter param
+the filter is a dictionary of list, with each key beeing an attribute
+to check, and the values in the list , values of that param to check against</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.get_plugins">
+<em class="property">classmethod </em><tt class="descname">get_plugins</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.get_plugins" title="Permalink to this definition">¶</a></dt>
+<dd><p>find a specific plugin in the list of available addOns, by interface and/or addOn</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.list_addons">
+<em class="property">classmethod </em><tt class="descname">list_addons</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.list_addons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scans the addOns&#8217; path for addons , and adds them to the list of currently available addOns</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.set_addon_state">
+<em class="property">classmethod </em><tt class="descname">set_addon_state</tt><big>(</big><em>id=None</em>, <em>name=None</em>, <em>activate=False</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.set_addon_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.setup">
+<tt class="descname">setup</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.update_addOn">
+<tt class="descname">update_addOn</tt><big>(</big><em>id</em>, <em>name</em>, <em>description</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.update_addOn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for addOn update</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="doboz_web.core.components.addons.addon_manager.AddOnManager.update_addOns">
+<em class="property">classmethod </em><tt class="descname">update_addOns</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.addons.addon_manager.AddOnManager.update_addOns" title="Permalink to this definition">¶</a></dt>
+<dd><p>wrapper method, for extraction+ list update in case of newly installed addons</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">AddOns</a><ul>
+<li><a class="reference internal" href="#module-doboz_web.core.components.addons.addon">AddOn</a></li>
+<li><a class="reference internal" href="#module-doboz_web.core.components.addons.addon_manager">Addon Manager</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="automation.html"
+                        title="previous chapter">Automation (tasks)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tools.html"
+                        title="next chapter">Tools</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/addons.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tools.html" title="Tools"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="automation.html" title="Automation (tasks)"
+             >previous</a> |</li>
+        <li><a href="index.html">Doboz-web v0.5.0 documentation</a> &raquo;</li>
+          <li><a href="components.html" >Components</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Mark &#39;ckaos&#39; Moissette.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

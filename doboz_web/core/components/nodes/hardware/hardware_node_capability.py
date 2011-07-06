@@ -1,5 +1,5 @@
 """
-.. py:module:: hardware_node
+.. py:module:: hardware_node_capability
    :synopsis: hardware node for reprap handling.
 """
 import logging

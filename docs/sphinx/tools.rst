@@ -8,6 +8,6 @@ Contents:
 
 
 
-.. automodule:: core.tools
+.. automodule:: doboz_web.core.tools
  :members:
  :show-inheritance:

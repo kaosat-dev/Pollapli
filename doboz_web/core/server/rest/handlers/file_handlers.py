@@ -11,11 +11,10 @@ from twisted.python.log import PythonLoggingObserver
 from twisted.web.server import NOT_DONE_YET
 from twisted.internet.task import deferLater
 
-from doboz_web.core.server.rest.default_rest_handler import DefaultRestHandler
+from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-from doboz_web.core.server.rest.environment_handler import EnvironmentHandler
 
 class FilesHandler(DefaultRestHandler):
     """

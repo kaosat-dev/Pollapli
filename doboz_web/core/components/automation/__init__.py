@@ -13,6 +13,14 @@ Base class for all tasks
  :show-inheritance:
  :undoc-members:
 
+Task Manager
+===============================
+
+.. automodule:: doboz_web.core.components.automation.task_manager
+ :members:
+ :show-inheritance:
+ :undoc-members:
+ 
 Print Task
 ===============================
 
@@ -21,30 +29,4 @@ Print Task
  :show-inheritance:
  :undoc-members:
  
-Scan Task
-===============================
-
-.. automodule:: doboz_web.core.components.automation.scan_task
- :members:
- :show-inheritance:
- :undoc-members:
- 
-
-Timer Task
-===============================
-
-.. automodule:: doboz_web.core.components.automation.timer_task
- :members:
- :show-inheritance:
- :undoc-members:
- 
-Transition Task
-===============================
-
-.. automodule:: doboz_web.core.components.automation.timer_task
- :members:
- :show-inheritance:
- :undoc-members:
-
-
 """

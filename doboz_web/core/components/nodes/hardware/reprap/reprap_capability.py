@@ -23,11 +23,11 @@ from doboz_web.core.components.nodes.node import Node
 class ReprapManagerEvents(Events):
     __events__=('OnLineParsed','OnTotalLinesSet','OnTotalLayersSet','OnPathSet','OnPositionChanged')
 
-class ReprapCapability(DBObject):
-    BELONGSTO   = ['node','environment']      
+class ReprapCapability(DBObject):     
     """
     A reprap node : hardware node  in the case of a reprap: endstops, temperature sensors, steppers, heaters
     """
+    BELONGSTO   = ['node','environment'] 
     def __init__(self,info="mk",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.info=info

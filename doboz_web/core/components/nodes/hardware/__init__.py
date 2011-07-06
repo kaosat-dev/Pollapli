@@ -5,9 +5,8 @@
 Hardware Node
 ===============================
 
-This is something I want to say that is not in the docstring.
 
-.. automodule:: doboz_web.core.components.hardware_nodes.hardware_node
+.. automodule:: doboz_web.core.components.nodes.hardware.hardware_node_capability
  :members:
  :show-inheritance:
  :undoc-members:
@@ -15,9 +14,8 @@ This is something I want to say that is not in the docstring.
 Reprap Node
 =============================
 
-This is something I want to say that is not in the docstring.
 
-.. automodule:: doboz_web.core.components.hardware_nodes.reprap.reprap_node
+.. automodule:: doboz_web.core.components.nodes.hardware.reprap.reprap_capability
  :members:
  :show-inheritance:
  :undoc-members:
@@ -25,9 +23,8 @@ This is something I want to say that is not in the docstring.
 Webcam Node
 =============================
 
-This is something I want to say that is not in the docstring.
 
-.. automodule:: doboz_web.core.components.hardware_nodes.webcam.webcam_node
+.. automodule:: doboz_web.core.components.nodes.hardware.webcam.webcam_node
  :members:
  :show-inheritance:
  :undoc-members:

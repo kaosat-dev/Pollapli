@@ -5,18 +5,49 @@
 
 Welcome to Doboz-web's documentation!
 =====================================
+
+.. warning::
+
+   Currently (version 0.5.0) Pollapli is not even an alpha version, features and documentation are partially implemented
+   and beeing reworked a lot, so use at your own risk! 
+ 
+Are you a user?
+===============
+ 
+Pollapli was thought from the start with end-users (thats you !)  in mind, making it as easy to use as possible, 
+without too much technical knowledge.
+
+
+
+Contents:
+
+.. toctree::
+	:maxdepth: 2
+	
+	user_overview
+	user_tutorial
+	user_interface
+	
+Are you a developper? 
+=====================
+ 
+All the technical doodads, the apis, class and function and documentations can be found here.
+ 
+.. note::
+
+   Everything is still in developpment, therefore subject to change: for example the move to the Twisted
+   framework was done recently, and some older elements still remain.
  
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+	:maxdepth: 2
    
-   run
-   hardware_nodes
-   hardware_connectors
-   hardware_drivers
-   automation
-   tools
+	dev_overview
+	run
+	rest_api
+	components
+	tools
 
 
 

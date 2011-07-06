@@ -3,17 +3,27 @@
 .. py:module:: webcam_node
    :synopsis: hardware node for webcam handling. 
 """
-
-import logging
+from twisted.internet import reactor, defer
+from twisted.enterprise import adbapi
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
+from twisted.python import log,failure
+from twisted.python.log import PythonLoggingObserver
 
 from doboz_web.core.tools.event_sys import *
-#from ..hardware_node import HardwareNode
+from doboz_web.core.components.nodes.hardware.hardware_node_capability import HardwareNodeCapability
+from doboz_web.core.components.nodes.node import Node
 
-class WebcamNode(HardwareNode):
+from doboz_web.core.tools.event_sys import *
+
+class WebcamNode(DBObject):
     """
     webcam Node class
     """
-    def __init__(self):
+    BELONGSTO   = ['node','environment'] 
+    def __init__(self,*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
         self.logger=logging.getLogger("dobozweb.core.WebcamNode")
         self.logger.setLevel(logging.ERROR)
         HardwareNode.__init__(self)

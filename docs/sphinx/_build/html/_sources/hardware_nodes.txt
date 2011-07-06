@@ -9,6 +9,6 @@ Contents:
 
 sdfsdfsd
 
-.. automodule:: core.components.hardware_nodes
+.. automodule:: doboz_web.core.components.nodes
  :members:
  :show-inheritance:
