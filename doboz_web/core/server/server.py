@@ -27,11 +27,19 @@ class MainServer():
         self.rootPath=rootPath
         self.filePath=filePath
         self.dataPath=dataPath
+        self.logPath=os.path.join(self.rootPath,"data")
+        """""""""""""""""""""""""""""""""""""""""
+        Initialize various subsystems /set correct paths
+        """
+        AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
+        AddOnManager.update_addOns()
+        
         FileManager.setRootDir(self.dataPath)
         
         self.environmentManager=EnvironmentManager(self.dataPath)
         reactor.callWhenRunning(self.environmentManager.setup)
         
+        """"""""""""""""""""""""""""""""""""""
         self.exceptionConverter=ExceptionConverter()
         self.exceptionConverter.add_exception(ParameterParseException,400 ,1,"Params parse error")
         self.exceptionConverter.add_exception(UnhandledContentTypeException,415 ,2,"Bad content type")
@@ -42,10 +50,9 @@ class MainServer():
         self.exceptionConverter.add_exception(NoConnectorSet,404,7,"Node has no connector")
         self.exceptionConverter.add_exception(UnknownConnector,500,8,"Unknown connector type")
         self.exceptionConverter.add_exception(UnknownDriver,500,9,"Unknown connector driver type")
-    
         
-        AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
-        AddOnManager.update_addOns()
+        
+       
         #AddOnManager.set_addon_state(name="ReprapAddOn",activate=True)
         
 #        def tutu(*args,**kwargs):
@@ -59,8 +66,12 @@ class MainServer():
 #        bob.send_message("pouet",{"data":42})
         
     def start(self):
-        observer = log.PythonLoggingObserver("dobozweb.core.server")
-        observer.start()
+        #observer = log.PythonLoggingObserver("dobozweb.core.server")
+        #observer.start()
+        from twisted.python import log
+        log.startLogging(sys.stdout)
+        logfile=os.path.join(self.logPath,"pollapli.log")
+        log.startLogging(open(logfile, 'w'),setStdout=False)
         
         root = File(self.filePath)
         restRoot=Resource()
@@ -68,11 +79,11 @@ class MainServer():
         try:
             restRoot.putChild("environments", EnvironmentsHandler("http://localhost",self.exceptionConverter,self.environmentManager))
         except Exception as inst:
-            log.msg("Error in environments resource creation",str(inst), logLevel=logging.CRITICAL)
+            log.msg("Error in environments resource creation",str(inst), system="server", logLevel=logging.CRITICAL)
          
         factory = Site(root)
         reactor.listenTCP(self.port, factory)
-        log.msg("Server started!", logLevel=logging.CRITICAL)
+        log.msg("Server started!", system="server", logLevel=logging.CRITICAL)
         reactor.run()
          #s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
          #s.connect(('google.com', 0))

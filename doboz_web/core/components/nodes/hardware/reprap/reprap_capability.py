@@ -31,13 +31,13 @@ class ReprapCapability(DBObject):
     def __init__(self,info="mk",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.info=info
-        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.hardware.reprap")
+        
         #HardwareNode.__init__(self,name,description,type,*args,**kwargs)
         self.startTime=time.time()
         self.rootPath=None
         self.events=ReprapManagerEvents() 
         self.gcodeSuffix="\n"
-        log.msg("Reprap Capability Init Done", logLevel=logging.CRITICAL)
+        log.msg("Reprap Capability Init Done", system="reprap node", logLevel=logging.CRITICAL)
     
     def __getattr__(self, attr_name):
         try:
@@ -74,13 +74,13 @@ class ReprapCapability(DBObject):
         self.isStarted=True
         self.totalTime=0
         self.startTime=time.time()  
-        log.msg("Starting Reprap Node", logLevel=logging.CRITICAL)
+        log.msg("Starting Reprap Node", system="reprap node", logLevel=logging.CRITICAL)
     
     def stop(self):
         """
         Stops the current task and shuts down
         """
-        log.msg("stopped Reprap Node", logLevel=logging.CRITICAL)
+        log.msg("stopped Reprap Node", system="reprap node", logLevel=logging.CRITICAL)
         self.isPaused=True
         self.serial.tearDown()
         #self.totalTime+=time.time()-self.startTime

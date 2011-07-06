@@ -71,7 +71,7 @@ class EnvironmentManager(object):
                     self.idCounter=maxFoundId+1
                     #temporary: this should be recalled from db from within the environments ?
         
-        log.msg("Environment manager setup correctly", logLevel=logging.CRITICAL)
+        log.msg("Environment manager setup correctly", system="environement manager", logLevel=logging.CRITICAL)
         
     def __getattr__(self, attr_name):
         for env in self.environments.values():
@@ -125,7 +125,7 @@ class EnvironmentManager(object):
             yield Environment.find().addCallback(addEnv)
             
             env=self.environments[self.idCounter-1]
-            log.msg("Adding environment named:",name ," description:",description,"with id",env.id, logLevel=logging.CRITICAL)
+            log.msg("Adding environment named:",name ," description:",description,"with id",env.id, system="environment manager", logLevel=logging.CRITICAL)
             defer.returnValue(env)
         else:
             raise EnvironmentAlreadyExists()
@@ -184,7 +184,7 @@ class EnvironmentManager(object):
                 del envs[id]
                 if os.path.isdir(envPath): 
                     shutil.rmtree(envPath)
-                    log.msg("Removed environment ",envName,"with id ",id,logLevel=logging.CRITICAL)
+                    log.msg("Removed environment ",envName,"with id ",id, system="environment manager",logLevel=logging.CRITICAL)
             except:
                 pass
                 #should raise  specific exception

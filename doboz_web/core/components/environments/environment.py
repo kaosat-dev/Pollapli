@@ -47,7 +47,7 @@ class Environment(DBObject):
 #            self.db=db_manager_SQLLITE(dbPath)
             
       
-        log.msg("Environment ",self.name ,"with id", self.id," setup correctly", logLevel=logging.CRITICAL)
+        log.msg("Environment ",self.name ,"with id", self.id," setup correctly", logLevel=logging.CRITICAL, system="environment")
         
     def tearDown(self):
         """

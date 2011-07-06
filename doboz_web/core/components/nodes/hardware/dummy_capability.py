@@ -12,8 +12,7 @@ class DummyCapability(DBObject):
     BELONGSTO   = ['node','environment']
     def __init__(self,info="reprapInfo",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.hardware.dummy")
-        log.msg("Dummy Capability Init Done", logLevel=logging.CRITICAL)
+        log.msg("Dummy Capability Init Done", system="dummy node", logLevel=logging.CRITICAL)
             
     
 Registry.register(Node, DummyCapability)
