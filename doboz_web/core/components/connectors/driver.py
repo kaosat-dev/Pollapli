@@ -9,8 +9,9 @@ from twisted.python.log import PythonLoggingObserver
 from zope.interface import Interface, Attribute,implements
 from twisted.plugin import IPlugin
 
-
-
+from doboz_web.core.signal_system import SignalHander
+from louie import dispatcher,error,Any,All
+import louie
 class Command(object):
     """Base command class, encapsulate all request and answer commands, also has a 'special' flag for commands that do no participate in normal flow of gcodes : i
     ie for example , regular poling of temperatures for display (the "OK" from those commands MUST not affect the line by line sending/answering of gcodes)
@@ -63,7 +64,7 @@ class Driver(DBObject):
         self.answerableCommandBuffer=[]
         self.commandBuffer=[]
         self.commandSlots=bufferSize 
-        
+        self.signalHandler=SignalHander("test")
         self.connection=None
         
     def _format_data(self,datablock,*args,**kwargs):
@@ -139,6 +140,8 @@ class Driver(DBObject):
                 
                 
             self.logger.debug("%d elements in commandBuffer",len(self.commandBuffer))
+            self.signalHandler.send_message(self,"test.driver.dataRecieved",{"data":cmd.answer})
+            #louie.send("test.driver.dataRecieved",self,cmd.answer)
         return cmd
      
            

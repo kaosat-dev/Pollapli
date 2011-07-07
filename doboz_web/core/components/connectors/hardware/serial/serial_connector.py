@@ -26,9 +26,6 @@ class PortWrapper(SerialPort):
           self._tempDataBuffer=[]
       def writeSomeData(self,*args,**kwargs):
           pass
-      #def connectionLost(self, reason):
-      #  SerialPort.connectionLost(self, reason)
-      #  self.protocol.connectionLost(reason)
         
 
 class SerialConnector(HardwareConnector,DBObject):
@@ -116,6 +113,7 @@ class SerialTwisted(Protocol):
         self.nextCommand=None
         self.isConnected=False
         reactor.callLater(3,self._checkForCommands)
+        
     def _toDict(self):
         return {"connector":{"type":"SerialTwisted","params":{"speed":self.speed,"port":self.port},"link":{"rel":"connector"}}}
 

@@ -9,7 +9,9 @@ Contents:
 ---------
 Features:
 ---------
-
+* remote contol via a REST based api
+* Pollapli was recently rewritten to make use of the Twisted asynch framework for improved long term reliability
+* use of longpolling to reduce server load (no need for high frequency poling with huge request count) and increase UI reactivity
 * Pollapli is expandable (additional functionalities, different drivers/nodes etc) via a system of addOns, that 
 are in effect groups of plugins + additional data.
 

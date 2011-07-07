@@ -28,6 +28,13 @@ from doboz_web.core.components.connectors.hardware.hardware_connector import Har
 from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
 #from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 #from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
+import louie
+from louie import dispatcher,error,Any,All,Anonymous,plugin
+from louie.plugin import TwistedDispatchPlugin 
+
+from doboz_web.core.signal_system import SignalHander
+from louie import dispatcher,error,Any,All
+
 
 Registry.register(Environment, Node)
 Registry.register(Node, Task)
@@ -43,7 +50,15 @@ class EnvironmentManager(object):
         self.environments={}
         self.path=envPath
         self.idCounter=1
-    
+        
+        #self.signalhandler=SignalHander("environment_manager",("test",Any,[self.__call__]))
+        self.signalhandler=SignalHander("environment_manager",[("test.driver.dataRecieved",Any,[self.__call__])])
+        #louie.connect(self, signal="test.driver.dataRecieved", sender=Any, weak=True)
+        #louie.send("test",self,"buuuuu")
+        
+    def __call__(self,*args,**kwargs):
+        print("here in env mgr",args,kwargs)
+        
     @defer.inlineCallbacks
     def setup(self):
         #self.scan_plugins()

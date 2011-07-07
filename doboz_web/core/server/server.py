@@ -19,8 +19,10 @@ from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
 from doboz_web.core.components.addons.addon_manager import AddOnManager
 
-from doboz_web.core.signal_system import SignalHander,TestChannel
+from doboz_web.core.signal_system import SignalHander
 from louie import dispatcher,error,Any,All
+import louie
+
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
         self.port=port
@@ -55,13 +57,13 @@ class MainServer():
        
         #AddOnManager.set_addon_state(name="ReprapAddOn",activate=True)
         
-#        def tutu(*args,**kwargs):
-#            print("tutu")
-#        bob=SignalHander("bob")
-#        bab=SignalHander("bab",[("doboz_web.connector",Any,[tutu]),("toto",Any,[tutu])])
+        def test(*args,**kwargs):
+            print("tutu")
+        #bob=SignalHander("bob")
+        #bab=SignalHander("bab",[("test",Any,[tutu])])
 #        
-#        
-#        bob.send_message("doboz_web.connector",{"data":25})
+       
+        #bob.send_message("test",{"data":25})
 #        bob.send_message("toto",{"data":"grosse madame"})
 #        bob.send_message("pouet",{"data":42})
         

@@ -1,0 +1,203 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Environments &mdash; Doboz-web v0.5.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Doboz-web v0.5.0 documentation" href="index.html" />
+    <link rel="up" title="Rest Api" href="rest_api.html" />
+    <link rel="next" title="Components" href="components.html" />
+    <link rel="prev" title="Rest Api" href="rest_api.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="components.html" title="Components"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="rest_api.html" title="Rest Api"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Doboz-web v0.5.0 documentation</a> &raquo;</li>
+          <li><a href="rest_api.html" accesskey="U">Rest Api</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="environments">
+<h1>Environments<a class="headerlink" href="#environments" title="Permalink to this headline">¶</a></h1>
+<p>Environments are the base elements of Doboz_web.</p>
+<p>Environment ids start with an index of 1</p>
+<p>Resource path:
+serverUrl/rest/environments
+Valid content types:
+&#8220;application/pollapli.environmentList+json&#8221;</p>
+<div class="section" id="get">
+<h2>GET<a class="headerlink" href="#get" title="Permalink to this headline">¶</a></h2>
+<p>url params/selection:
+environements can be either gotten as a whole (no params)
+or selected based on:
+* status (active/inactive)
+* id
+Response content type:
+Json:&#8221;application/pollapli.environmentList+json&#8221;</p>
+<p>Response http status code: 200</p>
+</div>
+<div class="section" id="post">
+<h2>POST<a class="headerlink" href="#post" title="Permalink to this headline">¶</a></h2>
+<p>this is used to add a new environment to the system
+request body params:
+name
+description
+status</p>
+<p>Response: the selected representation of the added environment</p>
+<p>Response content type:
+Json: &#8220;application/pollapli.environment+json&#8221;</p>
+<p>Response http status code: 201</p>
+</div>
+<div class="section" id="put">
+<h2>PUT<a class="headerlink" href="#put" title="Permalink to this headline">¶</a></h2>
+<p>Not implemented</p>
+</div>
+<div class="section" id="delete">
+<h2>DELETE<a class="headerlink" href="#delete" title="Permalink to this headline">¶</a></h2>
+<p>this method clears the environement list completely
+BEWARE!!! this deletes EVERY element !</p>
+<p>Response: empty
+Response http status code: 200</p>
+</div>
+</div>
+<div class="section" id="single-environment-manipulation">
+<h1>Single Environment manipulation<a class="headerlink" href="#single-environment-manipulation" title="Permalink to this headline">¶</a></h1>
+<p>Resource path:
+serverUrl/environments/id</p>
+<div class="section" id="id1">
+<h2>GET<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Response content type:
+Json: &#8220;application/pollapli.environment+json&#8221;
+Other formats: not supported</p>
+<p>Response http status code: 200</p>
+</div>
+<div class="section" id="id2">
+<h2>POST<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>Not implemented</p>
+</div>
+<div class="section" id="id3">
+<h2>PUT<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>Response content type:
+Json: &#8220;application/pollapli.environment+json&#8221;</p>
+<p>Response http status code: 200</p>
+</div>
+<div class="section" id="id4">
+<h2>DELETE<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>Response: empty
+Response http status code: 200</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Environments</a><ul>
+<li><a class="reference internal" href="#get">GET</a></li>
+<li><a class="reference internal" href="#post">POST</a></li>
+<li><a class="reference internal" href="#put">PUT</a></li>
+<li><a class="reference internal" href="#delete">DELETE</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#single-environment-manipulation">Single Environment manipulation</a><ul>
+<li><a class="reference internal" href="#id1">GET</a></li>
+<li><a class="reference internal" href="#id2">POST</a></li>
+<li><a class="reference internal" href="#id3">PUT</a></li>
+<li><a class="reference internal" href="#id4">DELETE</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="rest_api.html"
+                        title="previous chapter">Rest Api</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="components.html"
+                        title="next chapter">Components</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/rest_api_environments.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="components.html" title="Components"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="rest_api.html" title="Rest Api"
+             >previous</a> |</li>
+        <li><a href="index.html">Doboz-web v0.5.0 documentation</a> &raquo;</li>
+          <li><a href="rest_api.html" >Rest Api</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Mark &#39;ckaos&#39; Moissette.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
