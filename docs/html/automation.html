@@ -1,0 +1,297 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Automation (tasks) &mdash; Doboz-web v0.5.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Doboz-web v0.5.0 documentation" href="index.html" />
+    <link rel="up" title="Components" href="components.html" />
+    <link rel="next" title="Tools" href="tools.html" />
+    <link rel="prev" title="Connectors and drivers" href="connectors_drivers.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tools.html" title="Tools"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="connectors_drivers.html" title="Connectors and drivers"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Doboz-web v0.5.0 documentation</a> &raquo;</li>
+          <li><a href="components.html" accesskey="U">Components</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="automation-tasks">
+<h1>Automation (tasks)<a class="headerlink" href="#automation-tasks" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<span class="target" id="module-core.components.automation"></span><div class="section" id="task">
+<h2>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h2>
+<p>Base class for all tasks</p>
+<span class="target" id="module-doboz_web.core.components.automation.task"></span><dl class="class">
+<dt id="doboz_web.core.components.automation.task.AutomationEvents">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.automation.task.</tt><tt class="descname">AutomationEvents</tt><a class="headerlink" href="#doboz_web.core.components.automation.task.AutomationEvents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="tools.html#doboz_web.core.tools.event_sys.Events" title="doboz_web.core.tools.event_sys.Events"><tt class="xref py py-class docutils literal"><span class="pre">doboz_web.core.tools.event_sys.Events</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="doboz_web.core.components.automation.task.Task">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.automation.task.</tt><tt class="descname">Task</tt><big>(</big><em>name='task'</em>, <em>description='a task'</em>, <em>type='task'</em>, <em>params={}</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task.Task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">twistar.dbobject.DBObject</span></tt></p>
+<dl class="attribute">
+<dt id="doboz_web.core.components.automation.task.Task.BELONGSTO">
+<tt class="descname">BELONGSTO</tt><a class="headerlink" href="#doboz_web.core.components.automation.task.Task.BELONGSTO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for tasks (printing , scanning etc</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task.Task.check_conditions">
+<tt class="descname">check_conditions</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task.Task.check_conditions" title="Permalink to this definition">¶</a></dt>
+<dd><p>method in charge of verifying all of the tasks conditions
+for a task to start/continue running, all of its conditions must evaluate to True</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task.Task.enter">
+<tt class="descname">enter</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task.Task.enter" title="Permalink to this definition">¶</a></dt>
+<dd><p>When taks is entered</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task.Task.exit">
+<tt class="descname">exit</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task.Task.exit" title="Permalink to this definition">¶</a></dt>
+<dd><p>When taks is exited</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task.Task.pause">
+<tt class="descname">pause</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task.Task.pause" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task.Task.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task.Task.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task.Task.startPause">
+<tt class="descname">startPause</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task.Task.startPause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switches between active and inactive mode, or starts the task if not already done so</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-doboz_web.core.components.automation.task_manager">
+<span id="task-manager"></span><h2>Task Manager<a class="headerlink" href="#module-doboz_web.core.components.automation.task_manager" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-task_manager"></span><dl class="class">
+<dt id="doboz_web.core.components.automation.task_manager.TaskManager">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.automation.task_manager.</tt><tt class="descname">TaskManager</tt><big>(</big><em>parentNode</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task_manager.TaskManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task_manager.TaskManager.add_task">
+<tt class="descname">add_task</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task_manager.TaskManager.add_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new node to the list of nodes of the current environment
+Params:
+name: the name of the node
+Desciption: short description of node
+type: the type of the node : very important , as it will be used to instanciate the correct class
+instance
+Connector:the connector to use for this node
+Driver: the driver to use for this node&#8217;s connector</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task_manager.TaskManager.clear_tasks">
+<tt class="descname">clear_tasks</tt><big>(</big><em>forceStop=False</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task_manager.TaskManager.clear_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clears the task list completely 
+Params: forceStop: if set to true, the current running task gets stopped and removed aswell</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task_manager.TaskManager.get_task">
+<tt class="descname">get_task</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task_manager.TaskManager.get_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the task with given id</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task_manager.TaskManager.get_tasks">
+<tt class="descname">get_tasks</tt><big>(</big><em>filter=None</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task_manager.TaskManager.get_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the list of tasks, filtered by  the filter param
+the filter is a dictionary of list, with each key beeing an attribute
+to check, and the values in the list , values of that param to check against</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task_manager.TaskManager.remove_task">
+<tt class="descname">remove_task</tt><big>(</big><em>id</em>, <em>forceStop=False</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task_manager.TaskManager.remove_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the task with id==id 
+Shuts down the task before removing it 
+If forcestop is true, shutdown the task even if it is running</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task_manager.TaskManager.start_task">
+<tt class="descname">start_task</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task_manager.TaskManager.start_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts the task in line</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.task_manager.TaskManager.stop_task">
+<tt class="descname">stop_task</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.task_manager.TaskManager.stop_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forcefully Stops the task with the given id</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-doboz_web.core.components.automation.print_task">
+<span id="print-task"></span><h2>Print Task<a class="headerlink" href="#module-doboz_web.core.components.automation.print_task" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="doboz_web.core.components.automation.print_task.PrintTask">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.automation.print_task.</tt><tt class="descname">PrintTask</tt><big>(</big><em>filepath=None</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.print_task.PrintTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A task for printing gcode files</p>
+<dl class="method">
+<dt id="doboz_web.core.components.automation.print_task.PrintTask.connect">
+<tt class="descname">connect</tt><big>(</big><em>connector</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.print_task.PrintTask.connect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.print_task.PrintTask.disconnect">
+<tt class="descname">disconnect</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.print_task.PrintTask.disconnect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="doboz_web.core.components.automation.print_task.PrintTask.doLayerAnalysis">
+<tt class="descname">doLayerAnalysis</tt><a class="headerlink" href="#doboz_web.core.components.automation.print_task.PrintTask.doLayerAnalysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>For all things related to the print positioning tracking</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="doboz_web.core.components.automation.print_task.PrintTask.gcodeParser">
+<tt class="descname">gcodeParser</tt><a class="headerlink" href="#doboz_web.core.components.automation.print_task.PrintTask.gcodeParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>For the history of all previous commands this will need to be replaced with something more robust in the future</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.print_task.PrintTask.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.print_task.PrintTask.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts the current print task</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.automation.print_task.PrintTask.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.automation.print_task.PrintTask.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>clean shutdown mode</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Automation (tasks)</a><ul>
+<li><a class="reference internal" href="#task">Task</a></li>
+<li><a class="reference internal" href="#module-doboz_web.core.components.automation.task_manager">Task Manager</a></li>
+<li><a class="reference internal" href="#module-doboz_web.core.components.automation.print_task">Print Task</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="connectors_drivers.html"
+                        title="previous chapter">Connectors and drivers</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tools.html"
+                        title="next chapter">Tools</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/automation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tools.html" title="Tools"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="connectors_drivers.html" title="Connectors and drivers"
+             >previous</a> |</li>
+        <li><a href="index.html">Doboz-web v0.5.0 documentation</a> &raquo;</li>
+          <li><a href="components.html" >Components</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Mark &#39;ckaos&#39; Moissette.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

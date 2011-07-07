@@ -5,6 +5,11 @@
 from zope.interface import Interface, Attribute
 from twisted.plugin import IPlugin
 
+class IConnector(Interface):
+    """
+    Connector class , encapsulating a driver and its connection
+    """
+
 class ITestPlugin(Interface):
     """
     An object with specific physical properties

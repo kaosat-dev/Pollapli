@@ -30,9 +30,7 @@ class PortWrapper(SerialPort):
 
 class SerialConnector(HardwareConnector,DBObject):
     blockedPorts=["COM3"]
-    BELONGSTO = ['node']
     def __init__(self,port=None,seperator='\r\n',isBuffering=True,speed=115200,bannedPorts=None,maxErrors=5,waitForAnswer=False,*args,**kwargs):
-        DBObject.__init__(self,**kwargs)
         HardwareConnector.__init__(self)
         self.serial=None    
         self.protocol=SerialTwisted()
@@ -53,6 +51,7 @@ class SerialConnector(HardwareConnector,DBObject):
             self.serial=PortWrapper(self.protocol,"Com4",reactor,baudrate=self.speed)
         except Exception as inst:
             print("failed to connect to port",str(inst))
+            
     def disconnect(self):
         #print("disconnecting")
         try:
@@ -65,14 +64,6 @@ class SerialConnector(HardwareConnector,DBObject):
     def _toDict(self):
         return {"connector":{"type":"SerialTwisted","status":{"connected":self.protocol.isConnected},"type":None,"driver":None,"params":{"speed":self.speed,"port":self.port}},"link":{"rel":"connector"}}
    
-    def set_driver(self,driver):
-        """Sets what driver to use : a driver formats the data sent to the connector !!
-        And may also contain additional settings for the connector"""
-        self.driver=driver
-        self.protocol.driver=driver
-        self.seperator=driver.seperator
-        self.speed=driver.speed
-        self.reset_seperator()
 
 
 class SerialTwisted(Protocol):
@@ -119,6 +110,7 @@ class SerialTwisted(Protocol):
 
     def reset_seperator(self):
         self.regex = re.compile(self.seperator)
+        
     def connect(self):
         if not self.isStarted:
             self.isStarted=True
@@ -221,8 +213,6 @@ class SerialTwisted(Protocol):
             print("error in serial",str(inst))
     
     def _validate_connection(self,truc):
-        #print("truc",truc)
-        #self.protocol=truc
         self.isConnected=True
         print ("Arduino connected")
         
@@ -240,11 +230,9 @@ class SerialTwisted(Protocol):
         
     def _handle_data(self,data):
         if self.isConnected: 
-            #print("recieved data",data)  
+            print("recieved data",data)  
             newDataTreated=False
-         
-            
-            
+          
             #nextCommand=None
             if self.nextCommand:
                 self.send_command(self.nextCommand)
@@ -270,21 +258,7 @@ class SerialTwisted(Protocol):
                         
                         while results is not None:
                             nDataBlock= self.buffer[:results.start()]
-                            self.lastCommand=nDataBlock       
-                            if self.driver:
-                                nDataBlock=self.driver.handle_answer(nDataBlock)
-                                if nDataBlock:
-                                    if nDataBlock.answerComplete:
-                                        #self.events.OnDataRecieved(self,nDataBlock)
-                                        self.logger.critical("serial data block <<:  %s",(str(nDataBlock)))
-                                        self.add_command("a")
-                            else:
-                                #self.events.OnDataRecieved(self,nDataBlock)
-                                self.logger.critical("serial data block <<:  %s",(str(nDataBlock)))
-                                #print("block",nDataBlock)
-                                #self.add_command("a\n")
-                               # self.add_command("b")
-                                                 
+                            self.lastCommand=nDataBlock                            
                             self.buffer=self.buffer[results.end():]
                             results=None
                             try:
@@ -301,14 +275,9 @@ class SerialTwisted(Protocol):
     
     def add_command(self,command,*args,**kwargs):
         """
-        Ennqueue/add a command , via the driver:
+        Ennqueue/add a command 
         """
-       
-        if self.driver:
-            self.driver.handle_request(command,*args,**kwargs)
-            #self.send_command(command)
-        else:# without driver, no buffer , so just send the command
-            self.send_command(command)
+        self.send_command(command)
         self.logger.debug("new command appended: '%s'",str(command))
         
     def send_command(self,command,*args,**kwargs):  
@@ -317,7 +286,6 @@ class SerialTwisted(Protocol):
         """    
         if self.isConnected: 
             try:
-                self.logger.critical("serial data block >>: %s ",str(command))
                 self.transport.write(command)
             except OSError:
                 self.logger.critical("serial device not connected or not found on specified port")

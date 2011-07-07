@@ -26,6 +26,7 @@ from doboz_web.core.components.automation.task import Task
 from doboz_web.core.tools.wrapper_list import WrapperList
 from doboz_web.core.components.connectors.hardware.hardware_connector import HardwareConnector
 from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
+from doboz_web.core.components.connectors.driver import Driver
 #from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 #from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
 import louie
@@ -38,9 +39,8 @@ from louie import dispatcher,error,Any,All
 
 Registry.register(Environment, Node)
 Registry.register(Node, Task)
-#Registry.register(Environment, Task)
-Registry.register(Node, HardwareConnector)
-Registry.register(Node, SerialConnector)
+Registry.register(Node, Driver)
+
 class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
@@ -302,28 +302,13 @@ class EnvironmentManager(object):
              FOREIGN KEY(task_id) REFERENCES tasks(id)
              )''')
         
-        yield Registry.DBPOOL.runQuery('''CREATE TABLE hardware_connectors(
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
-             node_id INTEGER NOT NULL,
-             seperator TEXT NOT NULL ,
-             speed INTEGER NOT NULL,
-             FOREIGN KEY(node_id) REFERENCES nodes(id)        
-             )''')
-        yield Registry.DBPOOL.runQuery('''CREATE TABLE serial_connectors(
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
-             node_id INTEGER NOT NULL,
-             seperator TEXT NOT NULL ,
-             speed INTEGER NOT NULL,          
-             FOREIGN KEY(node_id) REFERENCES nodes(id)       
-             )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              node_id INTEGER NOT NULL,
-             connector_id INTEGER NOT NULL,
              type TEXT NOT NULL ,
-             name TEXT,          
-             description TEXT
-             
+             connector_type TEXT NOT NULL,
+             options TEXT ,
+             FOREIGN KEY(node_id) REFERENCES nodes(id)      
              )''')
         defer.returnValue(None)
 #             

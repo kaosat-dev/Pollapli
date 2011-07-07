@@ -1,6 +1,7 @@
 Tutorial
 =============
 
+After installing the application, run the program using python
 
 .. note::
 

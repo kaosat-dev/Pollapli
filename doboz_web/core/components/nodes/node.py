@@ -80,8 +80,8 @@ class Node(DBObject):
         connector
         """
         
-        self.connector=yield SerialConnector().save()
-        self.connector.node.set(self)
+        #self.connector=yield SerialConnector().save()
+        #self.connector.node.set(self)
         
         driver=None
         plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
@@ -90,15 +90,16 @@ class Node(DBObject):
         for driverKlass in plugins:#(yield AddOnManager.get_plugins(idoboz_web.IDriver)):
             #log.msg("found driver",driverKlass, logLevel=logging.CRITICAL)
             if driverType==driverKlass.__name__.lower():
-                driver=driverKlass(**driverParams)
-                self.connector.set_driver(driver)
-                self.connector.save()  
+                self.driver=driverKlass(**driverParams)
+                self.driver.set_connector(SerialConnector())   
+                print(self.driver)          
+                #self.driver.save()  
                 log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
-                #break
-        if not driver:
+                break
+        if not self.driver:
             raise UnknownDriver()
         
-        defer.returnValue(self.connector)
+        defer.returnValue(self.driver)
         
 #        if hasattr(self.connector, 'events'):    
 #             self.connector.events.disconnected+=self._on_connector_disconnected
@@ -151,11 +152,11 @@ class Node(DBObject):
     
     def connect(self):
         d=defer.Deferred()
-        def doConnect(connector):
-            connector.connect()
-            return self.connector
+        def doConnect(driver):
+            driver.connect()
+            return driver
         d.addCallback(doConnect)
-        d.callback(self.connector)
+        d.callback(self.driver)
         return d
     
            
