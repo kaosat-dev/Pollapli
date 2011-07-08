@@ -1,7 +1,0 @@
-setup.py
-DummyAddOn.egg-info/PKG-INFO
-DummyAddOn.egg-info/SOURCES.txt
-DummyAddOn.egg-info/dependency_links.txt
-DummyAddOn.egg-info/top_level.txt
-dummy/__init__.py
-dummy/spam_driver.py

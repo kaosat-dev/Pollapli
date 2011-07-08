@@ -30,7 +30,7 @@ class TaskManager(object):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.taskmanager")
         self.tasks={}
         self.parentNode=parentNode
-        self.connector=parentNode.connector
+        self.connector=parentNode.driver
         
 #    def __getattr__(self, attr_name):
 #        if hasattr(self.tasksById[id], attr_name):

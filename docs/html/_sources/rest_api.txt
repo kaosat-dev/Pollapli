@@ -35,7 +35,7 @@ Error codes / messages
   	* EnvironmentNotFound,404 ,4,"Environment not found"
   	* UnknownNodeType,500 ,5,"Unknown node type"
   	* NodeNotFound,404 ,6,"Node not found"
-  	* NoConnectorSet,404,7,"Node has no connector" 
+  	* NoDriverSet,404,7,"Node has no connector" 
 	
 
 +-------------------------------+-----------+---------------------+-----------------------------+

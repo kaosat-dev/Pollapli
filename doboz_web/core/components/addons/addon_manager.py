@@ -183,11 +183,11 @@ class AddOnManager(object):
                 fullpath=os.path.join(addOnPath,dir)           
                 if os.path.isdir(fullpath):
                     if not fullpath in sys.path:
-                        print("adding ",fullpath,"to sys path")
+                        #print("adding ",fullpath,"to sys path")
                         sys.path.insert(0, fullpath) 
                     addOnList[index]=AddOn(name=dir,description="",path=fullpath) 
                     index+=1
-            print(addOnList)
+           
         d.addCallback(scan,AddOnManager.addOnPath)
         reactor.callLater(0,d.callback,AddOnManager.addons)
         return d  
@@ -199,6 +199,7 @@ class AddOnManager(object):
         """
         AddOnManager.extract_addons()
         AddOnManager.list_addons()
+        
     @classmethod
     @defer.inlineCallbacks
     def get_plugins(cls,interface=None,addOnName=None):
@@ -212,7 +213,7 @@ class AddOnManager(object):
             try:
                 addonpackages=pkgutil.walk_packages(path=[path], prefix='')
                 for loader,name,isPkg in addonpackages: 
-                    mod = pkgutil.get_loader(name).load_module(name)               
+                    mod = pkgutil.get_loader(name).load_module(name)             
                     try:
                         plugins.extend((yield getPlugins(interface,mod)))
                     except Exception as inst:

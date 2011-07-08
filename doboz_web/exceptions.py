@@ -12,10 +12,7 @@ class UnknownNodeType(Exception):
 class NodeNotFound(Exception):
     pass
 
-class NoConnectorSet(Exception):
-    pass
-
-class UnknownConnector(Exception):
+class NoDriverSet(Exception):
     pass
 
 class UnknownDriver(Exception):

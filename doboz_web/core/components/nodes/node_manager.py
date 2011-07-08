@@ -14,7 +14,7 @@ from twisted.python.log import PythonLoggingObserver
 #from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 
 #from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNode
-from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
+#from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.tools.wrapper_list import WrapperList
@@ -22,6 +22,8 @@ from doboz_web.exceptions import UnknownNodeType,NodeNotFound
 
 from doboz_web.core.components.nodes.hardware.reprap.reprap_capability import ReprapCapability
 from doboz_web.core.components.nodes.hardware.dummy_capability import DummyCapability
+
+from doboz_web.core.components.drivers.driver import Driver,DriverFactory
 
 class NodeManager(object):
     """
@@ -41,6 +43,10 @@ class NodeManager(object):
         self.parentEnv=parentEnv
         self.nodes={}
         self.lastNodeId=0
+        
+        dF=DriverFactory()
+        dF.create({"driverType":"teacupdriver","speed":115200,"seperator":"\r\n"})
+        
     
     @defer.inlineCallbacks    
     def setup(self):

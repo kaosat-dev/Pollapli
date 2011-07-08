@@ -17,11 +17,11 @@ class SignalHander(object):
                 print("thingy",self.thingy)
                 louie.connect(self, signal=signal, sender=sender, weak=True)
         else:
-            print("thingamajig")
             louie.connect(self,signal=All,sender=None,weak=True)
             
     def __call__(self,signal=None,sender=None,*args,**kwargs):
-        log.msg(self.name, " recieved ",signal," from ",sender,logLevel=logging.CRITICAL)
+        log.msg(self.name, " recieved ",signal," from ",sender, "with data" ,args,kwargs,logLevel=logging.CRITICAL)
+        
         try:
             [callable(**kwargs) for callable in self.thingy[signal,sender]]
         except Exception as inst:

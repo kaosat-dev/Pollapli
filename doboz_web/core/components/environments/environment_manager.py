@@ -24,9 +24,8 @@ from doboz_web.exceptions import EnvironmentAlreadyExists
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.components.automation.task import Task
 from doboz_web.core.tools.wrapper_list import WrapperList
-from doboz_web.core.components.connectors.hardware.hardware_connector import HardwareConnector
-from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
-from doboz_web.core.components.connectors.driver import Driver
+
+from doboz_web.core.components.drivers.driver import Driver
 #from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 #from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
 import louie
@@ -40,6 +39,7 @@ from louie import dispatcher,error,Any,All
 Registry.register(Environment, Node)
 Registry.register(Node, Task)
 Registry.register(Node, Driver)
+
 
 class EnvironmentManager(object):
     """
@@ -55,6 +55,9 @@ class EnvironmentManager(object):
         self.signalhandler=SignalHander("environment_manager",[("test.driver.dataRecieved",Any,[self.__call__])])
         #louie.connect(self, signal="test.driver.dataRecieved", sender=Any, weak=True)
         #louie.send("test",self,"buuuuu")
+        
+        
+        
         
     def __call__(self,*args,**kwargs):
         print("here in env mgr",args,kwargs)
@@ -305,8 +308,8 @@ class EnvironmentManager(object):
         yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              node_id INTEGER NOT NULL,
-             type TEXT NOT NULL ,
-             connector_type TEXT NOT NULL,
+             hardwareHandlerType TEXT NOT NULL ,
+             logicHandlerType TEXT NOT NULL,
              options TEXT ,
              FOREIGN KEY(node_id) REFERENCES nodes(id)      
              )''')

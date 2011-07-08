@@ -22,7 +22,52 @@ class ITestPlugin(Interface):
         @type data: C{string}
         @param data: justdata
         """
+        
 class IDriver(Interface):
+    """
+    An object with specific physical properties
+    """
+    
+class IDriverLogicHandler(Interface):
+    """
+    Class to handle the higher level logic of drivers : for example command queues etc
+    """
+    def _handle_request(self,data,*args,**kwargs):
+        """
+        Manages command requests
+        @type data: C{string}
+        @param data:  the raw request that needs to be pre-treated
+
+        @rtype: C{object}
+        @return: an encapsulated (or not) version of the raw request data
+        """               
+    def _handle_response(self,data):
+        """
+        Manages command responses and if a correct response is recieved , send a message into the 
+        signal/message system
+        
+        @type data: C{string}
+        @param data:  the raw response that needs to be pre-treated
+
+        @rtype: C{object}
+        @return: an encapsulated (or not) version of the raw request data
+        """
+        
+class IDriverHardwareHandler(Interface):
+    """
+    Class to handle the lower level logic of drivers the actual hardware interactions:
+     for example connecting/disconnecting devices, the protocol that is used etc
+    """
+    def connect(self):
+        """
+        establish connection to the device
+        """
+    def disconnect(self):
+        """
+        shut down connection to the device
+        """
+        
+class IDriver_old(Interface):
     """
     An object with specific physical properties
     """

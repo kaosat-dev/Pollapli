@@ -23,7 +23,7 @@ from twisted.internet import abstract
 from twisted.python import log
 
 # sibling imports
-from serialport import BaseSerialPort
+from twisted.internet.serialport import BaseSerialPort
 
 
 class SerialPort(BaseSerialPort, abstract.FileDescriptor):
@@ -57,9 +57,7 @@ class SerialPort(BaseSerialPort, abstract.FileDescriptor):
         
         self.reactor.addEvent(self._overlappedRead.hEvent, self, 'serialReadEvent')
         self.reactor.addEvent(self._overlappedWrite.hEvent, self, 'serialWriteEvent')
-        ##test
-        #print("test",self.reactor._events)
-        #print("test2",self._overlappedRead.hEvent)
+
 
         self.protocol.makeConnection(self)
 
@@ -93,13 +91,14 @@ class SerialPort(BaseSerialPort, abstract.FileDescriptor):
                 self.protocol.dataReceived(first)
 
         #set up next one
-        win32event.ResetEvent(self._overlappedRead.hEvent)
-        try:
-            rc, self.read_buf = win32file.ReadFile(self._serial.hComPort,
-                                               win32file.AllocateReadBuffer(1),
-                                               self._overlappedRead)
-        except:
-            self.connectionLost("serial disconnected")
+        if self.connected:
+            win32event.ResetEvent(self._overlappedRead.hEvent)
+            try:
+                rc, self.read_buf = win32file.ReadFile(self._serial.hComPort,
+                                                   win32file.AllocateReadBuffer(1),
+                                                   self._overlappedRead)
+            except:
+                self.connectionLost("serial disconnected")
             
     def write(self, data):
         if data:
@@ -126,6 +125,8 @@ class SerialPort(BaseSerialPort, abstract.FileDescriptor):
             pass
         abstract.FileDescriptor.connectionLost(self, reason)
         self._serial.close()
+        self.connected=0
         self.protocol.connectionLost("connectionLost")
+        
     def loseConnection(self):
         self.connectionLost("")

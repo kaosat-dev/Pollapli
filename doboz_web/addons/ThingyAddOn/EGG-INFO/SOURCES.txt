@@ -1,7 +1,0 @@
-setup.py
-ThingyAddOn.egg-info/PKG-INFO
-ThingyAddOn.egg-info/SOURCES.txt
-ThingyAddOn.egg-info/dependency_links.txt
-ThingyAddOn.egg-info/top_level.txt
-thingy/__init__.py
-thingy/thingy_driver.py

@@ -23,6 +23,9 @@ from doboz_web.core.signal_system import SignalHander
 from louie import dispatcher,error,Any,All
 import louie
 
+
+
+
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
         self.port=port
@@ -49,16 +52,12 @@ class MainServer():
         self.exceptionConverter.add_exception(EnvironmentNotFound,404 ,4,"Environment not found")
         self.exceptionConverter.add_exception(UnknownNodeType,500 ,5,"Unknown node type")
         self.exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
-        self.exceptionConverter.add_exception(NoConnectorSet,404,7,"Node has no connector")
-        self.exceptionConverter.add_exception(UnknownConnector,500,8,"Unknown connector type")
-        self.exceptionConverter.add_exception(UnknownDriver,500,9,"Unknown connector driver type")
+        self.exceptionConverter.add_exception(NoDriverSet,404,7,"Node has no connector")
+        self.exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
         
         
        
-        #AddOnManager.set_addon_state(name="ReprapAddOn",activate=True)
         
-        def test(*args,**kwargs):
-            print("tutu")
         #bob=SignalHander("bob")
         #bab=SignalHander("bab",[("test",Any,[tutu])])
 #        

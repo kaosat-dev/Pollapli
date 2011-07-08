@@ -14,10 +14,8 @@ from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.automation.task_manager import TaskManager
-#from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
-from doboz_web.core.components.connectors.hardware.serial.serial_connector import SerialConnector
 
-from doboz_web.exceptions import UnknownDriver,NoConnectorSet
+from doboz_web.exceptions import UnknownDriver,NoDriverSet
 
 from twisted.plugin import getPlugins
 from doboz_web import idoboz_web
@@ -38,21 +36,21 @@ class Node(DBObject):
         self.type=type
         self.description=description
         self.isRunning=False  
-        self.connector=None 
+        self.driver=None 
         self.taskManager=TaskManager(self)
         self.components=[]
         """For Uptime calculation"""
         self.startTime=time.time()
     
     def setup(self):
-        def addConnector(connectors,node):
-            if len(connectors)>0:
-                node.connector=connectors[0] 
+        def addDriver(drivers,node):
+            if len(drivers)>0:
+                node.driver=drivers[0] 
                 #just a cheap hack for now
                 #node.connector.set_driver(TeacupDriver(speed=115200))
                 #log.msg("Node with id",self.id,", connector",self.connector.__class__.__name__, "setup successfully", logLevel=logging.CRITICAL)
 
-        SerialConnector.find(where=['node_id = ?', self.id]).addCallback(addConnector,self)
+       # SerialConnector.find(where=['node_id = ?', self.id]).addCallback(addDriver,self)
         
     
     
@@ -65,17 +63,14 @@ class Node(DBObject):
     def _toDict(self):
         return {"node":{"id":self.id,"name":self.name,"description":self.description,"type":self.type,"connector":{"status":{"connected":True},"type":None,"driver":None},"link":{"rel":"node"}}}
    
-    @defer.inlineCallbacks
-    def set_driver(self,driverType="Default",driverParams={},*args,**kwargs):
-        pass
     
     @defer.inlineCallbacks
-    def set_connector(self,type="Serial",driverType="Default",driverParams={},*args,**kwargs):
+    def set_driver(self,type="Serial",driverType="Default",driverParams={},*args,**kwargs):
         """
         Method to set this node's connector 
         Params:
-        connector: a connector instance
-        driver=
+        driver: a connector instance
+        
         WARNING: cheap hack for now, always defaults to serial
         connector
         """
@@ -94,7 +89,7 @@ class Node(DBObject):
                 self.driver.set_connector(SerialConnector())   
                 print(self.driver)          
                 #self.driver.save()  
-                log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
+                log.msg("Set driver of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
                 break
         if not self.driver:
             raise UnknownDriver()
@@ -114,25 +109,19 @@ class Node(DBObject):
         
         
     def get_connector(self):
-        if self.connector:
-            return self.connector 
+        if self.driver:
+            return self.driver 
         else: 
-            raise NoConnectorSet()
+            raise NoDriverSet()
 
     
-    def delete_connector(self):
-        if self.connector:
-            self.connector.disconnect()     
-            self.connector=None
+    def delete_driver(self):
+        if self.driver:
+            self.driver.disconnect()     
+            self.driver=None
             
         log.msg("Disconnected and removed connector", logLevel=logging.CRITICAL)
    
-    def set_driver(self): 
-        """Method to set a this nodes connector's driver 
-        Params:
-        WARNING: cheap hack for now, always defaults to serial
-        connector
-        """
         
     def start(self):
         """
@@ -162,19 +151,19 @@ class Node(DBObject):
            
     def disconnect(self):
         d=defer.Deferred()
-        def doDisconnect(connector):
-            connector.disconnect()
-            return self.connector
+        def doDisconnect(driver):
+            connector.driver()
+            return driver
         d.addCallback(doDisconnect)
-        d.callback(self.connector)
+        d.callback(self.driver)
         return d
     
-    def _on_connector_connected(self,args,kargs):
+    def _on_driver_connected(self,args,kargs):
         raise NotImplementedError, "This methods needs to be implemented in your node subclass"  
     
-    def _on_connector_disconnected(self,args,kargs):
+    def _on_driver_disconnected(self,args,kargs):
         raise NotImplementedError, "This methods needs to be implemented in your node subclass"
       
-    def _on_connector_reconnected(self,args,kargs):
+    def _on_driver_reconnected(self,args,kargs):
         raise NotImplementedError, "This methods needs to be implemented in your node subclass"  
 
