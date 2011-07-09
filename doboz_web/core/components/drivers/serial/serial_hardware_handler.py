@@ -131,6 +131,27 @@ class SerialHardwareHandler(object):
                 except Exception as inst:
                     log.msg("Error while opening port",port,"Error:",inst)
         defer.returnValue(available)
+    
+    """The next methods are at least partially deprecated and not in use """   
+    def reset_seperator(self):
+        self.regex = re.compile(self.seperator)
+    
+    def upload(self):
+        avrpath="/home/ckaos/data/Projects/Doboz/doboz_web/core/tools/avr"
+        cmd=os.path.join(avrpath,"avrdude")
+        conf=os.path.join(avrpath,"avrdude.conf")
+        
+    def tearDown(self):
+        """
+        Clean shutdown function
+        """
+        try:
+            SerialHardwareHandler.blockedPorts.remove(self.port)
+        except:
+            pass
+        self.isConnected=False        
+        self.logger.critical("Serial shutting down")
+
         
 class DummyProtocol(Protocol):
     pass
@@ -215,7 +236,7 @@ class BaseSerialProtocol(Protocol):
             
         except OSError:
             self.logger.critical("serial device not connected or not found on specified port")
-
+        
             
 class SerialWrapper(SerialPort):
       def __init__(self,*args,**kwargs):

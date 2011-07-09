@@ -26,11 +26,11 @@ from doboz_web.core.components.automation.task import Task
 from doboz_web.core.tools.wrapper_list import WrapperList
 
 from doboz_web.core.components.drivers.driver import Driver
-#from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
-#from doboz_web.core.components.nodes.reprap_capability import ReprapCapability
 
 Registry.register(Environment, Node)
 Registry.register(Node, Task)
+#Registry.register(Task, Action)
+#Registry.register(Task, Condition)
 Registry.register(Node, Driver)
 
 
@@ -44,10 +44,8 @@ class EnvironmentManager(object):
         self.path=envPath
         self.idCounter=1
         
-        
     @defer.inlineCallbacks
     def setup(self):
-        #self.scan_plugins()
         self.startTime = time.time()
         """Retrieve all existing environments from disk"""
         maxFoundId=1
@@ -104,7 +102,6 @@ class EnvironmentManager(object):
         """
         envPath=os.path.join(self.path,name)  
         #if such an environment does not exist, add it
-        
         if not name in os.listdir(self.path):
             os.mkdir(envPath)
             dbpath=os.path.join(envPath,name)+".db"
@@ -185,6 +182,7 @@ class EnvironmentManager(object):
                 del envs[id]
                 if os.path.isdir(envPath): 
                     shutil.rmtree(envPath)
+                            #self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",envName,envPath) 
                     log.msg("Removed environment ",envName,"with id ",id, system="environment manager",logLevel=logging.CRITICAL)
             except:
                 pass
@@ -193,7 +191,7 @@ class EnvironmentManager(object):
         d.addCallback(remove,self.environments,self.path)
         reactor.callLater(0,d.callback,id)
         return d
-        #self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",envName,envPath) 
+
         
     @defer.inlineCallbacks
     def clear_environments(self):
@@ -212,9 +210,6 @@ class EnvironmentManager(object):
     def force_id(self,id):     
         query=   '''UPDATE environments SET id ='''+str(id)+''' where id=1'''
         yield Registry.DBPOOL.runQuery(query)
-#        yield Registry.DBPOOL.runQuery('''UPDATE environments
-#             SET id =%id where id=1
-#             ''')
         defer.returnValue(None)
     
     @defer.inlineCallbacks
@@ -297,26 +292,31 @@ class EnvironmentManager(object):
              options TEXT ,
              FOREIGN KEY(node_id) REFERENCES nodes(id)      
              )''')
+             
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE sensors(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             node_id INTEGER NOT NULL,
+             captureType TEXT NOT NULL,
+             captureMode TEXT NOT NULL DEFAULT "Analog",
+             type TEXT NOT NULL ,
+             realName TEXT NOT NULL,
+             name TEXT,
+             description TEXT,
+             FOREIGN KEY(node_id) REFERENCES nodes(id)
+             )''')
+        
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE readings(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             node_id INTEGER NOT NULL,
+             sensor_id INTEGER NOT NULL,
+             data INTEGER NOT NULL,
+             dateTime TEXT NOT NULL,
+             FOREIGN KEY(node_id) REFERENCES nodes(id),
+             FOREIGN KEY(sensor_id) REFERENCES sensors(id)
+             )''')
+        
         defer.returnValue(None)
-#             
-#             
-#        Registry.DBPOOL.runQuery('''CREATE TABLE Sensors(
-#             id INTEGER PRIMARY KEY AUTOINCREMENT,
-#             env_id INTEGER NOT NULL,
-#             node_id INTEGER NOT NULL,
-#             auto_id INTEGER NOT NULL DEFAULT 1,
-#             captureType TEXT NOT NULL,
-#             captureMode TEXT NOT NULL DEFAULT "Analog",
-#             dataStorage TEXT NOT NULL DEFAULT "Db",
-#             type TEXT NOT NULL ,
-#             realName TEXT NOT NULL,
-#             name TEXT,
-#             description TEXT,
-#             FOREIGN KEY(env_id) REFERENCES Environments(id),
-#             FOREIGN KEY(node_id) REFERENCES Nodes(id),
-#             FOREIGN KEY(auto_id) REFERENCES Automation(id)
-#             )''').addCallback(self._dbGeneratedOk)
-#             
+      
 #        Registry.DBPOOL.runQuery('''CREATE TABLE Actors(
 #            id INTEGER PRIMARY KEY AUTOINCREMENT,
 #             env_id INTEGER NOT NULL,
@@ -330,13 +330,4 @@ class EnvironmentManager(object):
 #             FOREIGN KEY(node_id) REFERENCES Nodes(id),
 #             FOREIGN KEY(auto_id) REFERENCES Automation(id)
 #             )''').addCallback(self._dbGeneratedOk) 
-    
-    
- 
-                
-    
- 
-
-
-    
     

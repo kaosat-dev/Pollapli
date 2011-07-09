@@ -10,7 +10,7 @@ Contents:
 	
 	environments
 	nodes
-	connectors_drivers
+	drivers
 	automation
 	addons
 

@@ -1,0 +1,236 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Drivers &mdash; Doboz-web v0.5.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Doboz-web v0.5.0 documentation" href="index.html" />
+    <link rel="up" title="Components" href="components.html" />
+    <link rel="next" title="Automation (tasks)" href="automation.html" />
+    <link rel="prev" title="Nodes" href="nodes.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="automation.html" title="Automation (tasks)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="nodes.html" title="Nodes"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Doboz-web v0.5.0 documentation</a> &raquo;</li>
+          <li><a href="components.html" accesskey="U">Components</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="drivers">
+<h1>Drivers<a class="headerlink" href="#drivers" title="Permalink to this headline">¶</a></h1>
+<p>Drivers define <strong>how</strong> you connect a node to the system.</p>
+<p>Drivers are made of two main components:</p>
+<ul class="simple">
+<li>a hardwareHandler for all lower level manipulation(for example serial etc) connecting/disconneting, and in/out formatting of the raw data via a protocol</li>
+<li>a logicHandler for all higher level functions : such as a queue system etc</li>
+</ul>
+<p>A driver sends events/signals to all its listeners (somewhat like a software base interupt system) and acts as a main
+access point for all its subelements (other systems and components talk to then driver, not its subcomponents)</p>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<span class="target" id="module-doboz_web.core.components.drivers"></span><div class="section" id="module-doboz_web.core.components.drivers.driver">
+<span id="driver"></span><h2>Driver<a class="headerlink" href="#module-doboz_web.core.components.drivers.driver" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="doboz_web.core.components.drivers.driver.Command">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.drivers.driver.</tt><tt class="descname">Command</tt><big>(</big><em>special=False</em>, <em>twoStep=False</em>, <em>answerRequired=False</em>, <em>request=None</em>, <em>answer=None</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base command class, encapsulate all request and answer commands, also has a &#8216;special&#8217; flag for commands that do no participate in normal flow of gcodes : i
+ie for example , regular poling of temperatures for display (the &#8220;OK&#8221; from those commands MUST not affect the line by line sending/answering of gcodes)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="doboz_web.core.components.drivers.driver.CommandQueueLogic">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.drivers.driver.</tt><tt class="descname">CommandQueueLogic</tt><big>(</big><em>driver</em>, <em>bufferSize=8</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.CommandQueueLogic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Implements a command queue system for drivers</p>
+<dl class="method">
+<dt id="doboz_web.core.components.drivers.driver.CommandQueueLogic.send_next_command">
+<tt class="descname">send_next_command</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.CommandQueueLogic.send_next_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns next avalailable command in command queue</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="doboz_web.core.components.drivers.driver.Driver">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.drivers.driver.</tt><tt class="descname">Driver</tt><big>(</big><em>driverType=None</em>, <em>hardwareHandler=None</em>, <em>hardwareHandlerType=None</em>, <em>logicHandler=None</em>, <em>logicHandlerType=None</em>, <em>options={}</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">twistar.dbobject.DBObject</span></tt></p>
+<dl class="docutils">
+<dt>Driver class: higher level handler of device connection that formats outgoing and incoming commands</dt>
+<dd>according to a spec before they get sent to the lower level connector.
+It actually mimics the way system device drivers work in a way.
+You can think of the events beeing sent out by the driver (dataRecieved etc) as interupts of sorts</dd>
+</dl>
+<dl class="method">
+<dt id="doboz_web.core.components.drivers.driver.Driver.connect">
+<tt class="descname">connect</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.connect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="doboz_web.core.components.drivers.driver.Driver.deviceId">
+<tt class="descname">deviceId</tt><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.deviceId" title="Permalink to this definition">¶</a></dt>
+<dd><p>will be needed to identify a specific device, as the system does not work base on ports</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.drivers.driver.Driver.disconnect">
+<tt class="descname">disconnect</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.disconnect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.drivers.driver.Driver.send_command">
+<tt class="descname">send_command</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.send_command" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="doboz_web.core.components.drivers.driver.Driver.set_handlers">
+<tt class="descname">set_handlers</tt><big>(</big><em>hardwareHandler=None</em>, <em>logicHandler=None</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.set_handlers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="doboz_web.core.components.drivers.driver.DriverFactory">
+<em class="property">class </em><tt class="descclassname">doboz_web.core.components.drivers.driver.</tt><tt class="descname">DriverFactory</tt><a class="headerlink" href="#doboz_web.core.components.drivers.driver.DriverFactory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The driver factory assembles a Driver object (the one whose instances are actually stored in db)
+from two objects :</p>
+<blockquote>
+<div><ul class="simple">
+<li>a driver_high object for all higher level functions (ie the ones of the current driver class, mostly)</li>
+<li>a driver_low object for all lower level functions (ie the ones of the current connector class)</li>
+</ul>
+<p>this lower level driver is for example the actual serial_connector class as we have it currently</p>
+</div></blockquote>
+<p>This solve a whole lot of problems at once, since the subobjects will be essentially viewed as one, thanks
+to the getattr method</p>
+<dl class="classmethod">
+<dt id="doboz_web.core.components.drivers.driver.DriverFactory.create">
+<em class="property">classmethod </em><tt class="descname">create</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.DriverFactory.create" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="doboz_web.core.components.drivers.driver.DriverFactory.load">
+<em class="property">classmethod </em><tt class="descname">load</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.DriverFactory.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="serial">
+<h2>Serial<a class="headerlink" href="#serial" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="webcam">
+<h2>Webcam<a class="headerlink" href="#webcam" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Drivers</a><ul>
+<li><a class="reference internal" href="#module-doboz_web.core.components.drivers.driver">Driver</a></li>
+<li><a class="reference internal" href="#serial">Serial</a></li>
+<li><a class="reference internal" href="#webcam">Webcam</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="nodes.html"
+                        title="previous chapter">Nodes</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="automation.html"
+                        title="next chapter">Automation (tasks)</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/drivers.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="automation.html" title="Automation (tasks)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="nodes.html" title="Nodes"
+             >previous</a> |</li>
+        <li><a href="index.html">Doboz-web v0.5.0 documentation</a> &raquo;</li>
+          <li><a href="components.html" >Components</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Mark &#39;ckaos&#39; Moissette.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

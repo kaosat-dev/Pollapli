@@ -56,6 +56,9 @@ class Task(DBObject):
     def stop(self):
         pass
     
+    """
+    yield action()
+    """
     def startPause(self):
         """
         Switches between active and inactive mode, or starts the task if not already done so

@@ -15,7 +15,7 @@ Driver
 Serial
 =============================
 
-.. automodule:: doboz_web.core.components.drivers.serial.serial_plus
+.. automodule:: doboz_web.core.components.drivers.serial.serial_harware_handler
  :members:
  :show-inheritance:
  :undoc-members:

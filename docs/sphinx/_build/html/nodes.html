@@ -87,8 +87,8 @@ or some software node (pachube etc)</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.delete_connector">
-<tt class="descname">delete_connector</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.delete_connector" title="Permalink to this definition">¶</a></dt>
+<dt id="doboz_web.core.components.nodes.node.Node.delete_driver">
+<tt class="descname">delete_driver</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.delete_driver" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -97,8 +97,8 @@ or some software node (pachube etc)</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.get_connector">
-<tt class="descname">get_connector</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.get_connector" title="Permalink to this definition">¶</a></dt>
+<dt id="doboz_web.core.components.nodes.node.Node.get_driver">
+<tt class="descname">get_driver</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.get_driver" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -107,22 +107,11 @@ or some software node (pachube etc)</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.set_connector">
-<tt class="descname">set_connector</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.set_connector" title="Permalink to this definition">¶</a></dt>
+<dt id="doboz_web.core.components.nodes.node.Node.set_driver">
+<tt class="descname">set_driver</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.set_driver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to set this node&#8217;s connector 
 Params:
-connector: a connector instance
-driver=
-WARNING: cheap hack for now, always defaults to serial
-connector</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.set_driver">
-<tt class="descname">set_driver</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.set_driver" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to set a this nodes connector&#8217;s driver 
-Params:
-WARNING: cheap hack for now, always defaults to serial
+returns : a driver instance
 connector</p>
 </dd></dl>
 
@@ -135,6 +124,12 @@ connector</p>
 <dt id="doboz_web.core.components.nodes.node.Node.start">
 <tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>start this node</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="doboz_web.core.components.nodes.node.Node.startTime">
+<tt class="descname">startTime</tt><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.startTime" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is to ensure no &#8216;asynch clash&#8217; occurs when replacing the current driver</p>
 </dd></dl>
 
 <dl class="method">

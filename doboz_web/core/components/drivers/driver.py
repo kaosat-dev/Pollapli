@@ -133,6 +133,7 @@ class DriverFactory(object):
 ####################################################################################
 Driver logic handlers
 """
+
 class Command(object):
     """Base command class, encapsulate all request and answer commands, also has a 'special' flag for commands that do no participate in normal flow of gcodes : i
     ie for example , regular poling of temperatures for display (the "OK" from those commands MUST not affect the line by line sending/answering of gcodes)

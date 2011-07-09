@@ -1,12 +1,26 @@
-from doboz_web.core.tools.event_sys import *
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 
-
-
+class TaskComponent(Object):
+    def __init__(self):
+        self.id=-1
+        
+class Action(DBObject):
+    BELONGSTO   = ['task']  
+    def __init__(self,name="defaultAction",description="",*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
+        self.repeater=False
+        self.d=defer.Deferred()
+        return d
+    
+"""
+####################################################################################
+The following are Conditions related classes
+"""
+    
 class ConditionEvents(Events):
     """
     Class defining events associated to HardwareConnector Class

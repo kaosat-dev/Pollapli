@@ -19,7 +19,13 @@ from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
 from doboz_web.core.components.addons.addon_manager import AddOnManager
 
-
+def truc(f):    
+    try:
+        line=f.next()
+        print(line)
+        reactor.callLater(0,truc,f)
+    except StopIteration:
+        print("at end of file")
 
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
@@ -49,6 +55,11 @@ class MainServer():
         self.exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
         self.exceptionConverter.add_exception(NoDriverSet,404,7,"Node has no connector")
         self.exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
+        
+        testFilepath=os.path.join(self.rootPath,"data","printFiles","test.gcode")
+        f=file(testFilepath,"r")
+        reactor.callLater(0,truc,f)
+    
         
         
     def start(self):
