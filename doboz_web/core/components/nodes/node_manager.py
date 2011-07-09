@@ -23,7 +23,6 @@ from doboz_web.exceptions import UnknownNodeType,NodeNotFound
 from doboz_web.core.components.nodes.hardware.reprap.reprap_capability import ReprapCapability
 from doboz_web.core.components.nodes.hardware.dummy_capability import DummyCapability
 
-from doboz_web.core.components.drivers.driver import Driver,DriverFactory
 
 class NodeManager(object):
     """
@@ -44,10 +43,7 @@ class NodeManager(object):
         self.nodes={}
         self.lastNodeId=0
         
-        dF=DriverFactory()
-        dF.create({"driverType":"teacupdriver","speed":115200,"seperator":"\r\n"})
-        
-    
+     
     @defer.inlineCallbacks    
     def setup(self):
         def addNode(nodes,nodeTypes):

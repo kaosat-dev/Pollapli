@@ -15,7 +15,7 @@ from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRest
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-from doboz_web.core.server.rest.handlers.connector_handlers import ConnectorHandler
+from doboz_web.core.server.rest.handlers.driver_handlers import DriverHandler
 from doboz_web.core.server.rest.handlers.task_handlers import TasksHandler
 
 class NodesHandler(DefaultRestHandler):
@@ -92,8 +92,8 @@ class NodeHandler(DefaultRestHandler):
         self.envId=envId   
         self.nodeId=nodeId
         self.valid_contentTypes.append("application/pollapli.node+json")   
-        subPath=self.rootUri+"/environments/"+str(self.envId)+"/nodes/"+str(self.nodeId)+"/connector"
-        self.putChild("connector",ConnectorHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
+        subPath=self.rootUri+"/environments/"+str(self.envId)+"/nodes/"+str(self.nodeId)+"/drivers"
+        self.putChild("driver",DriverHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
 )
         subPath=self.rootUri+"/environments/"+str(self.envId)+"/nodes/"+str(self.nodeId)+"/tasks"
         self.putChild("tasks",TasksHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  

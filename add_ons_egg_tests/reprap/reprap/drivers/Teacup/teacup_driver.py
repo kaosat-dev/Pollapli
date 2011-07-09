@@ -41,8 +41,6 @@ class TeacupProtocol(BaseSerialProtocol):
         self.deviceHandshakeOk=False
         BaseSerialProtocol.connectionLost(self,reason)
         
-    
-
 class HardwareHandler(SerialHardwareHandler):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     def __init__(self,*args,**kwargs):

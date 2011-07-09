@@ -50,7 +50,7 @@ class RequestParser(object):
         elif self.request.method=="GET":
             for key in self.request.args.keys():         
                     params[key]=[int(elem) if elem.isdigit()  else elem for elem in self.request.args[key] ]    
-        d.callback(params)
+        reactor.callLater(0.2,d.callback,params)
         return d
     
     def _stringify_data(self,obj):

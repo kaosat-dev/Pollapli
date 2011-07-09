@@ -15,7 +15,6 @@ import louie
 from doboz_web.exceptions import UnknownDriver,NoDriverSet
 from doboz_web import idoboz_web
 from doboz_web.core.signal_system import SignalHander
-#from doboz_web.core.components.drivers.serial.serial_driver_low import SerialHardwareHandler,BaseSerialProtocol
 from doboz_web.core.components.addons.addon_manager import AddOnManager
 
     
@@ -27,21 +26,21 @@ class Driver(DBObject):
      You can think of the events beeing sent out by the driver (dataRecieved etc) as interupts of sorts
     """
     BELONGSTO = ['node']
-    def __init__(self,hardwareHandler=None,logicHandler=None,options={},*args,**kwargs):
+    def __init__(self,driverType=None,hardwareHandler=None,hardwareHandlerType=None,logicHandler=None,logicHandlerType=None,options={},*args,**kwargs):
         self.logger = logging.getLogger("dobozweb.core.components.driver")      
         self.logger.setLevel(logging.INFO)
-        print("driver kwargs",kwargs)
         DBObject.__init__(self,**kwargs)
         self.options=options
         
-        #self.errors=0
-       # self.maxErrors=5
-        
+        self.driverType=driverType
         self.hardwareHandler=hardwareHandler
         self.logicHandler=logicHandler
-        self.hardwareHandlerType=None
-        self.logicHandlerType=None
+        self.hardwareHandlerType=hardwareHandlerType
+        self.logicHandlerType=logicHandlerType
         self.signalHandler=SignalHander("Driver")
+    
+    def _toDict(self):
+        return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
     
     def set_handlers(self,hardwareHandler=None,logicHandler=None):
         if hardwareHandler:
@@ -90,38 +89,44 @@ class DriverFactory(object):
     """
     
     def __init__(self):
-        
         log.msg("starting driver factory", logLevel=logging.CRITICAL)
+    
+    @classmethod 
     @defer.inlineCallbacks
-    def create(self,params={}):        
-        
-        driverType=params.get("driverType", None)
+    def create(cls,driverType=None,driverParams={},*args,**kwargs):   
+        driverType=driverType
         plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        driver=None
         
-        driver=Driver(options=params)
-        for driverKlass in plugins:#(yield AddOnManager.get_plugins(idoboz_web.IDriver)):
-            #log.msg("found driver",driverKlass, logLevel=logging.CRITICAL)
-            
+        for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
-                #print("found driver",driverType)
-                #print("components",getattr(driverKlass,"components"))
-                hardwareHandler=driverKlass.components["hardwareHandler"](driver,**params)
-                logicHandler=driverKlass.components["logicHandler"](driver,**params)
+                driver=yield Driver(driverType=driverType,options=driverParams).save()
+                hardwareHandler=driverKlass.components["hardwareHandler"](driver,**driverParams)
+                logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
                 driver.set_handlers(hardwareHandler,logicHandler)
-                
-                #
-                
-
                 driver.save()  
-                driver.connect()
-                #log.msg("Set connector of node",self.id, "to serial plus, and driver of type", driverType," and params",str(driverParams), logLevel=logging.CRITICAL)
                 break
         if not driver:
+            #defer.returnValue(None)
             raise UnknownDriver()
         
         defer.returnValue(driver)
-
-
+    
+    @classmethod    
+    @defer.inlineCallbacks
+    def load(cls,driver):
+        driverType=driver.driverType
+        params=driver.options
+        plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        for driverKlass in plugins:
+            if driverType==driverKlass.__name__.lower():
+                hardwareHandler=driverKlass.components["hardwareHandler"](driver,**params)
+                logicHandler=driverKlass.components["logicHandler"](driver,**params)
+                driver.set_handlers(hardwareHandler,logicHandler)
+                break
+        defer.returnValue(driver)
+            
+        
 """
 ####################################################################################
 Driver logic handlers

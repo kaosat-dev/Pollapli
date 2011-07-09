@@ -24,9 +24,7 @@ class SerialHardwareHandler(object):
         self.isConnected=False
         self.currentErrors=0
         self.maxErrors=2
-        
-       
-        
+                
     def send_data(self,command):
         self.protocol.send_data(command)
         
@@ -34,12 +32,19 @@ class SerialHardwareHandler(object):
         self._connect()
     
     def disconnect(self):
+        
         try:
             if self.serial:
+                try:
+                    self.serial.d.cancel()
+                except:pass
                 self.serial.loseConnection()
                 self.serial=None
         except Exception as inst:
             print("error in serial disconnection",str(inst))
+    
+    def connectionClosed(self,failure):
+        pass
     
     @defer.inlineCallbacks     
     def _connect(self,*args,**kwargs):
@@ -55,13 +60,12 @@ class SerialHardwareHandler(object):
         
         if self.port is None and self.currentErrors<self.maxErrors:
             try:      
-                
                 self.port=str((yield self.scan())[0])
                 SerialHardwareHandler.blockedPorts.append(self.port)        
                 self.currentErrors=0
                 self.isConnected=True
                 self.serial=SerialWrapper(self.protocol,self.port,reactor,baudrate=self.speed)
-                self.serial.d.addCallback(self._connect)     
+                self.serial.d.addCallbacks(callback=self._connect,errback=self.connectionClosed)     
             except Exception as inst:
                 #log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
                 self.isConnected=False

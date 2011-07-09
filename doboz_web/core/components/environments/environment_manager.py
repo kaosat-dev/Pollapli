@@ -308,6 +308,7 @@ class EnvironmentManager(object):
         yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              node_id INTEGER NOT NULL,
+             driverType TEXT NOT NULL,
              hardwareHandlerType TEXT NOT NULL ,
              logicHandlerType TEXT NOT NULL,
              options TEXT ,
