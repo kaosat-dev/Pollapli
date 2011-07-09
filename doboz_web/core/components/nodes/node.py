@@ -42,7 +42,9 @@ class Node(DBObject):
         self.components=[]
         """For Uptime calculation"""
         self.startTime=time.time()
-    
+        
+        """this is to ensure no 'asynch clash' occurs when replacing the current driver"""
+        self.driverLock=defer.DeferredSemaphore(1)
     
     def setup(self):
         @defer.inlineCallbacks
@@ -74,12 +76,17 @@ class Node(DBObject):
         returns : a driver instance
         connector
         """
-        yield self.delete_driver()
         
-        self.driver=yield DriverFactory.create(**kwargs)
-        self.driver.node.set(self)
-        log.msg("Set driver of node",self.id," with params ", kwargs,system="Node")
-             
+        @defer.inlineCallbacks
+        def update():
+            yield self.delete_driver()
+            self.driver=yield DriverFactory.create(**kwargs)
+            self.driver.node.set(self)
+            log.msg("Set driver of node",self.id," with params ", kwargs,system="Node")
+            defer.returnValue(None)
+        yield self.driverLock.run(update)
+     
+        
         defer.returnValue(self.driver)
                     
         
