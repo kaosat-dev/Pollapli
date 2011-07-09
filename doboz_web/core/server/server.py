@@ -19,11 +19,6 @@ from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
 from doboz_web.core.components.addons.addon_manager import AddOnManager
 
-from doboz_web.core.signal_system import SignalHander
-from louie import dispatcher,error,Any,All
-import louie
-
-
 
 
 class MainServer():
@@ -55,16 +50,6 @@ class MainServer():
         self.exceptionConverter.add_exception(NoDriverSet,404,7,"Node has no connector")
         self.exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
         
-        
-       
-        
-        #bob=SignalHander("bob")
-        #bab=SignalHander("bab",[("test",Any,[tutu])])
-#        
-       
-        #bob.send_message("test",{"data":25})
-#        bob.send_message("toto",{"data":"grosse madame"})
-#        bob.send_message("pouet",{"data":42})
         
     def start(self):
         #observer = log.PythonLoggingObserver("dobozweb.core.server")

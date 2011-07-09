@@ -32,6 +32,8 @@ class Driver(DBObject):
         DBObject.__init__(self,**kwargs)
         self.options=options
         
+        self.deviceId=None
+        """will be needed to identify a specific device, as the system does not work base on ports"""
         self.driverType=driverType
         self.hardwareHandler=hardwareHandler
         self.logicHandler=logicHandler
@@ -211,7 +213,7 @@ class CommandQueueLogic(object):
                 cmd.answerComplete=True
                 
 
-        self.driver.signalHandler.send_message(self.driver,"test.driver.dataRecieved",{"data":cmd.answer})
+        self.driver.signalHandler.send_message(self.driver,"driver.dataRecieved",{"data":cmd.answer})
          ###one command was completed, send next  
         self._handle_request(data="a",answerRequired=True) 
         self.send_next_command()

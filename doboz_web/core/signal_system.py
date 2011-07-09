@@ -30,4 +30,5 @@ class SignalHander(object):
         pass
         
     def send_message(self,sender=None,channel=None,message={},*args,**kwargs):
-        err=louie.send(channel or "dump", sender or self,**message)
+        if message:
+            err=louie.send(channel or "dump", sender or self,**message)

@@ -9,7 +9,9 @@ from twistar.registry import Registry
 from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
+from louie import dispatcher,error,Any,All
 from doboz_web.core.tools.event_sys import *
+from doboz_web.core.signal_system import SignalHander
 
 
 class AutomationEvents(Events):
@@ -23,8 +25,8 @@ class Task(DBObject):
     """
     def __init__(self,name="task",description="a task",type="task",params={},*args,**kwargs):
         DBObject.__init__(self,**kwargs)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.task")
-        #self.logger=logging.getLogger("dobozweb.core.components.automation.task")
+        #self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.task")
+        self.logger=logging.getLogger("dobozweb.core.components.automation.task")
         self.connector=None
         self.name=name
         self.description=description
@@ -38,7 +40,10 @@ class Task(DBObject):
         self.progress=0
         self.status="NP" #can be : NP: not started, paused , SP: started, paused, SR:started, running
 
-        self.events=AutomationEvents()
+        self.signalhandler=SignalHander("task",[("driver.dataRecieved",Any,[self.__call__])])
+
+    def __call__(self):
+        print("task recieved message from driver")
         
     def _toDict(self):
         return {"task":{"id":self.id,"name":self.name,"description":self.description,"status":self.status,"progress":self.progress,"link":{"rel":"task"}}}
@@ -47,6 +52,8 @@ class Task(DBObject):
         if hasattr(self,"specialty"):
             self.specialty.start()
     def pause(self):
+        pass
+    def stop(self):
         pass
     
     def startPause(self):

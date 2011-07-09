@@ -8,3 +8,6 @@ class Action(DBObject):
     BELONGSTO   = ['task']  
     def __init__(self,name="defaultAction",description="",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
+        self.d=defer.Deferred()
+        return d
+    

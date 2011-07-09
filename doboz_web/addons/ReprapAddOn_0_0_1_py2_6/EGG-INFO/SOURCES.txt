@@ -4,10 +4,8 @@ ReprapAddOn.egg-info/SOURCES.txt
 ReprapAddOn.egg-info/dependency_links.txt
 ReprapAddOn.egg-info/top_level.txt
 reprap/__init__.py
-reprap/connectors/__init__.py
-reprap/connectors/drivers/__init__.py
-reprap/connectors/drivers/FiveD/__init__.py
-reprap/connectors/drivers/FiveD/fived_driver.py
 reprap/drivers/__init__.py
+reprap/drivers/FiveD/__init__.py
+reprap/drivers/FiveD/fived_driver.py
 reprap/drivers/Teacup/__init__.py
 reprap/drivers/Teacup/teacup_driver.py

@@ -1,5 +1,5 @@
 (dp1
-S'teacup_driver'
+S'fived_driver'
 p2
 ccopy_reg
 _reconstructor
@@ -14,7 +14,7 @@ NtRp6
 (dp7
 S'moduleName'
 p8
-S'reprap.drivers.Teacup.teacup_driver'
+S'reprap.drivers.FiveD.fived_driver'
 p9
 sS'description'
 p10
@@ -57,7 +57,7 @@ ag19
 asg20
 g6
 sg21
-S'HardwareHandler'
+S'FiveDHardwareHandler'
 p26
 sg10
 Nsbag3
@@ -74,9 +74,9 @@ p30
 asg20
 g6
 sg21
-S'TeacupDriver'
+S'FiveDDriver'
 p31
 sg10
-S'Class defining the components of the driver for the teacup reprap firmware '
+S'Class defining the components of the driver for the 5D reprap firmware '
 p32
 sbasbs.

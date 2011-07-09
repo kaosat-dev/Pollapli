@@ -18,6 +18,9 @@ class NoDriverSet(Exception):
 class UnknownDriver(Exception):
     pass
 
+class NoAvailablePort(Exception):
+    pass
+
 """"""""""""""""""""""""""""""""""""
 """rest handler exceptions"""
 class ParameterParseException(Exception):

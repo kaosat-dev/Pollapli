@@ -6,9 +6,11 @@ from twisted.python import log,failure
 from doboz_web.core.components.drivers.driver import Driver,CommandQueueLogic
 from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
 
-
-
 class TeacupProtocol(BaseSerialProtocol):
+    """
+    Class defining the protocol used by this driver: in this case, the reprap teacup protocol 
+    which is the most straighforward of reprap protocols (no checksum etc)
+    """
     def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
        # print("in  teacup Protocol", seperator,driver)
         BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
@@ -41,16 +43,14 @@ class TeacupProtocol(BaseSerialProtocol):
         self.deviceHandshakeOk=False
         BaseSerialProtocol.connectionLost(self,reason)
         
-    
-
 class HardwareHandler(SerialHardwareHandler):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     def __init__(self,*args,**kwargs):
         SerialHardwareHandler.__init__(self,protocol=TeacupProtocol(*args,**kwargs),*args,**kwargs)
 
 class TeacupDriver(object):
+    """Class defining the components of the driver for the teacup reprap firmware """
     classProvides(IPlugin, idoboz_web.IDriver)
-   # components={"logicHandler":"commandQueue","connection":"serial","protocol":TeacupProtocol}
     components={"logicHandler":CommandQueueLogic,"hardwareHandler":HardwareHandler}
     
     

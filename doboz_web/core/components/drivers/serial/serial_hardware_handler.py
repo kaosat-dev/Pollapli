@@ -10,6 +10,7 @@ from twisted.python.log import PythonLoggingObserver
 from twisted.plugin import IPlugin
 from zope.interface import implements,classProvides
 from doboz_web import idoboz_web
+from doboz_web.exceptions import NoAvailablePort
 
 class SerialHardwareHandler(object):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
@@ -31,10 +32,13 @@ class SerialHardwareHandler(object):
     def connect(self):
         self._connect()
     
-    def disconnect(self):
-        
+    def disconnect(self):      
         try:
             if self.serial:
+                try:
+                    SerialHardwareHandler.blockedPorts.remove(self.port)
+                except:
+                    pass
                 try:
                     self.serial.d.cancel()
                 except:pass
@@ -60,13 +64,16 @@ class SerialHardwareHandler(object):
         
         if self.port is None and self.currentErrors<self.maxErrors:
             try:      
-                self.port=str((yield self.scan())[0])
+                self.port=str((yield self.scan())[0])        
                 SerialHardwareHandler.blockedPorts.append(self.port)        
                 self.currentErrors=0
                 self.isConnected=True
                 self.serial=SerialWrapper(self.protocol,self.port,reactor,baudrate=self.speed)
-                self.serial.d.addCallbacks(callback=self._connect,errback=self.connectionClosed)     
+                self.serial.d.addCallbacks(callback=self._connect,errback=self.connectionClosed)  
+#            except OutofRangeException:
+#                raise NoAvailablePort()   
             except Exception as inst:
+               
                 #log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
                 self.isConnected=False
                 self.currentErrors+=1
@@ -143,7 +150,10 @@ class BaseSerialProtocol(Protocol):
     def connectionMade(self):
         log.msg("Device connected",system="Driver") 
           
-        
+    def _query_deviceInfo(self):
+        """method for retrieval of device info (for id and more) """
+        pass   
+    
     def _handle_deviceHandshake(self,data):
         """
         handles machine (hardware node etc) initialization
@@ -183,7 +193,7 @@ class BaseSerialProtocol(Protocol):
                         self._handle_deviceHandshake(nDataBlock)
                     else:
                         nDataBlock=self._format_data_in(nDataBlock)
-                        #log.msg("Data recieved <<: ",nDataBlock,system="Driver")  
+                        log.msg("Data recieved <<: ",nDataBlock,system="Driver")  
                         self.driver._handle_response(nDataBlock)
                     self.buffer=self.buffer[results.end():]
                     results=None
