@@ -29,10 +29,12 @@ def truc(f):
     except StopIteration:
         print("at end of file")
 
-
+from twisted.application.service import Application
 
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
+        #app = Application("PollapliServer")
+
         self.port=port
         self.rootPath=rootPath
         self.filePath=filePath
@@ -59,10 +61,8 @@ class MainServer():
         self.exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
         self.exceptionConverter.add_exception(NoDriverSet,404,7,"Node has no connector")
         self.exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
-        
-        #testFilepath=os.path.join(self.rootPath,"data","printFiles","test.gcode")
-        #f=file(testFilepath,"r")
-        #reactor.callLater(0,truc,f)
+        self.exceptionConverter.add_exception(DeviceHandshakeMismatch,500,9,"Device handshake failed to match the on defined by the driver")
+
         self.setup()
         
     @defer.inlineCallbacks
@@ -70,6 +70,7 @@ class MainServer():
         yield AddOnManager.setup()
         yield DriverManager.setup()
         yield EnvironmentManager.setup()
+        
         defer.returnValue(None)
         
     def start(self):

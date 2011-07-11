@@ -46,18 +46,21 @@ class Node(DBObject):
         """this is to ensure no 'asynch clash' occurs when replacing the current driver"""
         self.driverLock=defer.DeferredSemaphore(1)
     
+    @defer.inlineCallbacks
     def setup(self):
+        
         @defer.inlineCallbacks
         def addDriver(drivers,node):
             if len(drivers)>0:
                 driver=drivers[0]               
                 driver.options=ast.literal_eval(driver.options)
                 self.driver=yield DriverManager.load(driver)
-                log.msg("Node with id",self.id,", driver",self.driver.driverType, "setup successfully", logLevel=logging.CRITICAL,system="Node")
             defer.returnValue(None) 
-                       
-        Driver.find(where=['node_id = ?', self.id]).addCallback(addDriver,self)
-         
+        yield Driver.find(where=['node_id = ?', self.id]).addCallback(addDriver,self)
+        log.msg("Node with id",self.id, "setup successfully", logLevel=logging.CRITICAL,system="Node")
+
+        defer.returnValue(None)
+        
     def __getattr__(self, attr_name):
         if hasattr(self.taskManager, attr_name):
             return getattr(self.taskManager, attr_name)

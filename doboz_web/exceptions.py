@@ -17,6 +17,9 @@ class NoDriverSet(Exception):
 
 class UnknownDriver(Exception):
     pass
+
+class DeviceHandshakeMismatch(Exception):
+    pass
 class DeviceIdMismatch(Exception):
     pass
 class NoAvailablePort(Exception):

@@ -9,6 +9,7 @@ import imp
 import inspect
 
 from doboz_web.core.components.nodes.node_manager import NodeManager
+from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
@@ -31,13 +32,14 @@ class Environment(DBObject):
     ####################################################################################
     Configuration and shutdown methods
     """
-     
+    
+    @defer.inlineCallbacks
     def setup(self):
         """
         Function to instanciate the whole environment from disk (db)
         This is usually called at first start or after a server restart
         """
-        self.nodeManager.setup()
+        yield self.nodeManager.setup()
         #create db if not existent else just connect to it
 #        dbPath=self.path+os.sep+self.name+"_db"
 #        if not os.path.exists(dbPath):    
@@ -48,6 +50,7 @@ class Environment(DBObject):
             
       
         log.msg("Environment ",self.name ,"with id", self.id," setup correctly", logLevel=logging.CRITICAL, system="environment")
+        defer.returnValue(None)
         
     def tearDown(self):
         """

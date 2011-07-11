@@ -59,14 +59,15 @@ class EnvironmentManager(object):
                 dbPath=os.path.join(envPath,envName)+".db"
                 if os.path.exists(dbPath):
                     Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbPath,check_same_thread=False)
-                                    
+                    
+                    @defer.inlineCallbacks        
                     def addEnv(env,maxFoundId):
                         EnvironmentManager.environments[env[0].id]=env[0]
-                        env[0].setup()
+                        yield env[0].setup()
                         if env[0].id>maxFoundId:
                             maxFoundId=env[0].id
                         
-                        return maxFoundId
+                        defer.returnValue(maxFoundId)
                     
                     maxFoundId=yield Environment.find().addCallback(addEnv,maxFoundId)
                     EnvironmentManager.idCounter=maxFoundId+1

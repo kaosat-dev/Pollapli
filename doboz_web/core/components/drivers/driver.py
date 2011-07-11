@@ -41,8 +41,11 @@ class Driver(DBObject):
         self.logicHandlerType=logicHandlerType
         self.signalHandler=SignalHander("Driver")
         
+        self.initalSetup=True
         self.isConfigured=False#when the port association has not been set
-    
+        self.isDeviceHandshakeOk=False
+        self.isDeviceIdOk=False
+        
     def _toDict(self):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
     
@@ -56,12 +59,16 @@ class Driver(DBObject):
             
     def setup(self):
         log.msg("Attemtping to setup driver",system="Driver")
-        self.hardwareHandler.connect(setupMode=True)
         
-    def _setupSucceeded(self,params):
-        pass
-    def _setupFailed(self,params):
-        pass
+        self.hardwareHandler.connect(setupMode=True)#Special(setupMode=True,currentPortAttempted)
+        
+    def _setupSucceeded(self,params=None):
+        DriverManager._deviceMatchFound(self)
+        
+    def _setupFailed(self,params=None):
+        d=defer.Deferred()
+        return d
+        
     
     def connect(self,*args,**kwargs):
         self.hardwareHandler.connect()
@@ -80,14 +87,9 @@ class Driver(DBObject):
         else:
             self.signalHandler.send_message(self,"test.driver.dataRecieved",{"data":data})
             self.send_command("a")
-#        def __getattr__(self,attrname):
-#            try:
-#                if hasattr(self.lowDriver,attrname):
-#                    return getattr(self.lowDriver,attrname)
-#                elif hasattr(self.highDriver,attrname):
-#                    return getattr(self.highDriver,attrname)
-#            except:
-#                pass
+
+
+
         
 class DriverManager(object):
     """
@@ -100,11 +102,44 @@ class DriverManager(object):
     This solve a whole lot of problems at once, since the subobjects will be essentially viewed as one, thanks
     to the getattr method
     """
-    port_to_driver={}
+    """
+    For driver class: should there be a notion of "requester" for sending data, so that answers can be dispatche
+    to the actual entity that sent the command ? for example : during a reprap 3d print, querying for sensor 
+    data is actually completely seperate and should not be part of the print task, therefor, since all requests
+    are sent to the same device, there needs to be a way to differenciate between the two when sending back messages
+    """
+    
+    """
+    For plug & play managment
+    the whole "check and or set device id" procedure should not take place during the normal 
+    connect etc process but in a completely seperate set of phases (somethink like a "setup" 
+    and used to check for correct device on port /device id 
+    
+    the hardware manager's connect method needs to be modified:
+    - if the device was successfully associated with a port in the p&p detection phase, use that port info
+    - if the device was not identified , has no id, etc , then use the current "use the first available port" method
+    
+    perhaps we should use a method similar to the way drivers are installed on windows:
+    - ask for removal of cable if already connected
+    - ask for re plug of cable
+    - do a diff on the previous/new list of com/tty devices
+    - do id generation/association
+    """    
+    
     
     loaded_drivers=[]
+    
+    port_to_driver={}
+    driver_to_port={}
+    
     available_devices={}
     available_devices["serial"]=[]
+    toConfigure_drivers=[]
+    hardware_handlers={}
+    hardware_handlers["serial"]=SerialHardwareHandler
+    
+    pending_ports=[]
+    pending_drivers=[]
     
     
     def __init__(self):
@@ -164,121 +199,107 @@ class DriverManager(object):
     def unregister_driver(cls,driver):
         if driver in DriverManager.loaded_drivers:
             loaded_drivers.remove(driver)
+            del DriverManager.driver_to_port[driver]
             
-    @classmethod
-    @defer.inlineCallbacks        
-    def scanAndMatchDeviceId(self,driver):
-        """scan for available ports.
-        Returns a list of actual available ports"""        
-        available = []
-        serial=None
-        for port in (yield SerialHardwareHandler.list_ports()):  
-            if port not in SerialHardwareHandler.blockedPorts: 
-                try:
-                    serial = SerialWrapper(DummyProtocol(),port,reactor) 
-                    available.append(serial._serial.name)
-                    SerialHardwareHandler()
-                    serial.loseConnection()  
-                except Exception as inst:
-                    log.msg("Error while opening port",port,"Error:",inst)
-        defer.returnValue(available)
     
     @classmethod
-    def pnpScan(self):
-        """god awfull hack for now: try to connect to every port and check for IdMismatch Exceptions"""
-        @defer.inlineCallbacks
-        def scanDriver(drivers):
-            for driver in drivers:
-                try:
-                    driver.connect()
-                    port=driver.hardwareHandler.port
-                    driver.disconnect()
-                except DeviceIdMismatch:
-                    print("bad id")
-            defer.returnValue(None)                
-        Driver.all.addCallback(scanDriver)
-
+    @defer.inlineCallbacks
+    def _deviceMatchFound(self,driver):
+        log.msg("Node",(yield driver.node.get()).name,"plugged in to port",driver.hardwareHandler.port,system="Driver")
+        DriverManager.port_to_driver[driver.hardwareHandler.port]=driver
+        DriverManager.driver_to_port[driver]=driver.hardwareHandler.port
+        #print("blaah",DriverManager.driver_to_port)
+        defer.returnValue(None)
+        
+  
+    
+    @classmethod
+    def _next_driverToSetup(self):
+        pass      
+    
+    
+    class PortBinderHelper(object):
+        def __init__(self,ports,drivers):
+            self.ports=ports
+            self.drivers=drivers
+            self.d=defer.Deferred()
+            return  self.d
+            
+        def _next_driver(self):
+            pass 
+        
+        def driverYielder(self,drivers):
+            driverIndex=0
+            while driverIndex < len(drivers):
+                yield drivers[driverIndex]
+                driverIndex += 1
+                
+        def portYielder(self,ports):
+            portIndex=0
+            while driverIndex < len(drivers):
+                yield drivers[driverIndex]
+                driverIndex += 1
+        
+    @classmethod
+    def setup_drivers(cls,ports,drivers):
+        pass
+    
+    @classmethod
+    def _driver_setup_failed(cls,*args,**kwargs):
+        print("driver setup failed",args,kwargs)
+        
     @classmethod
     @defer.inlineCallbacks  
     def update_deviceList(cls):
         """
         Needs to be done with each hardware type with pnp support
         """
-        log.msg("Checking for device changes",system="Driver")
-        oldPorts=DriverManager.available_devices["serial"]
-        ports=yield SerialHardwareHandler.scan()
+        #log.msg("Checking for device changes",system="Driver")
+        oldPorts=DriverManager.available_devices["serial"]       
+        newPorts=[]
+        for handler in DriverManager.hardware_handlers.itervalues():
+            newPorts.extend((yield handler.list_availablePorts()))
+        
         
         def checkForPortChanges(oldL,newL):
-            result=[]
-            if not oldL and not newL:
-                return False
-            if (not newL and oldL) or ( newL and not oldL):
-                return True
-            
-            if len(newL)== len(oldL):
-                l1= sorted(newL)
-                l2= sorted(oldL)
-                print("L1",l1,"L2",l2,"new",newL,"old",oldL)
-                for i in range (0,len(newL)):
-                    if l1[i]!= l2[i]:
-                        result.append(l1[i])
-                        return True
-                return False
-            return True
-        
-        def checkForPortChanges2(oldL,newL):
-            result=[]
+            addedPorts=[]
             """
             we don't do a preliminary "if len(oldL) != len(newL):" since even with the same amount of 
             detected devices, the actual devices in the list could be different
             """
             s1=set(oldL)
             s2=set(newL)
-            print("tutu",s1-s2)
-            #l1= sorted(oldL)
-            #l2= sorted(newL)
-#            if len(l2)> len(l1):#new device(s) was(were) added
-#                for i in range (0,len(newL)):
-#                    if l1[i]!= l2[i]:
-#                        result.append(l1[i])
-#                        return True
-
-        for driver in DriverManager.loaded_drivers:
-            print(driver)
-            #if not driver.isConfigured:
+            addedPorts=s2-s1
+            removePorts=s1-s2
+            return (addedPorts,removePorts)
                 
-                #driver.setup()
-#        checkForPortChanges2(oldPorts,ports)
-#        if checkForPortChanges(oldPorts,ports):
-#            log.msg("THERE WAS A CHANGE IN PORTS !!!",system="Driver")
-#            DriverManager.available_devices["serial"]=ports
-        
+        portChanges=checkForPortChanges(oldPorts,newPorts)
+        if len(portChanges[0])>0 or len(portChanges[1])>0:
+            DriverManager.available_devices["serial"]=list(portChanges[0])
+            if len(portChanges[1])>0:
+                #log.msg("These ports were removed",portChanges[1])
+                s1=set(DriverManager.port_to_driver.iterkeys())
+                disconnectedPorts=s1.intersection(portChanges[1])
+                for port in list(disconnectedPorts):
+                    driver=DriverManager.port_to_driver[port]
+                    log.msg("Node",(yield driver.node.get()).name,"plugged out of port",driver.hardwareHandler.port,system="Driver")
+                    del DriverManager.driver_to_port[driver]
+                    del DriverManager.port_to_driver[port]
+                    driver.isConfigured=False
+                    driver.hardwareHandler.protocol.deviceInitOk=False
+
+            if len(portChanges[0])>0:
+                log.msg("These ports were added",portChanges[0])
+                
+                #yield PortBinderHelper(list(portChanges[0]),DriverManager.loaded_drivers)
+                #DriverManager._next_driverToSetup()
+                
+                for driver in DriverManager.loaded_drivers:
+                    if not driver.isConfigured:
+                        driver.setup()
+                        
         reactor.callLater(3,DriverManager.update_deviceList)
-"""
-For driver class: should there be a notion of "requester" for sending data, so that answers can be dispatche
-to the actual entity that sent the command ? for example : during a reprap 3d print, querying for sensor 
-data is actually completely seperate and should not be part of the print task, therefor, since all requests
-are sent to the same device, there needs to be a way to differenciate between the two when sending back messages
-"""
-
-"""
-For plug & play managment
-the whole "check and or set device id" procedure should not take place during the normal 
-connect etc process but in a completely seperate set of phases (somethink like a "setup" 
-and used to check for correct device on port /device id 
-
-the hardware manager's connect method needs to be modified:
-- if the device was successfully associated with a port in the p&p detection phase, use that port info
-- if the device was not identified , has no id, etc , then use the current "use the first available port" method
-
-perhaps we should use a method similar to the way drivers are installed on windows:
-- ask for removal of cable if already connected
-- ask for re plug of cable
-- do a diff on the previous/new list of com/tty devices
-- do id generation/association
-"""
-
-    
+        
         
 """
 ####################################################################################

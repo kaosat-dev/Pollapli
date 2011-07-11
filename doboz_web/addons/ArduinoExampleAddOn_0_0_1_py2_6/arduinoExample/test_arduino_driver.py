@@ -4,9 +4,11 @@ from doboz_web import idoboz_web
 from zope.interface import classProvides
 from twisted.python import log,failure
 from twisted.internet import reactor, defer
-from doboz_web.core.components.drivers.driver import Driver,CommandQueueLogic
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
 import uuid
+from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
+from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
+from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
+
 
 class ArduinoExampleProtocol(BaseSerialProtocol):
     """
@@ -17,7 +19,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
         self.deviceHandshakeOk=False
         self.deviceInitOk=False
-        print("TUTUUUUUUUUUUUUUUUUU")
+        
     def _handle_deviceHandshake(self,data):
         """
         handles machine (hardware node etc) initialization
@@ -29,7 +31,12 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self._query_deviceInfo()
             #self.logger.critical("Machine Initialized")
         else:
-            raise Exception("Machine NOT INITIALIZED")
+            log.msg("Device hanshake mismatch",system="Driver")
+            
+            DriverManager._driver_setup_failed()
+            #self.driver._setupFailed()
+            self.driver.disconnect()
+            #raise DeviceHandshakeMismatch()
     
     @defer.inlineCallbacks
     def _handle_deviceInit(self,data):
@@ -49,21 +56,29 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             if not self.driver.deviceId :
                 self.driver.deviceId=str(uuid.uuid4())
                 yield self.driver.save()
-                self.send_data("s"+ self.driver.deviceId)
+                self._set_deviceId()
                 self._query_deviceInfo()
                 
             elif self.driver.deviceId!= data: 
-                raise Exception("Connected to wrong device")
+                DriverManager._driver_setup_failed(self.driver)
+                self.driver._setupFailed()
+                self.driver.disconnect()
+                #raise Exception("Connected to wrong device")
             
         else:
             self.driver.deviceId=data
             yield self.driver.save()
             self.deviceInitOk=True
-            log.msg("Device id set to",data,system="Driver")
-            self.send_data("a")#temporary hack
+            log.msg("Device id is ",data,system="Driver")
             self.driver.isConfigured=True
-            #raise Exception("Machine NOT INITIALIZED")
+            self.driver.disconnect()
+            self.driver._setupSucceeded()
+
         defer.returnValue(None)
+        
+    def _set_deviceId(self,id=None):
+        self.send_data("s"+ self.driver.deviceId)
+        
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """

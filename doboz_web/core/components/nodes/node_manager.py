@@ -11,10 +11,7 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-#from doboz_web.core.components.nodes.hardware.reprap.reprap_node import ReprapNode
 
-#from doboz_web.core.components.nodes.hardware.webcam.webcam_node import WebcamNode
-#from doboz_web.core.components.connectors.hardware.serial.serial_plus import SerialPlus
 
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.tools.wrapper_list import WrapperList
@@ -46,19 +43,23 @@ class NodeManager(object):
      
     @defer.inlineCallbacks    
     def setup(self):
+        
+        @defer.inlineCallbacks
         def addNode(nodes,nodeTypes):
             for node in nodes:
                 node.environment.set(self.parentEnv)
                 self.nodes[node.id]=node
-                node.setup()
-                for capability in nodeTypes.values():            
+               
+                yield node.setup()
+                for capability in nodeTypes.values():   
                     def addCapabilities(caps,node):
                         if len(caps)>0:
                             node.capability=caps[0] 
                     capability.find(where=['node_id = ?', node.id]).addCallback(addCapabilities,node)
-                
+            
                 
         yield Node.all().addCallback(addNode,self.nodeTypes)
+        defer.returnValue(None)
         
     """
     ####################################################################################

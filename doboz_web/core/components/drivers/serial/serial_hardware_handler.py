@@ -12,9 +12,19 @@ from zope.interface import implements,classProvides
 from doboz_web import idoboz_web
 from doboz_web.exceptions import NoAvailablePort
 
+class PortInfo(object):
+    def __init__(self,name="",blocked=False,inUse=False,bound=False):
+        self.portName=name
+        self.isBlocked=blocked
+        self.isInUse=inUse
+        self.isBound=bound
+
 class SerialHardwareHandler(object):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     blockedPorts=["COM3"]
+    availablePorts=[]
+    ports=[]
+    ports.append(PortInfo(name="COM3",blocked=True))
 
     def __init__(self,driver=None,protocol=None,speed=19200,*args,**kwargs):
         self.driver=driver
@@ -31,9 +41,11 @@ class SerialHardwareHandler(object):
     def send_data(self,command):
         self.protocol.send_data(command)
         
-    def connect(self,setupMode=False,*args,**kwargs):
-        self._connect(setupMode,*args,**kwargs)
+    def connect(self,setupMode=False,port=None,*args,**kwargs):
+        self._connect(setupMode,port,*args,**kwargs)
     
+    def reconnect(self):
+        pass
     def disconnect(self):      
         try:
             if self.serial:
@@ -52,15 +64,17 @@ class SerialHardwareHandler(object):
     def connectionClosed(self,failure):
         pass
     
-    def _connect_fd(self,setupMode=False,*args,**kwargs):
-        if setupMode:
-            print("in setup mode")
     
+    def connectSpecial(self,setupMode=False,port=None,*args,**kwargs):
+        self.port=port
+        SerialHardwareHandler.blockedPorts.append(self.port)
+        self.serial=SerialWrapper(self.protocol,self.port,reactor,baudrate=self.speed)
+        self.serial.d.addCallbacks(callback=self._connect,errback=self.connectionClosed) 
+         
     @defer.inlineCallbacks     
-    def _connect(self,setupMode=False,*args,**kwargs):
+    def _connect(self,setupMode=False,port=None,*args,**kwargs):
         """Port connection/reconnection procedure"""    
-        
-        def get_port():
+        if port:
             pass
         try:
             SerialHardwareHandler.blockedPorts.remove(self.port)
@@ -93,11 +107,7 @@ class SerialHardwareHandler(object):
                     self.serial.d.cancel()
                 except:pass
             #self.tearDown()
-    
-    @classmethod
-    def pnpscan(cls):
-        """method for automatic polling of ports , for plug & play"""
-        reactor.callLater(3,SerialHardwareHandler.pnpscan)
+
         
     @classmethod       
     def list_ports(self):
@@ -129,6 +139,25 @@ class SerialHardwareHandler(object):
         return d
     
     @classmethod
+    @defer.inlineCallbacks 
+    def list_availablePorts(self):
+        """scan for available ports.
+        Returns a list of actual available ports"""        
+        available = []
+        serial=None
+        for port in (yield self.list_ports()):  
+            if port not in SerialHardwareHandler.blockedPorts: 
+                try:
+                    serial = SerialWrapper(DummyProtocol(),port,reactor) 
+                    available.append(serial._serial.name)
+                    if port not in SerialHardwareHandler.availablePorts:
+                        SerialHardwareHandler.availablePorts.append(serial._serial.name)
+                    serial.loseConnection()  
+                except Exception as inst:
+                    log.msg("Error while opening port",port,"Error:",inst)
+        defer.returnValue(available)
+        
+    @classmethod
     @defer.inlineCallbacks        
     def scan(self):
         """scan for available ports.
@@ -140,12 +169,12 @@ class SerialHardwareHandler(object):
                 try:
                     serial = SerialWrapper(DummyProtocol(),port,reactor) 
                     available.append(serial._serial.name)
+                    if port not in SerialHardwareHandler.availablePorts:
+                        SerialHardwareHandler.availablePorts.append(serial._serial.name)
                     serial.loseConnection()  
                 except Exception as inst:
                     log.msg("Error while opening port",port,"Error:",inst)
         defer.returnValue(available)
-        
-    
     
     """The next methods are at least partially deprecated and not in use """   
     def reset_seperator(self):
@@ -192,6 +221,10 @@ class BaseSerialProtocol(Protocol):
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
         pass   
+    
+    def _set_deviceId(self,id=None):
+        """ method for setting device id: MANDATORY for all drivers/protocols """
+        pass
     
     def _handle_deviceHandshake(self,data):
         """
