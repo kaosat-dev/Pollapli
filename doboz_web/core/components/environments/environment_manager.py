@@ -38,28 +38,30 @@ class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
     """
+    envPath=None
+    environments={}
+    idCounter=1
     def __init__(self,envPath):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.environments.environmentManager")
-        self.environments={}
-        self.path=envPath
-        self.idCounter=1
-        
+        self.path=EnvironmentManager.envPath
+        self.idCounter=EnvironmentManager.idCounter
+    
+    @classmethod
     @defer.inlineCallbacks
-    def setup(self):
-        self.startTime = time.time()
+    def setup(cls,*args,**kwargs):
         """Retrieve all existing environments from disk"""
         maxFoundId=1
-        for fileDir in os.listdir(self.path): 
-            if os.path.isdir(os.path.join(self.path,fileDir)):        
+        for fileDir in os.listdir(EnvironmentManager.envPath): 
+            if os.path.isdir(os.path.join(EnvironmentManager.envPath,fileDir)):        
                    
                 envName= fileDir
-                envPath=os.path.join(self.path,envName)
+                envPath=os.path.join(EnvironmentManager.envPath,envName)
                 dbPath=os.path.join(envPath,envName)+".db"
                 if os.path.exists(dbPath):
                     Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbPath,check_same_thread=False)
                                     
                     def addEnv(env,maxFoundId):
-                        self.environments[env[0].id]=env[0]
+                        EnvironmentManager.environments[env[0].id]=env[0]
                         env[0].setup()
                         if env[0].id>maxFoundId:
                             maxFoundId=env[0].id
@@ -67,7 +69,7 @@ class EnvironmentManager(object):
                         return maxFoundId
                     
                     maxFoundId=yield Environment.find().addCallback(addEnv,maxFoundId)
-                    self.idCounter=maxFoundId+1
+                    EnvironmentManager.idCounter=maxFoundId+1
                     #temporary: this should be recalled from db from within the environments ?
         
         log.msg("Environment manager setup correctly", system="environement manager", logLevel=logging.CRITICAL)
@@ -289,6 +291,7 @@ class EnvironmentManager(object):
              driverType TEXT NOT NULL,
              hardwareHandlerType TEXT NOT NULL ,
              logicHandlerType TEXT NOT NULL,
+             deviceId TEXT,
              options TEXT ,
              FOREIGN KEY(node_id) REFERENCES nodes(id)      
              )''')

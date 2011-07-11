@@ -10,10 +10,6 @@ from zipfile import ZipFile
 import os
 import sys
 from twisted.internet import reactor, defer
-from twisted.enterprise import adbapi
-from twistar.registry import Registry
-from twistar.dbobject import DBObject
-from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from twisted.plugin import getPlugins,IPlugin
@@ -21,7 +17,7 @@ from twisted.plugin import getPlugins,IPlugin
 
 from doboz_web.core.components.addons.addon import AddOn
 from doboz_web.core.tools.wrapper_list import WrapperList
-from doboz_web.exceptions import UnknownNodeType,NodeNotFound
+#from doboz_web.exceptions import UnknownaddOnType,addOnNotFound
 
 
 class AddOnManager(object):
@@ -32,89 +28,67 @@ class AddOnManager(object):
     addons={}
     addOnPath=None
     def __init__(self):
-        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.addonManager")
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.addOns.addonManager")
+    
+    @classmethod
+    @defer.inlineCallbacks
+    def setup(self):          
+        yield AddOnManager.update_addOns()
+        log.msg("AddOn Manager setup succesfully ",system="AddOn Manager")
         
-    @defer.inlineCallbacks    
-    def setup(self):
-        def addAddOn(nodes,nodeTypes):
-            for node in nodes:
-                node.environment.set(self.parentEnv)
-                self.nodes[node.id]=node
-                node.setup()
-                for capability in nodeTypes.values():            
-                    def addCapabilities(caps,node):
-                        if len(caps)>0:
-                            node.capability=caps[0] 
-                    capability.find(where=['node_id = ?', node.id]).addCallback(addCapabilities,node)
-                
-                
-        yield Node.all().addCallback(addNode,self.nodeTypes)
-        
+        defer.returnValue(None)
     """
     ####################################################################################
-    The following are the "CRUD" (Create, read, update,delete) methods for the general handling of nodes
+    The following are the "CRUD" (Create, read, update,delete) methods for the general handling of addOns
     """
     @defer.inlineCallbacks
-    def add_addOn(self,name="node",description="",type=None,connector=None,driver=None,*args,**kwargs):
+    def add_addOn(self,name="addOn",description="",type=None,connector=None,driver=None,*args,**kwargs):
         """
-        Add a new node to the list of nodes of the current environment
+        Add a new addOn to the list of addOns of the current environment
         Params:
-        name: the name of the node
-        Desciption: short description of node
-        type: the type of the node : very important , as it will be used to instanciate the correct class
+        name: the name of the addOn
+        Desciption: short description of addOn
+        type: the type of the addOn : very important , as it will be used to instanciate the correct class
         instance
-        Connector:the connector to use for this node
-        Driver: the driver to use for this node's connector
+        Connector:the connector to use for this addOn
+        Driver: the driver to use for this addOn's connector
         """
-            
-        if type in self.nodeTypes.iterkeys():
-            node= yield Node(name,description,type).save()
-            node.environment.set(self.parentEnv)
-            self.nodes[node.id]=node
-            capability= yield NodeManager.nodeTypes[type](name,description).save()
-            capability.node.set(node)
-            node.capability=capability
-            
-            log.msg("Added  node ",name," of capability ",type," with id set to ",str(node.id), logLevel=logging.CRITICAL)
-            defer.returnValue(node)
-        else:
-            log.msg("unknown node type",logLevel=logging.CRITICAL)
-            raise(UnknownNodeType())
+    
         defer.returnValue(None)
     
     def get_addOns(self,filter=None):
         """
-        Returns the list of nodes, filtered by  the filter param
+        Returns the list of addOns, filtered by  the filter param
         the filter is a dictionary of list, with each key beeing an attribute
         to check, and the values in the list , values of that param to check against
         """
         d=defer.Deferred()
         
-        def filter_check(node,filter):
+        def filter_check(addOn,filter):
             for key in filter.keys():
-                if not getattr(node, key) in filter[key]:
+                if not getattr(addOn, key) in filter[key]:
                     return False
             return True
       
-        def get(filter,nodesList):
+        def get(filter,addOnsList):
             if filter:
-                return WrapperList(data=[node for node in nodesList if filter_check(node,filter)],rootType="nodes")
+                return WrapperList(data=[addOn for addOn in addOnsList if filter_check(addOn,filter)],rootType="addOns")
             else:               
-                return WrapperList(data=nodesList,rootType="nodes")
+                return WrapperList(data=addOnsList,rootType="addOns")
             
-        d.addCallback(get,self.nodes.values())
+        d.addCallback(get,self.addOns.values())
         reactor.callLater(0.5,d.callback,filter)
         return d
     
     def get_addOn(self,id):
-        if not id in self.nodes.keys():
-            raise NodeNotFound()
-        return self.nodes[id]
+        if not id in self.addOns.keys():
+            raise AddOnNotFound()
+        return self.addOns[id]
     
     def update_addOn(self,id,name,description):
         """Method for addOn update"""
-        return self.nodes[id]
-        #self.nodes[id].update()
+        return self.addons[id]
+        #self.addOns[id].update()
     
     def delete_addOn(self,id):
         """
@@ -187,18 +161,20 @@ class AddOnManager(object):
                         sys.path.insert(0, fullpath) 
                     addOnList[index]=AddOn(name=dir,description="",path=fullpath) 
                     index+=1
-           
+            
         d.addCallback(scan,AddOnManager.addOnPath)
-        reactor.callLater(0,d.callback,AddOnManager.addons)
+        reactor.callLater(1,d.callback,AddOnManager.addons)
         return d  
     
     @classmethod
+    @defer.inlineCallbacks
     def update_addOns(cls):
         """
         wrapper method, for extraction+ list update in case of newly installed addons
         """
-        AddOnManager.extract_addons()
-        AddOnManager.list_addons()
+        yield AddOnManager.extract_addons()
+        yield AddOnManager.list_addons()
+        defer.returnValue(None)
         
     @classmethod
     @defer.inlineCallbacks
@@ -213,7 +189,7 @@ class AddOnManager(object):
             try:
                 addonpackages=pkgutil.walk_packages(path=[path], prefix='')
                 for loader,name,isPkg in addonpackages: 
-                    mod = pkgutil.get_loader(name).load_module(name)             
+                    mod = pkgutil.get_loader(name).load_module(name)           
                     try:
                         plugins.extend((yield getPlugins(interface,mod)))
                     except Exception as inst:

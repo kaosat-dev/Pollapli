@@ -20,7 +20,7 @@ from doboz_web.exceptions import UnknownDriver,NoDriverSet
 from twisted.plugin import getPlugins
 from doboz_web import idoboz_web
 from doboz_web.core.components.addons.addon_manager import AddOnManager
-from doboz_web.core.components.drivers.driver import Driver,DriverFactory
+from doboz_web.core.components.drivers.driver import Driver,DriverManager
 
 import ast
 
@@ -52,7 +52,7 @@ class Node(DBObject):
             if len(drivers)>0:
                 driver=drivers[0]               
                 driver.options=ast.literal_eval(driver.options)
-                self.driver=yield DriverFactory.load(driver)
+                self.driver=yield DriverManager.load(driver)
                 log.msg("Node with id",self.id,", driver",self.driver.driverType, "setup successfully", logLevel=logging.CRITICAL,system="Node")
             defer.returnValue(None) 
                        
@@ -80,7 +80,7 @@ class Node(DBObject):
         @defer.inlineCallbacks
         def update():
             yield self.delete_driver()
-            self.driver=yield DriverFactory.create(**kwargs)
+            self.driver=yield DriverManager.create(**kwargs)
             self.driver.node.set(self)
             log.msg("Set driver of node",self.id," with params ", kwargs,system="Node")
             defer.returnValue(None)
@@ -99,10 +99,11 @@ class Node(DBObject):
     @defer.inlineCallbacks
     def delete_driver(self):
         if self.driver:
-            self.driver.disconnect()     
+            self.driver.disconnect()    
+            DriverManager.unregister_driver(self.driver) 
             yield self.driver.delete()
-            self.driver=None
-        log.msg("Disconnected and removed driver", logLevel=logging.CRITICAL,system="Node")
+            self.driver=None         
+            log.msg("Disconnected and removed driver", logLevel=logging.CRITICAL,system="Node")
         defer.returnValue(None)
         
     def start(self):

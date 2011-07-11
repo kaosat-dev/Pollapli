@@ -15,7 +15,7 @@ from doboz_web.exceptions import NoAvailablePort
 class SerialHardwareHandler(object):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     blockedPorts=["COM3"]
-    #implements(IPlugin, idoboz_web.IDriverHardwareHandler)
+
     def __init__(self,driver=None,protocol=None,speed=19200,*args,**kwargs):
         self.driver=driver
         self.serial=None    
@@ -25,12 +25,14 @@ class SerialHardwareHandler(object):
         self.isConnected=False
         self.currentErrors=0
         self.maxErrors=2
+        
+        self.notMyPorts=[]
                 
     def send_data(self,command):
         self.protocol.send_data(command)
         
-    def connect(self):
-        self._connect()
+    def connect(self,setupMode=False,*args,**kwargs):
+        self._connect(setupMode,*args,**kwargs)
     
     def disconnect(self):      
         try:
@@ -50,8 +52,12 @@ class SerialHardwareHandler(object):
     def connectionClosed(self,failure):
         pass
     
+    def _connect_fd(self,setupMode=False,*args,**kwargs):
+        if setupMode:
+            print("in setup mode")
+    
     @defer.inlineCallbacks     
-    def _connect(self,*args,**kwargs):
+    def _connect(self,setupMode=False,*args,**kwargs):
         """Port connection/reconnection procedure"""    
         
         def get_port():
@@ -87,7 +93,13 @@ class SerialHardwareHandler(object):
                     self.serial.d.cancel()
                 except:pass
             #self.tearDown()
-            
+    
+    @classmethod
+    def pnpscan(cls):
+        """method for automatic polling of ports , for plug & play"""
+        reactor.callLater(3,SerialHardwareHandler.pnpscan)
+        
+    @classmethod       
     def list_ports(self):
         """
         Return a list of ports
@@ -116,6 +128,7 @@ class SerialHardwareHandler(object):
         d.addCallback(_list_ports)
         return d
     
+    @classmethod
     @defer.inlineCallbacks        
     def scan(self):
         """scan for available ports.
@@ -131,6 +144,8 @@ class SerialHardwareHandler(object):
                 except Exception as inst:
                     log.msg("Error while opening port",port,"Error:",inst)
         defer.returnValue(available)
+        
+    
     
     """The next methods are at least partially deprecated and not in use """   
     def reset_seperator(self):
@@ -155,6 +170,7 @@ class SerialHardwareHandler(object):
         
 class DummyProtocol(Protocol):
     pass
+
  
 class BaseSerialProtocol(Protocol):
     def __init__(self,driver=None,isBuffering=True,seperator='\r\n'):
@@ -162,8 +178,10 @@ class BaseSerialProtocol(Protocol):
         self.isBuffering=isBuffering
         self.buffer=""
         self.regex = re.compile(self.seperator)
-        self.deviceHandshakeOk=True
         self.driver=driver
+        
+        self.deviceHandshakeOk=True
+        self.deviceInitOk=True
         
     def connectionLost(self,reason="connectionLost"):
         log.msg("Device disconnected",system="Driver")   
@@ -176,6 +194,11 @@ class BaseSerialProtocol(Protocol):
         pass   
     
     def _handle_deviceHandshake(self,data):
+        """
+        handles machine (hardware node etc) initialization
+        datab: the incoming data from the machine
+        """
+    def _handle_deviceInit(self,data):
         """
         handles machine (hardware node etc) initialization
         datab: the incoming data from the machine
@@ -208,14 +231,21 @@ class BaseSerialProtocol(Protocol):
                             
                 while results is not None:
                     nDataBlock= self.buffer[:results.start()] 
+                    nDataBlock=self._format_data_in(nDataBlock)
                     #log.msg("serial data block",nDataBlock)
-                    
-                    if not self.deviceHandshakeOk:
-                        self._handle_deviceHandshake(nDataBlock)
+                
+                    ##for pnp and more
+                    if not self.driver.isConfigured:
+                        if not self.deviceHandshakeOk:
+                            self._handle_deviceHandshake(nDataBlock)
+                        elif not self.deviceInitOk:
+                            self._handle_deviceInit(nDataBlock)
                     else:
-                        nDataBlock=self._format_data_in(nDataBlock)
-                        log.msg("Data recieved <<: ",nDataBlock,system="Driver")  
-                        self.driver._handle_response(nDataBlock)
+                        if not self.deviceHandshakeOk:
+                            self._handle_deviceHandshake(nDataBlock)
+                        else:
+                            log.msg("Data recieved <<: ",nDataBlock,system="Driver")  
+                            self.driver._handle_response(nDataBlock)
                     self.buffer=self.buffer[results.end():]
                     results=None
                     try:
@@ -232,7 +262,7 @@ class BaseSerialProtocol(Protocol):
         """    
         try:
             #log.msg("Data sent >>: ",data,system="Driver")
-            self.transport.write(self._format_data_in(data))
+            self.transport.write(self._format_data_out(data))
             
         except OSError:
             self.logger.critical("serial device not connected or not found on specified port")

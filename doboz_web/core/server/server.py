@@ -9,6 +9,7 @@ from twisted.web.resource import NoResource
 from twisted.internet import reactor
 from twisted.enterprise import adbapi
 from twisted.plugin import pluginPackagePaths
+from twisted.internet import reactor, defer
 
 
 from doboz_web.core.components.environments.environment_manager import EnvironmentManager
@@ -18,6 +19,7 @@ from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
 from doboz_web.core.components.addons.addon_manager import AddOnManager
+from doboz_web.core.components.drivers.driver import DriverManager
 
 def truc(f):    
     try:
@@ -26,6 +28,8 @@ def truc(f):
         reactor.callLater(0,truc,f)
     except StopIteration:
         print("at end of file")
+
+
 
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
@@ -38,12 +42,12 @@ class MainServer():
         Initialize various subsystems /set correct paths
         """
         AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
-        AddOnManager.update_addOns()
+        EnvironmentManager.envPath=self.dataPath
+        FileManager.rootDir=self.dataPath
         
-        FileManager.setRootDir(self.dataPath)
         
         self.environmentManager=EnvironmentManager(self.dataPath)
-        reactor.callWhenRunning(self.environmentManager.setup)
+        
         
         """"""""""""""""""""""""""""""""""""""
         self.exceptionConverter=ExceptionConverter()
@@ -56,11 +60,17 @@ class MainServer():
         self.exceptionConverter.add_exception(NoDriverSet,404,7,"Node has no connector")
         self.exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
         
-        testFilepath=os.path.join(self.rootPath,"data","printFiles","test.gcode")
-        f=file(testFilepath,"r")
-        reactor.callLater(0,truc,f)
-    
+        #testFilepath=os.path.join(self.rootPath,"data","printFiles","test.gcode")
+        #f=file(testFilepath,"r")
+        #reactor.callLater(0,truc,f)
+        self.setup()
         
+    @defer.inlineCallbacks
+    def setup(self):
+        yield AddOnManager.setup()
+        yield DriverManager.setup()
+        yield EnvironmentManager.setup()
+        defer.returnValue(None)
         
     def start(self):
         #observer = log.PythonLoggingObserver("dobozweb.core.server")

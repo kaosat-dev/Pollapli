@@ -28,7 +28,7 @@ def helper():
     except:
         pass
     try:
-        client.post('rest/environments/1/nodes/2/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"fiveddriver","driverParams":{"speed":115200}}')
+        client.post('rest/environments/1/nodes/2/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"arduinoexampledriver","driverParams":{"speed":115200}}')
     except:
         pass
     try:

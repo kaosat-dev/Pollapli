@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='DummyAddOn',
+    name='ArduinoExampleAddOn',
     version='0.0.1',
     description='a simple addOn test',
     author='Mark "ckaos" Moissette',
     author_email='kaosat.dev@gmail.com',
-    url='http://github.com/kaosat-dev/Doboz',
+    url='http://github.com/kaosat-dev/Pollapli',
     keywords='web remote control remote monitoring reprap repstrap',
     license='GPL',
     classifiers=[
@@ -16,5 +16,5 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.6"
     ], 
-    packages = ['dummy']
+    packages =find_packages('.')
     )
