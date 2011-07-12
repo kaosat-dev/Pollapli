@@ -4,7 +4,9 @@ from doboz_web.core.patches._win32serialport import SerialPort
 import re
 import sys
 import itertools
+import time
 from twisted.internet import reactor, defer
+from twisted.internet.task import LoopingCall
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from twisted.plugin import IPlugin
@@ -21,7 +23,8 @@ class PortInfo(object):
 
 class SerialHardwareHandler(object):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
-    blockedPorts=["COM3"]
+    blockedPorts=[]
+    blackListPorts=["COM3"]
     availablePorts=[]
     ports=[]
     ports.append(PortInfo(name="COM3",blocked=True))
@@ -33,26 +36,31 @@ class SerialHardwareHandler(object):
         self.speed=speed
         self.port=None
         self.isConnected=False
-        self.currentErrors=0
-        self.maxErrors=2
         
         self.notMyPorts=[]
+        self.setupMode=False
+        
                 
     def send_data(self,command):
         self.protocol.send_data(command)
         
     def connect(self,setupMode=False,port=None,*args,**kwargs):
+        self.driver.connectionErrors=0
+        self.setupMode=setupMode
+        self.port=port
         self._connect(setupMode,port,*args,**kwargs)
     
     def reconnect(self):
-        pass
-    def disconnect(self):      
+        self.disconnect(clearPort=False)
+        self._connect()
+        
+    def disconnect(self,clearPort=True):   
+        self.driver.isConnected=False   
         try:
             if self.serial:
-                try:
-                    SerialHardwareHandler.blockedPorts.remove(self.port)
-                except:
-                    pass
+                if clearPort:
+                    if self.port in SerialHardwareHandler.blockedPorts:
+                        SerialHardwareHandler.blockedPorts.remove(self.port)
                 try:
                     self.serial.d.cancel()
                 except:pass
@@ -63,54 +71,40 @@ class SerialHardwareHandler(object):
     
     def connectionClosed(self,failure):
         pass
-    
-    
-    def connectSpecial(self,setupMode=False,port=None,*args,**kwargs):
-        self.port=port
-        SerialHardwareHandler.blockedPorts.append(self.port)
-        self.serial=SerialWrapper(self.protocol,self.port,reactor,baudrate=self.speed)
-        self.serial.d.addCallbacks(callback=self._connect,errback=self.connectionClosed) 
-         
-    @defer.inlineCallbacks     
-    def _connect(self,setupMode=False,port=None,*args,**kwargs):
-        """Port connection/reconnection procedure"""    
-        if port:
-            pass
-        try:
-            SerialHardwareHandler.blockedPorts.remove(self.port)
-        except:
-            pass
-        self.port=None
         
-        if self.port is None and self.currentErrors<self.maxErrors:
+    def _connect(self,*args,**kwargs):
+        """Port connection/reconnection procedure"""   
+        if self.port and self.driver.connectionErrors<self.driver.maxConnectionErrors:
             try:      
-                self.port=str((yield self.scan())[0])        
-                SerialHardwareHandler.blockedPorts.append(self.port)        
-                self.currentErrors=0
-                self.isConnected=True
+                #self.port=str((yield self.scan())[0])   
+                if not self.port in SerialHardwareHandler.blockedPorts:
+                    SerialHardwareHandler.blockedPorts.append(self.port)        
+                self.driver.isConnected=True
                 self.serial=SerialWrapper(self.protocol,self.port,reactor,baudrate=self.speed)
                 self.serial.d.addCallbacks(callback=self._connect,errback=self.connectionClosed)  
-#            except OutofRangeException:
-#                raise NoAvailablePort()   
-            except Exception as inst:
-               
+            except Exception as inst:          
                 #log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
-                self.isConnected=False
-                self.currentErrors+=1
-                reactor.callLater(self.currentErrors*5,self._connect)
-
-        if not self.port :
-            log.msg("failed to connect serial driver, attempts left:",self.maxErrors-self.currentErrors,system="Driver")
-            if self.currentErrors>=self.maxErrors:
-                log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",system="Driver")
-                try:
-                    self.serial.d.cancel()
-                except:pass
-            #self.tearDown()
+                self.driver.isConnected=False
+                self.driver.connectionErrors+=1
+                print("ERROR",inst)
+                log.msg("failed to connect serial driver, attempts left:",self.driver.maxConnectionErrors-self.driver.connectionErrors,system="Driver")
+                if self.driver.connectionErrors<self.driver.maxConnectionErrors:
+                    reactor.callLater(self.driver.connectionErrors*5,self._connect)
+                
+        if self.driver.connectionErrors>=self.driver.maxConnectionErrors:
+            try:
+                self.serial.d.cancel()
+                self.disconnect()
+            except:pass
+            if not self.setupMode:
+                log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver")
+            else:
+                log.msg("Failed to establish correct connection with device/identify device by id",system="Driver")
+                reactor.callLater(1,self.driver.d.errback,None)
 
         
     @classmethod       
-    def list_ports(self):
+    def list_ports(cls):
         """
         Return a list of ports
         """
@@ -127,55 +121,38 @@ class SerialHardwareHandler(object):
                 for i in itertools.count():
                     try:
                         val = winreg.EnumValue(key, i)
-                        foundPorts.append(str(val[1]))
+                        port=str(val[1])
+                        if port not in cls.blackListPorts: 
+                            foundPorts.append(port)
                     except EnvironmentError:
                         break
             else:
                 foundPorts= glob.glob('/dev/ttyUSB*')+ glob.glob('/dev/cu*')
             return foundPorts
         #self.logger.info("Serial Ports on  system:",+str(foundPorts))
-        reactor.callLater(0,d.callback,None)
+        reactor.callLater(0.5,d.callback,None)
         d.addCallback(_list_ports)
         return d
     
     @classmethod
     @defer.inlineCallbacks 
-    def list_availablePorts(self):
+    def list_availablePorts(cls):
         """scan for available ports.
         Returns a list of actual available ports"""        
         available = []
         serial=None
-        for port in (yield self.list_ports()):  
-            if port not in SerialHardwareHandler.blockedPorts: 
+        for port in (yield cls.list_ports()):  
+            if port not in cls.blackListPorts: 
                 try:
                     serial = SerialWrapper(DummyProtocol(),port,reactor) 
                     available.append(serial._serial.name)
-                    if port not in SerialHardwareHandler.availablePorts:
-                        SerialHardwareHandler.availablePorts.append(serial._serial.name)
+                    #if port not in cls.availablePorts:
+                    #    cls.availablePorts.append(serial._serial.name)
                     serial.loseConnection()  
-                except Exception as inst:
-                    log.msg("Error while opening port",port,"Error:",inst)
+                except Exception as inst:pass
+                    #log.msg("Error while opening port",port,"Error:",inst)
         defer.returnValue(available)
         
-    @classmethod
-    @defer.inlineCallbacks        
-    def scan(self):
-        """scan for available ports.
-        Returns a list of actual available ports"""        
-        available = []
-        serial=None
-        for port in (yield self.list_ports()):  
-            if port not in SerialHardwareHandler.blockedPorts: 
-                try:
-                    serial = SerialWrapper(DummyProtocol(),port,reactor) 
-                    available.append(serial._serial.name)
-                    if port not in SerialHardwareHandler.availablePorts:
-                        SerialHardwareHandler.availablePorts.append(serial._serial.name)
-                    serial.loseConnection()  
-                except Exception as inst:
-                    log.msg("Error while opening port",port,"Error:",inst)
-        defer.returnValue(available)
-    
     """The next methods are at least partially deprecated and not in use """   
     def reset_seperator(self):
         self.regex = re.compile(self.seperator)
@@ -193,7 +170,7 @@ class SerialHardwareHandler(object):
             SerialHardwareHandler.blockedPorts.remove(self.port)
         except:
             pass
-        self.isConnected=False        
+        self.driver.isConnected=False        
         self.logger.critical("Serial shutting down")
 
         
@@ -202,7 +179,8 @@ class DummyProtocol(Protocol):
 
  
 class BaseSerialProtocol(Protocol):
-    def __init__(self,driver=None,isBuffering=True,seperator='\r\n'):
+    """need to add some sort of ability to "ping" a device, with a timeout system"""
+    def __init__(self,driver=None,isBuffering=True,seperator='\r\n'):       
         self.seperator=seperator
         self.isBuffering=isBuffering
         self.buffer=""
@@ -212,11 +190,39 @@ class BaseSerialProtocol(Protocol):
         self.deviceHandshakeOk=True
         self.deviceInitOk=True
         
+        self.hasRecievedData=False
+        #self.timeoutTimer=LoopingCall(self._timeoutCheck)
+    
+    def _timeOutEnd(self,*args,**kwargs):
+        print("end of timeout")
+        
+    def _timeOutFailure(self,*args,**kwargs):
+        self.timeoutTimer.stop()
+        print("failure of timeout",args,kwargs)
+    
+    def _timeoutCheck(self,*args,**kwargs):
+        if self.driver.isConnected:
+            
+            if not self.hasRecievedData:
+            #if not self.deviceHandshakeOk and not self.deviceInitOk:
+                #print("after timeout, still no response, shutting down")
+                #this should be different based on whether we want auto reconnect or not
+                #self.timeoutTimer.stop()
+                self.driver.connectionErrors+=1
+                self.driver.reconnect()
+            else:
+                reactor.callLater(5,self._timeoutCheck)
+        
     def connectionLost(self,reason="connectionLost"):
-        log.msg("Device disconnected",system="Driver")   
+        log.msg("Device disconnected",system="Driver")  
+       # self.timeoutTimer.stop()
         
     def connectionMade(self):
         log.msg("Device connected",system="Driver") 
+        #self.timeoutTimer.start(7,False).addCallbacks(callback=self._timeOutEnd,errback =self._timeOutFailure)
+        reactor.callLater(5,self._timeoutCheck)
+        #start timeout timer
+        #timeout : if after x number of seconds, nothing was recieved
           
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
@@ -252,6 +258,7 @@ class BaseSerialProtocol(Protocol):
         return data
         
     def dataReceived(self, data):
+        self.hasRecievedData=True
         try:
             if self.isBuffering:
                 self.buffer+=str(data)
@@ -265,9 +272,8 @@ class BaseSerialProtocol(Protocol):
                 while results is not None:
                     nDataBlock= self.buffer[:results.start()] 
                     nDataBlock=self._format_data_in(nDataBlock)
-                    #log.msg("serial data block",nDataBlock)
+                    #log.msg("Data recieved <<: ",nDataBlock,system="Driver")  
                 
-                    ##for pnp and more
                     if not self.driver.isConfigured:
                         if not self.deviceHandshakeOk:
                             self._handle_deviceHandshake(nDataBlock)
@@ -277,7 +283,7 @@ class BaseSerialProtocol(Protocol):
                         if not self.deviceHandshakeOk:
                             self._handle_deviceHandshake(nDataBlock)
                         else:
-                            log.msg("Data recieved <<: ",nDataBlock,system="Driver")  
+                            
                             self.driver._handle_response(nDataBlock)
                     self.buffer=self.buffer[results.end():]
                     results=None
@@ -288,13 +294,14 @@ class BaseSerialProtocol(Protocol):
             
         except Exception as inst:
             print("error in serial",str(inst))
-            
+        self.hasRecievedData=False
+        
     def send_data(self,data,*args,**kwargs):  
         """
         Simple wrapper to send data over serial
         """    
         try:
-            #log.msg("Data sent >>: ",data,system="Driver")
+            #log.msg("Data sent >>: ",self._format_data_out(data)," done",system="Driver")
             self.transport.write(self._format_data_out(data))
             
         except OSError:
@@ -310,7 +317,6 @@ class SerialWrapper(SerialPort):
           pass
       
       def connectionLost(self,reason="connectionLost"):
-        SerialPort.connectionLost(self,reason)
-        self.d.callback("arrgh")
-        #log.msg("Device disconnectedsdfsdf",system="Driver") 
+          SerialPort.connectionLost(self,reason)
+          self.d.callback("connection failure")
     

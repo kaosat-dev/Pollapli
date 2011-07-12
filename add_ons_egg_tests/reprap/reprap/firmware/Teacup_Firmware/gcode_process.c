@@ -514,6 +514,14 @@ void process_gcode_command() {
 				break;
 			#endif /* DEBUG */
 				// unknown mcode: spit an error
+			
+			//CUSTOM: get id
+			case 280:
+				sersendf_P();
+				break;
+			//CUSTOM: set id
+			case 281:
+				break;
 			default:
 				sersendf_P(PSTR("E: Bad M-code %d"), next_target.M);
 				// newline is sent from gcode_parse after we return

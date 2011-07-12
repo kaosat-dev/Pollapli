@@ -29,13 +29,9 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self.deviceHandshakeOk=True
             log.msg("Device handshake validated",system="Driver")
             self._query_deviceInfo()
-            #self.logger.critical("Machine Initialized")
         else:
             log.msg("Device hanshake mismatch",system="Driver")
-            
-            DriverManager._driver_setup_failed()
-            #self.driver._setupFailed()
-            self.driver.disconnect()
+            self.driver.reconnect()
             #raise DeviceHandshakeMismatch()
     
     @defer.inlineCallbacks
@@ -53,16 +49,16 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         
         if not validate_uuid(data):
             log.msg("Device id not set or not valid",system="Driver")
-            if not self.driver.deviceId :
-                self.driver.deviceId=str(uuid.uuid4())
-                yield self.driver.save()
-                self._set_deviceId()
-                self._query_deviceInfo()
-                
-            elif self.driver.deviceId!= data: 
-                DriverManager._driver_setup_failed(self.driver)
-                self.driver._setupFailed()
-                self.driver.disconnect()
+            self.driver.connectionErrors+=1
+            self.driver.reconnect()
+#            if not self.driver.deviceId :
+#                self.driver.deviceId=str(uuid.uuid4())
+#                yield self.driver.save()
+#                self._set_deviceId()
+#                self._query_deviceInfo()
+#                
+#            elif self.driver.deviceId!= data: 
+#                self.driver.reconnect()
                 #raise Exception("Connected to wrong device")
             
         else:
@@ -70,9 +66,10 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             yield self.driver.save()
             self.deviceInitOk=True
             log.msg("Device id is ",data,system="Driver")
-            self.driver.isConfigured=True
+            self.driver.isConfigured=True 
             self.driver.disconnect()
-            self.driver._setupSucceeded()
+            self.driver.d.callback(self.driver)    
+            #self.driver._setupSucceeded()
 
         defer.returnValue(None)
         
@@ -88,7 +85,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         """
         Cleanup gcode : remove comments and whitespaces
         """
-        return data+"\n"
+        return data+'\n'
     
     def _format_data_in(self,data,*args,**kwargs):
         """

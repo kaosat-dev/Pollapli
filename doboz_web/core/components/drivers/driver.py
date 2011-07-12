@@ -45,6 +45,11 @@ class Driver(DBObject):
         self.isConfigured=False#when the port association has not been set
         self.isDeviceHandshakeOk=False
         self.isDeviceIdOk=False
+        self.isConnected=False
+        self.connectionErrors=0
+        self.maxConnectionErrors=2
+        
+        self.d=defer.Deferred()
         
     def _toDict(self):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
@@ -59,23 +64,24 @@ class Driver(DBObject):
             
     def setup(self):
         log.msg("Attemtping to setup driver",system="Driver")
-        
         self.hardwareHandler.connect(setupMode=True)#Special(setupMode=True,currentPortAttempted)
-        
-    def _setupSucceeded(self,params=None):
-        DriverManager._deviceMatchFound(self)
-        
-    def _setupFailed(self,params=None):
-        d=defer.Deferred()
-        return d
-        
+    
+    def bind(self,port):
+        self.d=defer.Deferred()
+        log.msg("Attemtping to bind driver to port",port,system="Driver") 
+        #d.addCallback()
+        self.hardwareHandler.connect(setupMode=True,port=port)
+        return self.d
     
     def connect(self,*args,**kwargs):
         self.hardwareHandler.connect()
+    def reconnect(self,*args,**kwargs):
+        self.hardwareHandler.reconnect(*args,**kwargs)
     def disconnect(self,*args,**kwargs):
         self.hardwareHandler.disconnect()
     
-    def send_command(self,data):
+    
+    def send_command(self,data,sender=None):
         if self.logicHandler:
             self.logicHandler._handle_request(data)
         else:
@@ -89,8 +95,6 @@ class Driver(DBObject):
             self.send_command("a")
 
 
-
-        
 class DriverManager(object):
     """
     This class acts as factory and manager
@@ -128,19 +132,23 @@ class DriverManager(object):
     
     
     loaded_drivers=[]
-    
-    port_to_driver={}
-    driver_to_port={}
-    
+        
     available_devices={}
     available_devices["serial"]=[]
-    toConfigure_drivers=[]
+    
     hardware_handlers={}
     hardware_handlers["serial"]=SerialHardwareHandler
     
-    pending_ports=[]
-    pending_drivers=[]
     
+    """"""""""""""""""
+    driverLock=defer.DeferredSemaphore(1)
+    unboundDrivers=[]
+    unboundPorts=[]
+    
+    boundDrivers={}#driver to port
+    boundPorts={}#port to driver
+    
+    """"""""""""""""""
     
     def __init__(self):
         
@@ -150,21 +158,25 @@ class DriverManager(object):
         port_to_deviceId['com4]
         or 
         """
+    
     @classmethod 
-    @defer.inlineCallbacks
     def setup(self,*args,**kwargs):
         log.msg("Driver Manager setup succesfully",system="Driver Manager")
-        yield DriverManager.update_deviceList()
-        #reactor.callLater(3,DriverManager.update_deviceList)
+        d=defer.Deferred()
+        reactor.callLater(3,DriverManager.update_deviceList)
+        d.callback(None)        
+        return d      
         
-        
+    """
+    ####################################################################################
+    The following are the "CRUD" (Create, read, update,delete) methods for drivers
+    """    
     @classmethod 
     @defer.inlineCallbacks
     def create(cls,driverType=None,driverParams={},*args,**kwargs):   
         driverType=driverType
         plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
         driver=None
-        print("found plugins: ",plugins)
         for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
                 driver=yield Driver(driverType=driverType,options=driverParams).save()
@@ -172,12 +184,10 @@ class DriverManager(object):
                 logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
                 driver.set_handlers(hardwareHandler,logicHandler)
                 driver.save()  
-                DriverManager.loaded_drivers.append(driver)
+                cls.register_driver(driver)
                 break
         if not driver:
-            #defer.returnValue(None)
             raise UnknownDriver()
-        
         defer.returnValue(driver)
     
     @classmethod    
@@ -191,75 +201,93 @@ class DriverManager(object):
                 hardwareHandler=driverKlass.components["hardwareHandler"](driver,**params)
                 logicHandler=driverKlass.components["logicHandler"](driver,**params)
                 driver.set_handlers(hardwareHandler,logicHandler)
-                DriverManager.loaded_drivers.append(driver)
+                cls.register_driver(driver)
+                
                 break
         defer.returnValue(driver)
-
+        
+    @classmethod 
+    @defer.inlineCallbacks
+    def update(cls,driver,driverType=None,driverParams={},*args,**kwargs):   
+        """ updates the given driver with the new params"""
+        driverType=driverType
+        plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        for driverKlass in plugins:
+            if driverType==driverKlass.__name__.lower():
+                driver.driverType=driverType
+                driver.options=driverParams
+                hardwareHandler=driverKlass.components["hardwareHandler"](driver,**driverParams)
+                logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
+                driver.set_handlers(hardwareHandler,logicHandler)
+                driver.save()  
+                break
+        if not driver:
+            raise UnknownDriver()
+        
+        defer.returnValue(driver)
+    
+    
+    """
+    ####################################################################################
+    The following are the plug&play and registration methods for drivers
+    """
+    @classmethod
+    def register_driver(cls,driver):
+        cls.loaded_drivers.append(driver)
+        cls.unboundDrivers.append(driver)
+        cls._start_bindAttempt(driver)
+        #DriverManager.binderHelper.add_drivers([driver])
+    
     @classmethod
     def unregister_driver(cls,driver):
         if driver in DriverManager.loaded_drivers:
             loaded_drivers.remove(driver)
             del DriverManager.driver_to_port[driver]
-            
     
     @classmethod
     @defer.inlineCallbacks
-    def _deviceMatchFound(self,driver):
-        log.msg("Node",(yield driver.node.get()).name,"plugged in to port",driver.hardwareHandler.port,system="Driver")
-        DriverManager.port_to_driver[driver.hardwareHandler.port]=driver
-        DriverManager.driver_to_port[driver]=driver.hardwareHandler.port
-        #print("blaah",DriverManager.driver_to_port)
-        defer.returnValue(None)
-        
-  
+    def setup_drivers(cls):
+        log.msg("Attempting to bind drivers")
+        for driver in  cls.loaded_drivers:
+            if not driver.isConfigured:
+                yield cls._start_bindAttempt(driver)
+                #driver.setup()
+        defer.returnValue(True)
     
     @classmethod
-    def _next_driverToSetup(self):
-        pass      
-    
-    
-    class PortBinderHelper(object):
-        def __init__(self,ports,drivers):
-            self.ports=ports
-            self.drivers=drivers
-            self.d=defer.Deferred()
-            return  self.d
-            
-        def _next_driver(self):
-            pass 
-        
-        def driverYielder(self,drivers):
-            driverIndex=0
-            while driverIndex < len(drivers):
-                yield drivers[driverIndex]
-                driverIndex += 1
-                
-        def portYielder(self,ports):
-            portIndex=0
-            while driverIndex < len(drivers):
-                yield drivers[driverIndex]
-                driverIndex += 1
+    @defer.inlineCallbacks
+    def _start_bindAttempt(cls,driver):
+        if len(cls.unboundPorts)>0:#is it even worth checking: if not port are available, its pointless
+            for port in cls.unboundPorts:
+                yield driver.bind(port).addCallbacks(callback=cls._driver_binding_succeeded\
+                                                          ,callbackKeywords={"driver":driver,"port":port},errback=cls._driver_binding_failed)
+        defer.returnValue(True)
         
     @classmethod
-    def setup_drivers(cls,ports,drivers):
+    def _driver_binding_failed(cls,result,*args,**kwargs):
         pass
+        #print("driver setup failed",args,kwargs)
     
     @classmethod
-    def _driver_setup_failed(cls,*args,**kwargs):
-        print("driver setup failed",args,kwargs)
-        
+    @defer.inlineCallbacks
+    def _driver_binding_succeeded(cls,result,driver,port,*args,**kwargs):
+        #print("driver setup sucess",args,kwargs,"port",port,"driver",driver)
+        log.msg("Node",(yield driver.node.get()).name,"plugged in to port",port,system="Driver")
+        cls.boundDrivers[driver]=port
+        cls.boundPorts[port]=driver
+                
     @classmethod
     @defer.inlineCallbacks  
     def update_deviceList(cls):
         """
         Needs to be done with each hardware type with pnp support
         """
-        #log.msg("Checking for device changes",system="Driver")
-        oldPorts=DriverManager.available_devices["serial"]       
+        #import time
+        #log.msg("Checking for device changes. Time:",time.time(),system="Driver")
+        oldPorts=cls.unboundPorts  
         newPorts=[]
-        for handler in DriverManager.hardware_handlers.itervalues():
-            newPorts.extend((yield handler.list_availablePorts()))
-        
+        for handler in cls.hardware_handlers.itervalues():
+            newPorts.extend((yield handler.list_ports()))        
         
         def checkForPortChanges(oldL,newL):
             addedPorts=[]
@@ -271,34 +299,32 @@ class DriverManager(object):
             s2=set(newL)
             addedPorts=s2-s1
             removePorts=s1-s2
+           
             return (addedPorts,removePorts)
                 
         portChanges=checkForPortChanges(oldPorts,newPorts)
-        if len(portChanges[0])>0 or len(portChanges[1])>0:
-            DriverManager.available_devices["serial"]=list(portChanges[0])
+        #print ("changes",portChanges[1],portChanges[0])
+        if len(portChanges[0])>0 or len(portChanges[1])>0: 
+                  
             if len(portChanges[1])>0:
+                [cls.unboundPorts.remove(port) for port in list(portChanges[1])] 
                 #log.msg("These ports were removed",portChanges[1])
-                s1=set(DriverManager.port_to_driver.iterkeys())
+                s1=set(cls.boundPorts.iterkeys())
                 disconnectedPorts=s1.intersection(portChanges[1])
                 for port in list(disconnectedPorts):
-                    driver=DriverManager.port_to_driver[port]
-                    log.msg("Node",(yield driver.node.get()).name,"plugged out of port",driver.hardwareHandler.port,system="Driver")
-                    del DriverManager.driver_to_port[driver]
-                    del DriverManager.port_to_driver[port]
+                    driver=cls.boundPorts[port]
+                    log.msg("Node",(yield driver.node.get()).name,"plugged out of port",port,system="Driver")
+                    del cls.boundDrivers[driver]
+                    del cls.boundPorts[port]
                     driver.isConfigured=False
                     driver.hardwareHandler.protocol.deviceInitOk=False
 
             if len(portChanges[0])>0:
-                log.msg("These ports were added",portChanges[0])
+                cls.unboundPorts.extend(list(portChanges[0]))
+                #log.msg("These ports were added",portChanges[0])
+                cls.driverLock.run(cls.setup_drivers)
                 
-                #yield PortBinderHelper(list(portChanges[0]),DriverManager.loaded_drivers)
-                #DriverManager._next_driverToSetup()
-                
-                for driver in DriverManager.loaded_drivers:
-                    if not driver.isConfigured:
-                        driver.setup()
-                        
-        reactor.callLater(3,DriverManager.update_deviceList)
+        reactor.callLater(2,DriverManager.update_deviceList)
         
         
 """
@@ -376,7 +402,7 @@ class CommandQueueLogic(object):
                         cmd.answer=data
                         self.commandSlots+=1#free a commandSlot
                        
-                        self.send_next_command()
+                        #self.send_next_command()
                         
                 except Exception as inst:
                     log.msg("Failure in handling command ",str(inst),system="Driver")
@@ -388,7 +414,7 @@ class CommandQueueLogic(object):
 
         self.driver.signalHandler.send_message(self.driver,"driver.dataRecieved",{"data":cmd.answer})
          ###one command was completed, send next  
-        self._handle_request(data="a",answerRequired=True) 
+        #self._handle_request(data="a",answerRequired=True) 
         self.send_next_command()
         return cmd
      
