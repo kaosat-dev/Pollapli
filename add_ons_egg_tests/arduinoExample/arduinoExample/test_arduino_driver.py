@@ -33,7 +33,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             log.msg("Device hanshake mismatch",system="Driver")
             self.driver.reconnect()
     
-    @defer.inlineCallbacks
+    
     def _handle_deviceInit(self,data):
         """
         handles machine (hardware node etc) initialization
@@ -47,40 +47,46 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             return False
         
         sucess=False
-        
         if self.driver.connectionMode==2:
             """if we are trying to set the device id"""    
             if validate_uuid(data):
                 """if the remote device has already go a valid id, and we don't, update accordingly"""
                 if not self.driver.deviceId :
                     self.driver.deviceId=data
-                    yield self.driver.save()
                     sucess=True
                 elif self.driver.deviceId!= data:
                     self._set_deviceId()
                     self._query_deviceInfo()
-                    sucess=True
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
+                elif self.driver.deviceId==data:
+                    sucess=True     
+            else:
+                if not self.driver.deviceId:
+                    self.driver.deviceId=str(uuid.uuid4())
+                self._set_deviceId()
+                self._query_deviceInfo()
         else:
             """ some other connection mode , that still requires id check"""
             if not validate_uuid(data) or self.driver.deviceId!= data:
                 log.msg("Device id not set or not valid",system="Driver")
                 self.driver.connectionErrors+=1
                 self.driver.reconnect()
+            else:
+                sucess=True
                 
-        if sucess: 
+        if sucess is True: 
             self.deviceInitOk=True
-            log.msg("Device id is ",data,system="Driver")
+            log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.driver.disconnect(clearPort=False)
             self.driver.d.callback(None)      
 
-        defer.returnValue(None)
+        
         
     def _set_deviceId(self,id=None):
-        self.send_data("s"+ self.driver.deviceId)
+        self.send_data("s "+ self.driver.deviceId)
         
         
     def _query_deviceInfo(self):

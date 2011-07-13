@@ -14,20 +14,12 @@ from zope.interface import implements,classProvides
 from doboz_web import idoboz_web
 from doboz_web.exceptions import NoAvailablePort
 
-class PortInfo(object):
-    def __init__(self,name="",blocked=False,inUse=False,bound=False):
-        self.portName=name
-        self.isBlocked=blocked
-        self.isInUse=inUse
-        self.isBound=bound
 
 class SerialHardwareHandler(object):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     blockedPorts=[]
     blackListPorts=["COM3"]
     availablePorts=[]
-    ports=[]
-    ports.append(PortInfo(name="COM3",blocked=True))
 
     def __init__(self,driver=None,protocol=None,speed=19200,*args,**kwargs):
         self.driver=driver
@@ -57,11 +49,12 @@ class SerialHardwareHandler(object):
         
     def disconnect(self,clearPort=True):   
         self.driver.isConnected=False   
+        if clearPort:
+            self.port=None
+            if self.port in SerialHardwareHandler.blockedPorts:
+                SerialHardwareHandler.blockedPorts.remove(self.port)
         try:
             if self.serial:
-                if clearPort:
-                    if self.port in SerialHardwareHandler.blockedPorts:
-                        SerialHardwareHandler.blockedPorts.remove(self.port)
                 try:
                     self.serial.d.cancel()
                 except:pass
@@ -101,7 +94,7 @@ class SerialHardwareHandler(object):
                 log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver")
             else:
                 log.msg("Failed to establish correct connection with device/identify device by id",system="Driver")
-                reactor.callLater(1,self.driver.d.errback,failure.Failure())
+                reactor.callLater(5,self.driver.d.errback,failure.Failure())
                 
 
         
@@ -207,13 +200,13 @@ class BaseSerialProtocol(Protocol):
             
             if not self.hasRecievedData:
             #if not self.deviceHandshakeOk and not self.deviceInitOk:
-                #print("after timeout, still no response, shutting down")
+                print("after timeout, still no response, shutting down")
                 #this should be different based on whether we want auto reconnect or not
                 #self.timeoutTimer.stop()
                 self.driver.connectionErrors+=1
                 self.driver.reconnect()
             else:
-                reactor.callLater(5,self._timeoutCheck)
+                reactor.callLater(15,self._timeoutCheck)
         
     def connectionLost(self,reason="connectionLost"):
         log.msg("Device disconnected",system="Driver")  
@@ -222,7 +215,7 @@ class BaseSerialProtocol(Protocol):
     def connectionMade(self):
         log.msg("Device connected",system="Driver") 
         #self.timeoutTimer.start(7,False).addCallbacks(callback=self._timeOutEnd,errback =self._timeOutFailure)
-        reactor.callLater(5,self._timeoutCheck)
+        reactor.callLater(15,self._timeoutCheck)
         #start timeout timer
         #timeout : if after x number of seconds, nothing was recieved
           
