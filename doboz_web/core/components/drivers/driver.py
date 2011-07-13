@@ -46,9 +46,17 @@ class Driver(DBObject):
         self.isDeviceHandshakeOk=False
         self.isDeviceIdOk=False
         self.isConnected=False
+        
         self.connectionErrors=0
         self.maxConnectionErrors=2
         
+        """
+        Modes :
+        0:setup
+        1:normal
+        2:setId
+        """
+        self.connectionMode=1
         self.d=defer.Deferred()
         
     def _toDict(self):
@@ -64,13 +72,11 @@ class Driver(DBObject):
             
     def setup(self):
         log.msg("Attemtping to setup driver",system="Driver")
-        self.hardwareHandler.connect(setupMode=True)#Special(setupMode=True,currentPortAttempted)
     
-    def bind(self,port):
+    def bind(self,port,setId=True):
         self.d=defer.Deferred()
         log.msg("Attemtping to bind driver to port",port,system="Driver") 
-        #d.addCallback()
-        self.hardwareHandler.connect(setupMode=True,port=port)
+        self.hardwareHandler.connect(setupMode=True,setIdMode=setId,port=port)
         return self.d
     
     def connect(self,*args,**kwargs):
@@ -94,7 +100,112 @@ class Driver(DBObject):
             self.signalHandler.send_message(self,"test.driver.dataRecieved",{"data":data})
             self.send_command("a")
 
-
+class PortDriverBindings(object):
+    """
+    Helper class for setting and unseting driver /port bindings
+    It relies on a "pseudo bidictionary": the elements dicts  contains keys for both
+    drivers and ports 
+    """
+    def __init__(self):
+        self.elements={}
+    
+    def add_drivers(self,drivers):
+        [self.elements.__setitem__(driver,None) for driver in drivers]
+    def add_ports(self,ports):
+        [self.elements.__setitem__(port,None) for port in ports]   
+           
+    def remove_drivers(self,drivers):
+        """
+        unbind and delete the specified drivers
+        """
+        for driver in drivers:
+            self.unbind(driver=driver)
+        for driver in drivers:
+            del self.elements[driver]
+        
+    def remove_ports(self,ports):
+        """
+        unbind and delete the specified ports
+        """
+        for port in ports:
+            self.unbind(port=port)
+        for port in ports:
+            try:
+                del self.elements[port]
+            except KeyError:pass
+            
+    def get_bindingInfo(self,elementKey):
+        """
+        get the  value associated either with the driver or port
+        """
+        try:
+            return self.elements[elementKey]
+        except KeyError:
+            return None
+       
+        
+    def get_unboundPorts(self):
+        """
+        return a list of unbound ports: basically  all ports that have a value of None associated with
+        them
+        """
+        return [port for port,driver in self.elements.iteritems() if port.__class__!=Driver and not driver]
+    def get_unboundDrivers(self):
+        """
+        return a list of unbound drivers: basically  all driver that have a value of None associated with
+        them
+        """
+        return [driver for driver,port in self.elements.iteritems() if driver.__class__==Driver and not port]
+    def get_boundPorts(self):
+        """
+        return a list of bound ports: basically  all ports that have a driver (not None) associated with
+        them
+        """
+        return [port for port,driver in self.elements.iteritems() if port.__class__!=Driver and driver]
+    def get_boundDrivers(self):
+        """
+        return a list of bound drivers: basically  all driver that have a port (not None ) associated with
+        them
+        """
+        return [driver for driver,port in self.elements.iteritems() if driver.__class__==Driver and port]
+    def get_ports(self):
+        """
+        return a list of all ports: basically  all keys that are NOT of type "Driver"
+        """
+        return [port for port in self.elements.iterkeys() if port.__class__!=Driver]
+        
+    def get_drivers(self):
+        """
+        return a list of all drivers: basically  all keys that are of type "Driver"
+        """
+        return [driver for driver in self.elements.iterkeys() if driver.__class__==Driver]
+        #return [driver for driver,port in self.elements.iteritems() if driver.__class__==Driver]
+    
+    def bind(self,driver=None,port=None):
+        """ create a binding between a driver and a port : inserts two key value pairs into the elements
+        dict : one driver->port and another port->driver"""
+        self.elements[port]=driver
+        self.elements[driver]=port    
+        
+    def unbind(self,driver=None,port=None):
+        """ remove a binding between a driver and a port : deletes the two key value pairs from the elements
+        dict : the driver->port and the port->driver pairs"""
+        if port is not None and driver is not None:
+            self.elements[port]=None
+            self.elements[driver]=None
+        elif port is not None and not driver:
+            try:
+                drv=self.elements[port]
+                if drv:
+                    self.elements[drv]=None
+                self.elements[port]=None
+            except KeyError:pass
+        elif not port and driver is not None:
+            prt=self.elements[driver]
+            if prt:
+                self.elements[prt]=None
+            self.elements[driver]=None
+    
 class DriverManager(object):
     """
     This class acts as factory and manager
@@ -131,22 +242,11 @@ class DriverManager(object):
     """    
     
     
-    loaded_drivers=[]
-        
-    available_devices={}
-    available_devices["serial"]=[]
-    
     hardware_handlers={}
     hardware_handlers["serial"]=SerialHardwareHandler
     
-    
-    """"""""""""""""""
-    driverLock=defer.DeferredSemaphore(1)
-    unboundDrivers=[]
-    unboundPorts=[]
-    
-    boundDrivers={}#driver to port
-    boundPorts={}#port to driver
+    driverLock=defer.DeferredSemaphore(1)    
+    bindings=PortDriverBindings()
     
     """"""""""""""""""
     
@@ -226,6 +326,12 @@ class DriverManager(object):
         
         defer.returnValue(driver)
     
+    @classmethod
+    @defer.inlineCallbacks
+    def set_remoteId(cls,driver,port):
+        driver.connectionMode=2
+        yield driver.bind(port,setId=True)
+        driver.connectionMode=1
     
     """
     ####################################################################################
@@ -233,58 +339,75 @@ class DriverManager(object):
     """
     @classmethod
     def register_driver(cls,driver):
-        cls.loaded_drivers.append(driver)
-        cls.unboundDrivers.append(driver)
+        cls.bindings.add_drivers([driver])
         cls._start_bindAttempt(driver)
-        #DriverManager.binderHelper.add_drivers([driver])
-    
+            
     @classmethod
     def unregister_driver(cls,driver):
-        if driver in DriverManager.loaded_drivers:
-            loaded_drivers.remove(driver)
-            del DriverManager.driver_to_port[driver]
-    
+        cls.bindings.remove_drivers([driver])
+
     @classmethod
     @defer.inlineCallbacks
     def setup_drivers(cls):
-        log.msg("Attempting to bind drivers")
-        for driver in  cls.loaded_drivers:
-            if not driver.isConfigured:
-                yield cls._start_bindAttempt(driver)
-                #driver.setup()
-        defer.returnValue(True)
-    
-    @classmethod
-    @defer.inlineCallbacks
-    def _start_bindAttempt(cls,driver):
-        if len(cls.unboundPorts)>0:#is it even worth checking: if not port are available, its pointless
-            for port in cls.unboundPorts:
-                yield driver.bind(port).addCallbacks(callback=cls._driver_binding_succeeded\
-                                                          ,callbackKeywords={"driver":driver,"port":port},errback=cls._driver_binding_failed)
+        """
+        method to iterate over driver and try to bind them to the correct available port
+        """
+        #log.msg("Attempting to bind drivers")
+        for driver in cls.bindings.get_unboundDrivers():
+            yield cls._start_bindAttempt(driver)
         defer.returnValue(True)
         
     @classmethod
-    def _driver_binding_failed(cls,result,*args,**kwargs):
-        pass
-        #print("driver setup failed",args,kwargs)
+    @defer.inlineCallbacks
+    def _start_bindAttempt(cls,driver):
+        for port in cls.bindings.get_unboundPorts():
+           yield driver.bind(port).addCallbacks(callback=cls._driver_binding_succeeded\
+                    ,callbackKeywords={"driver":driver,"port":port},errback=cls._driver_binding_failed)
+      
+        defer.returnValue(True)
+        
+    @classmethod
+    def _driver_binding_failed(cls,*args,**kwargs):
+        print("driver setup failed",args,kwargs)
     
     @classmethod
     @defer.inlineCallbacks
     def _driver_binding_succeeded(cls,result,driver,port,*args,**kwargs):
-        #print("driver setup sucess",args,kwargs,"port",port,"driver",driver)
+        cls.bindings.bind(driver,port)
         log.msg("Node",(yield driver.node.get()).name,"plugged in to port",port,system="Driver")
-        cls.boundDrivers[driver]=port
-        cls.boundPorts[port]=driver
-                
+         
+    @classmethod
+    def test(cls):
+        drv1=Driver(driverType="tutu")
+        drv2=Driver(driverType="toto")
+        cls.bindings.add_drivers([drv1,drv2]) 
+        cls.bindings.add_ports(["com3","com4"]) 
+        cls.bindings.bind(drv1,"com3")
+        print("binding: all ports found",cls.bindings.get_ports())
+        print("binding: all drivers found",cls.bindings.get_drivers())
+        print("binding: all unbound ports found",cls.bindings.get_unboundPorts())
+        print("binding: all unbound drivers found",cls.bindings.get_unboundDrivers())
+        print("binding: all bound ports found",cls.bindings.get_boundPorts())
+        print("binding: all bound drivers found",cls.bindings.get_boundDrivers())
+      
+        print("doing deletion")
+        cls.bindings.remove_ports(["com3"])
+        print("binding: all unbound ports found",cls.bindings.get_unboundPorts())
+        print("binding: all unbound drivers found",cls.bindings.get_unboundDrivers())
+        print("binding: all bound ports found",cls.bindings.get_boundPorts())
+        print("binding: all bound drivers found",cls.bindings.get_boundDrivers())
+        
+        reactor.stop()
+        
     @classmethod
     @defer.inlineCallbacks  
     def update_deviceList(cls):
         """
         Needs to be done with each hardware type with pnp support
         """
-        #import time
-        #log.msg("Checking for device changes. Time:",time.time(),system="Driver")
-        oldPorts=cls.unboundPorts  
+        
+        oldPorts=cls.bindings.get_ports()
+       
         newPorts=[]
         for handler in cls.hardware_handlers.itervalues():
             newPorts.extend((yield handler.list_ports()))        
@@ -303,25 +426,20 @@ class DriverManager(object):
             return (addedPorts,removePorts)
                 
         portChanges=checkForPortChanges(oldPorts,newPorts)
-        #print ("changes",portChanges[1],portChanges[0])
         if len(portChanges[0])>0 or len(portChanges[1])>0: 
-                  
-            if len(portChanges[1])>0:
-                [cls.unboundPorts.remove(port) for port in list(portChanges[1])] 
-                #log.msg("These ports were removed",portChanges[1])
-                s1=set(cls.boundPorts.iterkeys())
-                disconnectedPorts=s1.intersection(portChanges[1])
-                for port in list(disconnectedPorts):
-                    driver=cls.boundPorts[port]
-                    log.msg("Node",(yield driver.node.get()).name,"plugged out of port",port,system="Driver")
-                    del cls.boundDrivers[driver]
-                    del cls.boundPorts[port]
-                    driver.isConfigured=False
-                    driver.hardwareHandler.protocol.deviceInitOk=False
+            if len(portChanges[1])>0:                
+                oldBoundDrivers=cls.bindings.get_boundDrivers()
+                cls.bindings.remove_ports(list(portChanges[1])) 
+                newBoundDrivers=cls.bindings.get_boundDrivers()
+
+                for driver in set(oldBoundDrivers)-set(newBoundDrivers):
+                   log.msg("Node",(yield driver.node.get()).name,"plugged out of port",driver.hardwareHandler.port,system="Driver") 
+                   driver.isConfigured=False
+                   driver.hardwareHandler.protocol.deviceInitOk=False
 
             if len(portChanges[0])>0:
-                cls.unboundPorts.extend(list(portChanges[0]))
                 #log.msg("These ports were added",portChanges[0])
+                cls.bindings.add_ports(list(portChanges[0])) 
                 cls.driverLock.run(cls.setup_drivers)
                 
         reactor.callLater(2,DriverManager.update_deviceList)
