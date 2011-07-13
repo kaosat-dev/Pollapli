@@ -25,12 +25,15 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         handles machine (hardware node etc) initialization
         datab: the incoming data from the machine
         """
+        self.isProcessing=True
         if "start" in data:
             self.deviceHandshakeOk=True
             log.msg("Device handshake validated",system="Driver")
+            self.isProcessing=False
             self._query_deviceInfo()
         else:
             log.msg("Device hanshake mismatch",system="Driver")
+            self.isProcessing=False
             self.driver.reconnect()
     
     
@@ -39,6 +42,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         handles machine (hardware node etc) initialization
         datab: the incoming data from the machine
         """
+        self.isProcessing=True
         def validate_uuid(data):
             if len(str(data))==36:
                 fields=str(data).split('-')
@@ -55,6 +59,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                     self.driver.deviceId=data
                     sucess=True
                 elif self.driver.deviceId!= data:
+                    self.isProcessing=False
                     self._set_deviceId()
                     self._query_deviceInfo()
                     """if we end up here again, it means something went wrong with 
@@ -65,6 +70,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             else:
                 if not self.driver.deviceId:
                     self.driver.deviceId=str(uuid.uuid4())
+                self.isProcessing=False
                 self._set_deviceId()
                 self._query_deviceInfo()
         else:
@@ -72,6 +78,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             if not validate_uuid(data) or self.driver.deviceId!= data:
                 log.msg("Device id not set or not valid",system="Driver")
                 self.driver.connectionErrors+=1
+                self.isProcessing=False
                 self.driver.reconnect()
             else:
                 sucess=True
@@ -80,18 +87,20 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self.deviceInitOk=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
-            self.driver.disconnect(False)
+            self.isProcessing=False
+            self.driver.disconnect(clearPort=False)
             self.driver.d.callback(None)      
-
-        
         
     def _set_deviceId(self,id=None):
+        self.isProcessing=True
         self.send_data("s "+ self.driver.deviceId)
-        
+        self.isProcessing=False
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
+        self.isProcessing=True
         self.send_data("i")
+        self.isProcessing=False
         
     def _format_data_out(self,data,*args,**kwargs):
         """

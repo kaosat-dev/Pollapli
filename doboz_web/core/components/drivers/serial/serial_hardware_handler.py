@@ -185,7 +185,9 @@ class BaseSerialProtocol(Protocol):
         self.deviceHandshakeOk=True
         self.deviceInitOk=True
         
+        #for  timeout stuff
         self.hasRecievedData=False
+        self.isProcessing=False
         #self.timeoutTimer=LoopingCall(self._timeoutCheck)
     
     def _timeOutEnd(self,*args,**kwargs):
@@ -197,8 +199,8 @@ class BaseSerialProtocol(Protocol):
     
     def _timeoutCheck(self,*args,**kwargs):
         if self.driver.isConnected:
-            
-            if not self.hasRecievedData:
+            #print("processing",self.isProcessing)
+            if not self.hasRecievedData and not self.isProcessing:
             #if not self.deviceHandshakeOk and not self.deviceInitOk:
                 print("after timeout, still no response, shutting down")
                 #this should be different based on whether we want auto reconnect or not
@@ -206,7 +208,7 @@ class BaseSerialProtocol(Protocol):
                 self.driver.connectionErrors+=1
                 self.driver.reconnect()
             else:
-                reactor.callLater(15,self._timeoutCheck)
+                reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
         
     def connectionLost(self,reason="connectionLost"):
         log.msg("Device disconnected",system="Driver")  
@@ -215,7 +217,7 @@ class BaseSerialProtocol(Protocol):
     def connectionMade(self):
         log.msg("Device connected",system="Driver") 
         #self.timeoutTimer.start(7,False).addCallbacks(callback=self._timeOutEnd,errback =self._timeOutFailure)
-        reactor.callLater(15,self._timeoutCheck)
+        reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
         #start timeout timer
         #timeout : if after x number of seconds, nothing was recieved
           
