@@ -5,24 +5,6 @@
 from zope.interface import Interface, Attribute
 from twisted.plugin import IPlugin
 
-class IConnector(Interface):
-    """
-    Connector class , encapsulating a driver and its connection
-    """
-
-class ITestPlugin(Interface):
-    """
-    An object with specific physical properties
-    """
-    
-    def doAThing(data):
-        """
-        Bla bla
-
-        @type data: C{string}
-        @param data: justdata
-        """
-        
 class IDriver(Interface):
     """
     An object with specific physical properties
@@ -115,3 +97,9 @@ class IDriver_old(Interface):
         @rtype: C{None}
         @return: Nothing
         """
+
+
+class ITask(Interface):
+    """
+    task class 
+    """

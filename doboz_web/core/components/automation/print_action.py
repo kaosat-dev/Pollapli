@@ -28,7 +28,12 @@ class PrintAction():
                                 self.currentLayerValue=z
                                 self.pointCloud.add_point(Point(x/20,y/20,z/20)) 
     """
-    def __init__(self,printFile,fileType="GCode"):
+    BELONGSTO   = ['task']
+    TABLENAME="actions" 
+    
+    def __init__(self,printFile=None,fileType="GCode",*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
+        self.params=[printFile,fileType]
         self.printFileName=printFile
         self.printFilePath=os.path.join(FileManager.rootDir,"printFiles",printFileName)      
         self.line=""

@@ -5,6 +5,7 @@ import re
 import sys
 import itertools
 import time
+import logging
 from twisted.internet import reactor, defer
 from twisted.internet.task import LoopingCall
 from twisted.python import log,failure
@@ -22,6 +23,7 @@ class SerialHardwareHandler(object):
     availablePorts=[]
 
     def __init__(self,driver=None,protocol=None,speed=19200,*args,**kwargs):
+        self.logger=logging.getLogger("pollapli.core.components.driver")
         self.driver=driver
         self.serial=None    
         self.protocol=protocol
@@ -78,7 +80,7 @@ class SerialHardwareHandler(object):
                 #log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
                 self.driver.isConnected=False
                 self.driver.connectionErrors+=1
-                print("ERROR",inst)
+                #print("ERROR",inst)
                 log.msg("failed to connect serial driver, attempts left:",self.driver.maxConnectionErrors-self.driver.connectionErrors,system="Driver")
                 if self.driver.connectionErrors<self.driver.maxConnectionErrors:
                     reactor.callLater(self.driver.connectionErrors*5,self._connect)
@@ -203,7 +205,6 @@ class BaseSerialProtocol(Protocol):
     def connectionLost(self,reason="connectionLost"):
         log.msg("Device disconnected",system="Driver")  
         self.driver.send_signal("disconnected")
-       # self.timeoutTimer.stop()
         
     def connectionMade(self):
         log.msg("Device connected",system="Driver") 
@@ -230,12 +231,14 @@ class BaseSerialProtocol(Protocol):
         handles machine (hardware node etc) initialization
         datab: the incoming data from the machine
         """
-        
+       
     def _format_data_in(self,data,*args,**kwargs):
         """
         Formats an incomming data block according to some specs/protocol 
         data: the incomming data from the device
         """
+        data=data.replace('\n','')
+        data=data.replace('\r','')
         return data
     
     def _format_data_out(self,data,*args,**kwargs):
@@ -249,7 +252,7 @@ class BaseSerialProtocol(Protocol):
         self.hasRecievedData=True
         try:
             if self.isBuffering:
-                self.buffer+=str(data)
+                self.buffer+=str(data.encode('utf-8'))
                 #if we have NOT already checked the last state of the data block, then check it
                 results=None
                 try:
@@ -261,17 +264,17 @@ class BaseSerialProtocol(Protocol):
                     nDataBlock= self.buffer[:results.start()] 
                     nDataBlock=self._format_data_in(nDataBlock)
                     #log.msg("Data recieved <<: ",nDataBlock,system="Driver")  
-                
+                    
+                    #if self.driver.connectionMode==2:
                     if not self.driver.isConfigured:
-                        if not self.deviceHandshakeOk:
-                            self._handle_deviceHandshake(nDataBlock)
-                        elif not self.deviceInitOk:
-                            self._handle_deviceInit(nDataBlock)
+                            if not self.deviceHandshakeOk:
+                                self._handle_deviceHandshake(nDataBlock)
+                            elif not self.deviceInitOk:
+                                self._handle_deviceInit(nDataBlock)
                     else:
                         if not self.deviceHandshakeOk:
                             self._handle_deviceHandshake(nDataBlock)
                         else:
-                            
                             self.driver._handle_response(nDataBlock)
                     self.buffer=self.buffer[results.end():]
                     results=None
@@ -290,8 +293,7 @@ class BaseSerialProtocol(Protocol):
         """    
         try:
             #log.msg("Data sent >>: ",self._format_data_out(data)," done",system="Driver")
-            self.transport.write(self._format_data_out(data))
-            
+            self.transport.write(self._format_data_out(data).encode('utf-8'))
         except OSError:
             self.logger.critical("serial device not connected or not found on specified port")
         

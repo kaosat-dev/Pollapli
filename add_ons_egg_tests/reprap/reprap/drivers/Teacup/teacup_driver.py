@@ -12,21 +12,88 @@ class TeacupProtocol(BaseSerialProtocol):
     which is the most straighforward of reprap protocols (no checksum etc)
     """
     def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
-       # print("in  teacup Protocol", seperator,driver)
         BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
-        self.deviceHandshakeOk=False
+        
         
     def _handle_deviceHandshake(self,data):
         """
         handles machine (hardware node etc) initialization
         datab: the incoming data from the machine
         """
+        self.isProcessing=True
         if "start" in data:
-            self.deviceHandshakeOk=True
+            self.driver.isDeviceHandshakeOk=True
             log.msg("Device handshake validated",system="Driver")
-            #self.logger.critical("Machine Initialized")
+            self.isProcessing=False
+            self._query_deviceInfo()
         else:
-            raise Exception("Machine NOT INITIALIZED")
+            log.msg("Device hanshake mismatch",system="Driver")
+            self.isProcessing=False
+            self.driver.reconnect()
+         
+    def _handle_deviceInit(self,data):
+        """
+        handles machine (hardware node etc) initialization
+        data: the incoming data from the machine
+        """
+        self.isProcessing=True
+        def validate_uuid(data):
+            if len(str(data))==36:
+                fields=str(data).split('-')
+                if len(fields[0])==8 and len(fields[1])==4 and len(fields[2])==4 and len(fields[3])==4 and len(fields[4])==12:
+                    return True
+            return False
+        
+        sucess=False
+        if self.driver.connectionMode==2 or self.driver.connectionMode==0:
+            """if we are trying to set the device id"""    
+            if validate_uuid(data):
+                """if the remote device has already go a valid id, and we don't, update accordingly"""
+                if not self.driver.deviceId :
+                    self.driver.deviceId=data
+                    sucess=True
+                elif self.driver.deviceId!= data:
+                    self.isProcessing=False
+                    self._set_deviceId()
+                    """if we end up here again, it means something went wrong with 
+                    the remote setting of id, so add to errors"""
+                    self.driver.connectionErrors+=1
+                elif self.driver.deviceId==data:
+                    sucess=True     
+            else:
+                if not self.driver.deviceId:
+                    self.driver.deviceId=str(uuid.uuid4())
+                self.isProcessing=False
+                self._set_deviceId()
+        else:
+            """ some other connection mode , that still requires id check"""
+            if not validate_uuid(data) or self.driver.deviceId!= data:
+                log.msg("Device id not set or not valid",system="Driver")
+                self.driver.connectionErrors+=1
+                self.isProcessing=False
+                self.driver.reconnect()
+            else:
+                sucess=True
+                
+        if sucess is True: 
+            self.driver.isDeviceIdOk=True
+            log.msg("DeviceId match ok: id is ",data,system="Driver")
+            self.driver.isConfigured=True 
+            self.isProcessing=False
+            self.driver.disconnect()
+            self.driver.d.callback(None)      
+        
+    def _set_deviceId(self,id=None):
+        print("attempting to set device id")
+        self.isProcessing=True
+        self.send_data("s "+ self.driver.deviceId)
+        self.isProcessing=False
+        
+    def _query_deviceInfo(self):
+        """method for retrieval of device info (for id and more) """
+        self.isProcessing=True
+        self.send_data("i")
+        self.isProcessing=False
         
     def _format_data_out(self,data,*args,**kwargs):
         """
@@ -38,9 +105,9 @@ class TeacupProtocol(BaseSerialProtocol):
         data=data.replace(' ','')
         data=data.replace("\t",'')
         return data+ "\n"
-    
+        
     def connectionLost(self,reason="connectionLost"):
-        self.deviceHandshakeOk=False
+        self.driver.isDeviceHandshakeOk=False
         BaseSerialProtocol.connectionLost(self,reason)
         
 class HardwareHandler(SerialHardwareHandler):

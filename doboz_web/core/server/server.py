@@ -22,7 +22,7 @@ from doboz_web.core.components.addons.addon_manager import AddOnManager
 from doboz_web.core.components.drivers.driver import DriverManager
 
 from twisted.application.service import Application
-
+from twisted.python import log
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
         #app = Application("PollapliServer")
@@ -63,12 +63,12 @@ class MainServer():
         defer.returnValue(None)
         
     def start(self):
-        #observer = log.PythonLoggingObserver("dobozweb.core.server")
-        #observer.start()
-        from twisted.python import log
-        log.startLogging(sys.stdout)
-        logfile=os.path.join(self.logPath,"pollapli.log")
-        log.startLogging(open(logfile, 'w'),setStdout=False)
+        observer = log.PythonLoggingObserver("pollapli.core")
+        observer.start()
+       
+#        log.startLogging(sys.stdout)
+#        logfile=os.path.join(self.logPath,"pollapli.log")
+#        log.startLogging(open(logfile, 'w'),setStdout=False)
         
         root = File(self.filePath)
         restRoot=Resource()

@@ -15,10 +15,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
     Class defining the protocol used by this driver: in this case, the reprap 5D protocol (similar to teacup, but with checksum)
     """
     def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
-       # print("in  fived Protocol", seperator,driver)
         BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
-        self.deviceHandshakeOk=False
-        self.deviceInitOk=False
         
     def _handle_deviceHandshake(self,data):
         """
@@ -27,7 +24,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         """
         self.isProcessing=True
         if "start" in data:
-            self.deviceHandshakeOk=True
+            self.driver.isDeviceHandshakeOk=True
             log.msg("Device handshake validated",system="Driver")
             self.isProcessing=False
             self._query_deviceInfo()
@@ -39,7 +36,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
     def _handle_deviceInit(self,data):
         """
         handles machine (hardware node etc) initialization
-        datab: the incoming data from the machine
+        data: the incoming data from the machine
         """
         self.isProcessing=True
         def validate_uuid(data):
@@ -84,7 +81,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                 sucess=True
                 
         if sucess is True: 
-            self.deviceInitOk=True
+            self.driver.isDeviceIdOk=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.isProcessing=False
@@ -119,7 +116,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         return data
     
     def connectionLost(self,reason="connectionLost"):
-        self.deviceHandshakeOk=False
+        self.driver.isDeviceHandshakeOk=False
         BaseSerialProtocol.connectionLost(self,reason)
         
 class ArduinoExampleHardwareHandler(SerialHardwareHandler):

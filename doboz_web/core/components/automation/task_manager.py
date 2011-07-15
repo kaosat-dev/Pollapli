@@ -14,7 +14,7 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-from doboz_web.core.components.automation.print_task import PrintTask
+from doboz_web.core.components.automation.print_action import PrintAction
 #from doboz_web.core.components.automation.timer_task import TimerTask
 from doboz_web.core.components.automation.task import Task
 from doboz_web.core.tools.wrapper_list import WrapperList
@@ -22,7 +22,7 @@ from doboz_web.core.tools.wrapper_list import WrapperList
 
 class TaskManager(object):
     taskTypes={}
-    taskTypes["print"]=PrintTask
+    taskTypes["print"]=PrintAction
  #   taskTypes["timer"]=TimerTask
     taskTypes["task"]=Task
     
@@ -44,6 +44,21 @@ class TaskManager(object):
     """
     
     @defer.inlineCallbacks
+    def create(parentNode=None,taskType=None,taskParams={},*args,**kwargs):
+        plugins= (yield AddOnManager.get_plugins(idoboz_web.ITask))
+        task=None
+        for taskKlass in plugins:
+            if taskType==taskKlass.__name__.lower():
+                task=yield Task(taskType=taskType,options=taskParams).save()
+                yield task.save()  
+                task.node.set(parentNode)
+                yield task.setup()
+                break
+        if not task:
+            raise UnknownTask()
+        defer.returnValue(task)
+    
+    @defer.inlineCallbacks
     def add_task(self,name="task",description="",type=None,params={},*args,**kwargs):
         """
         Add a new node to the list of nodes of the current environment
@@ -59,11 +74,10 @@ class TaskManager(object):
         if type in self.taskTypes.iterkeys():
             
             task= yield Task(name,description,type,params).save()
-            task.specialty=TaskManager.taskTypes[type](**params)
+            #task.specialty=TaskManager.taskTypes[type](**params)
             #task= yield TaskManager.taskTypes[type](name,description,**taskParams).save()
-            print("added task",task, "with specialty",task.specialty)
             task.node.set(self.parentNode)         
-            task.start()
+            #task.start()
             self.tasks[task.id]=task
             
             print("tasks",self.tasks)

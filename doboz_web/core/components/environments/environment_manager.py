@@ -261,6 +261,16 @@ class EnvironmentManager(object):
              FOREIGN KEY(node_id) REFERENCES nodes(id)  
              )''')
       #FOREIGN KEY(node_id) REFERENCES nodes(id)  
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             node_id INTEGER NOT NULL,
+             driverType TEXT NOT NULL,
+             hardwareHandlerType TEXT NOT NULL ,
+             logicHandlerType TEXT NOT NULL,
+             deviceId TEXT,
+             options TEXT ,
+             FOREIGN KEY(node_id) REFERENCES nodes(id)      
+             )''')
         
         yield Registry.DBPOOL.runQuery('''CREATE TABLE tasks(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -274,8 +284,9 @@ class EnvironmentManager(object):
         yield Registry.DBPOOL.runQuery('''CREATE TABLE actions(
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              task_id INTEGER NOT NULL,
-             name TEXT,          
-             description TEXT,
+             actionType TEXT,          
+             type TEXT,
+             params TEXT,
              FOREIGN KEY(task_id) REFERENCES tasks(id)
              )''')
         yield Registry.DBPOOL.runQuery('''CREATE TABLE conditions(
@@ -286,16 +297,7 @@ class EnvironmentManager(object):
              FOREIGN KEY(task_id) REFERENCES tasks(id)
              )''')
         
-        yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
-             node_id INTEGER NOT NULL,
-             driverType TEXT NOT NULL,
-             hardwareHandlerType TEXT NOT NULL ,
-             logicHandlerType TEXT NOT NULL,
-             deviceId TEXT,
-             options TEXT ,
-             FOREIGN KEY(node_id) REFERENCES nodes(id)      
-             )''')
+       
              
         yield Registry.DBPOOL.runQuery('''CREATE TABLE sensors(
              id INTEGER PRIMARY KEY AUTOINCREMENT,

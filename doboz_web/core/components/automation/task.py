@@ -14,83 +14,54 @@ from doboz_web.core.tools.event_sys import *
 from doboz_web.core.signal_system import SignalHander
 
 
-class AutomationEvents(Events):
-    __events__=("OnEntered","OnExited","ActionDone")
+class TaskStatus(object):
+    def __init__(self):
+        self.isStarted=False
+        self.isPaused=False
     
-
 class Task(DBObject):
     BELONGSTO   = ['node']      
     """
     Base class for tasks (printing , scanning etc
     """
-    def __init__(self,name="task",description="a task",type="task",params={},*args,**kwargs):
+    def __init__(self,name="task",description="a task",taskType="task",options={},*args,**kwargs):
         DBObject.__init__(self,**kwargs)
-        #self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.task")
         self.logger=logging.getLogger("dobozweb.core.components.automation.task")
-        self.connector=None
+        
         self.name=name
         self.description=description
-        self.type=type
-        self.isRunning=False
+        self.taskType=taskType
         self.params=params
         self.startTime=time.time()        
         self.totalTime=0#for total print/scan time count
         
         self.progressFraction=0
         self.progress=0
-        self.status="NP" #can be : NP: not started, paused , SP: started, paused, SR:started, running
-
+        self.status=TaskStatus()
+        self.actions=None
         self.signalhandler=SignalHander("task",[("driver.dataRecieved",Any,[self.__call__])])
 
     def __call__(self):
         print("task recieved message from driver")
         
     def _toDict(self):
-        return {"task":{"id":self.id,"name":self.name,"description":self.description,"status":self.status,"progress":self.progress,"link":{"rel":"task"}}}
+        return {"task":{"id":self.id,"name":self.name,"description":self.description,"status":"","progress":self.progress,"link":{"rel":"task"}}}
     
+    @defer.inlineCallbacks  
+    def setup(self):
+        self.signalChannelPrefix=str((yield self.node.get()).id)
+        self.signalChannel="node"+self.signalChannelPrefix+".task"+str(self.id)
+        self.signalHandler=SignalHander(self.signalChannel,[(All,self.signalChannel,[self.__call__])])
+        log.msg("Driver setup sucessfully",system="Driver")  
+          
     def start(self):
-        if hasattr(self,"specialty"):
-            self.specialty.start()
+        if self.actions:
+            self.actions.start()
+            
     def pause(self):
         pass
     def stop(self):
         pass
-    
-    """
-    yield action()
-    """
-    def startPause(self):
-        """
-        Switches between active and inactive mode, or starts the task if not already done so
-        """
-        if self.status=="SR":
-            self.status="SP"
-            log.msg("Pausing task ",self.id, logLevel=logging.CRITICAL)
-            #update elapsed time
-            self.totalTime+=time.time()-self.startTime
-        elif self.status=="SP":
-            self.status="SR"
-            log.msg("Unpausing task ",self.id, logLevel=logging.CRITICAL)
-            self.startTime=time.time()   
-            self._do_action_step()
-            
-    def enter(self):
-        """
-        When taks is entered
-        """
-        self.events.OnEntered(self,"Entered")
-        
-    def exit(self):
-        """
-        When taks is exited
-        """
-        self.events.OnExited(self,"Exited")
- 
-    def _do_action(self):
-        """
-        do sub action in task
-        """
-        raise NotImplementedException("This needs to be implemented in a subclass")
 
     def check_conditions(self):
         """

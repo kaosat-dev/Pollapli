@@ -24,7 +24,7 @@ def helper():
     except:
         pass
     try:
-        client.post('rest/environments/1/nodes/1/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"teacupdriver","driverParams":{"speed":115200}}')
+        client.post('rest/environments/1/nodes/1/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"arduinoexampledriver","driverParams":{"speed":115200}}')
     except:
         pass
     try:
@@ -32,7 +32,8 @@ def helper():
     except:
         pass
     try:
-        client.post('rest/environments/1/nodes/1/tasks',headers={'Content-Type': 'application/pollapli.taskList+json'},payload='{"name":"testTask","description":"a task for printing 3D models","type":"print","params":{"filepath":"toto.gcode"}}')
+        pass
+        #client.post('rest/environments/1/nodes/1/tasks',headers={'Content-Type': 'application/pollapli.taskList+json'},payload='{"name":"testTask","description":"a task for printing 3D models","type":"print","params":{"filepath":"toto.gcode"}}')
     except Exception as inst:
         print("failed to add task",str(inst))
 

@@ -26,8 +26,8 @@ class Driver(DBObject):
      You can think of the events beeing sent out by the driver (dataRecieved etc) as interupts of sorts
     """
     BELONGSTO = ['node']
-    def __init__(self,driverType=None,deviceId=None,hardwareHandler=None,hardwareHandlerType=None,logicHandler=None,logicHandlerType=None,options={},*args,**kwargs):
-        self.logger = logging.getLogger("dobozweb.core.components.driver")      
+    def __init__(self,driverType=None,deviceId="",hardwareHandler=None,hardwareHandlerType=None,logicHandler=None,logicHandlerType=None,options={},*args,**kwargs):
+        self.logger = logging.getLogger("pollapli.core.components.driver")      
         self.logger.setLevel(logging.INFO)
         DBObject.__init__(self,**kwargs)
         self.options=options
@@ -82,7 +82,8 @@ class Driver(DBObject):
         self.signalChannelPrefix=str((yield self.node.get()).id)
         self.signalChannel="node"+self.signalChannelPrefix+".driver"
         self.signalHandler=SignalHander(self.signalChannel,[(All,self.signalChannel,[self.__call__])])
-        log.msg("Driver setup sucessfully",system="Driver")
+        #self.logger.info("Driver setup sucessfully")
+        log.msg("Driver setup sucessfully",system="Driver",logLevel=logging.INFO)
     
     def bind(self,port,setId=True):
         self.d=defer.Deferred()
@@ -342,8 +343,7 @@ class DriverManager(object):
     """    
     @classmethod 
     @defer.inlineCallbacks
-    def create(cls,driverType=None,driverParams={},*args,**kwargs):   
-        driverType=driverType
+    def create(cls,parentNode=None,driverType=None,driverParams={},*args,**kwargs):   
         plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
         driver=None
         for driverKlass in plugins:
@@ -352,7 +352,9 @@ class DriverManager(object):
                 hardwareHandler=driverKlass.components["hardwareHandler"](driver,**driverParams)
                 logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
                 driver.set_handlers(hardwareHandler,logicHandler)
-                driver.save()  
+                yield driver.save()  
+                driver.node.set(parentNode)
+                yield driver.setup()
                 cls.register_driver(driver,creation=True)
                 break
         if not driver:
@@ -388,7 +390,8 @@ class DriverManager(object):
                 hardwareHandler=driverKlass.components["hardwareHandler"](driver,**driverParams)
                 logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
                 driver.set_handlers(hardwareHandler,logicHandler)
-                driver.save()  
+                yield driver.save()  
+                yield driver.setup()
                 break
         if not driver:
             raise UnknownDriver()    
@@ -401,8 +404,9 @@ class DriverManager(object):
     @classmethod
     def register_driver(cls,driver,creation=False):
         cls.bindings.add_drivers([driver])
-        if creation:
-            driver.connectionMode=2
+        #if creation:
+        driver.connectionMode=2
+        #driver.connectionMode=0
             #cls.set_remoteId(driver)
         #cls._start_bindAttempt(driver)
             
@@ -460,7 +464,7 @@ class DriverManager(object):
     def _driver_binding_failed(cls,result,driver,port,*args,**kwargs):
         """call back method for driver binding failure"""
         cls.bindings.add_toTested(driver,port)
-        print("Failure",cls.bindings.get_driverUntestedPorts(driver))
+        #print("Failure",cls.bindings.get_driverUntestedPorts(driver))
         #print("driver setup failed",args,kwargs)
     
     @classmethod
@@ -604,7 +608,7 @@ class CommandQueueLogic(object):
         params: data the raw response that needs to be treated
         """
         cmd=None        
-              
+        print("here",len(self.commandBuffer)>0)
         if len(self.commandBuffer)>0:
             try:
                 if self.commandBuffer[0].currentPart>1:  

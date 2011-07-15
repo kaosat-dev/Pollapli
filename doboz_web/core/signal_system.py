@@ -14,7 +14,7 @@ class SignalHander(object):
         if recieversInfo:
             for signal,sender,handlers in recieversInfo:
                 self.thingy[(signal,sender)]=handlers
-                print("thingy",self.thingy)
+                #print("thingy",self.thingy)
                 louie.connect(self, signal=signal, sender=sender, weak=True)
         else:
             louie.connect(self,signal=All,sender=None,weak=True)

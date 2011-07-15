@@ -15,10 +15,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
     Class defining the protocol used by this driver: in this case, the reprap 5D protocol (similar to teacup, but with checksum)
     """
     def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
-       # print("in  fived Protocol", seperator,driver)
         BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
-        self.deviceHandshakeOk=False
-        self.deviceInitOk=False
         
     def _handle_deviceHandshake(self,data):
         """
@@ -27,7 +24,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         """
         self.isProcessing=True
         if "start" in data:
-            self.deviceHandshakeOk=True
+            self.driver.isDeviceHandshakeOk=True
             log.msg("Device handshake validated",system="Driver")
             self.isProcessing=False
             self._query_deviceInfo()
@@ -39,7 +36,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
     def _handle_deviceInit(self,data):
         """
         handles machine (hardware node etc) initialization
-        datab: the incoming data from the machine
+        data: the incoming data from the machine
         """
         self.isProcessing=True
         def validate_uuid(data):
@@ -50,7 +47,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             return False
         
         sucess=False
-        if self.driver.connectionMode==2:
+        if self.driver.connectionMode==2 or self.driver.connectionMode==0:
             """if we are trying to set the device id"""    
             if validate_uuid(data):
                 """if the remote device has already go a valid id, and we don't, update accordingly"""
@@ -60,7 +57,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                 elif self.driver.deviceId!= data:
                     self.isProcessing=False
                     self._set_deviceId()
-                    self._query_deviceInfo()
+                    #self._query_deviceInfo()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -70,8 +67,9 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                 if not self.driver.deviceId:
                     self.driver.deviceId=str(uuid.uuid4())
                 self.isProcessing=False
+                #self.driver.reconnect()
                 self._set_deviceId()
-                self._query_deviceInfo()
+                #self._query_deviceInfo()
         else:
             """ some other connection mode , that still requires id check"""
             if not validate_uuid(data) or self.driver.deviceId!= data:
@@ -83,7 +81,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                 sucess=True
                 
         if sucess is True: 
-            self.deviceInitOk=True
+            self.driver.isDeviceIdOk=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.isProcessing=False
@@ -91,6 +89,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self.driver.d.callback(None)      
         
     def _set_deviceId(self,id=None):
+        print("attempting to set device id")
         self.isProcessing=True
         self.send_data("s "+ self.driver.deviceId)
         self.isProcessing=False
@@ -117,7 +116,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         return data
     
     def connectionLost(self,reason="connectionLost"):
-        self.deviceHandshakeOk=False
+        self.driver.isDeviceHandshakeOk=False
         BaseSerialProtocol.connectionLost(self,reason)
         
 class ArduinoExampleHardwareHandler(SerialHardwareHandler):

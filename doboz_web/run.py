@@ -19,11 +19,11 @@ def configure_all():
     """ 
     
     
-    logger = logging.getLogger("dobozweb.core")
+    logger = logging.getLogger("pollapli.core")
     logger.setLevel(logging.ERROR)
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.ERROR)
+    ch.setLevel(logging.INFO)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     """"""""""""""""""""""""""""""""""""

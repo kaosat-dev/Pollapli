@@ -83,8 +83,8 @@ class Node(DBObject):
         @defer.inlineCallbacks
         def update():
             yield self.delete_driver()
-            self.driver=yield DriverManager.create(**kwargs)
-            self.driver.node.set(self)
+            self.driver=yield DriverManager.create(parentNode=self,**kwargs)
+            
             log.msg("Set driver of node",self.id," with params ", kwargs,system="Node")
             defer.returnValue(None)
         yield self.driverLock.run(update)

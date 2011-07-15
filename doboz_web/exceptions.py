@@ -25,6 +25,9 @@ class DeviceIdMismatch(Exception):
 class NoAvailablePort(Exception):
     pass
 
+class UnknownTask(Exception):
+    pass
+
 """"""""""""""""""""""""""""""""""""
 """rest handler exceptions"""
 class ParameterParseException(Exception):
