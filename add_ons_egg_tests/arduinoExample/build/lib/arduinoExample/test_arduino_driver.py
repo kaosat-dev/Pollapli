@@ -36,7 +36,6 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self.isProcessing=False
             self.driver.reconnect()
     
-    
     def _handle_deviceInit(self,data):
         """
         handles machine (hardware node etc) initialization
@@ -88,7 +87,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.isProcessing=False
-            self.driver.disconnect(clearPort=False)
+            self.driver.disconnect()
             self.driver.d.callback(None)      
         
     def _set_deviceId(self,id=None):

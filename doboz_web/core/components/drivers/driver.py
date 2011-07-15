@@ -39,7 +39,9 @@ class Driver(DBObject):
         self.logicHandler=logicHandler
         self.hardwareHandlerType=hardwareHandlerType
         self.logicHandlerType=logicHandlerType
-        self.signalHandler=SignalHander("Driver")
+        self.signalHandler=None 
+        self.signalChannelPrefix=""
+        self.signalChannel=""
         
         self.initalSetup=True
         self.isConfigured=False#when the port association has not been set
@@ -60,6 +62,10 @@ class Driver(DBObject):
         self.connectionMode=1
         self.d=defer.Deferred()
         
+        
+    def __call__(self,*args,**kwargs):
+        pass
+    
     def _toDict(self):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
     
@@ -70,9 +76,13 @@ class Driver(DBObject):
         if logicHandler:
             self.logicHandler=logicHandler
             self.logicHandlerType=logicHandler.__class__.__name__
-            
+    
+    @defer.inlineCallbacks    
     def setup(self):
-        log.msg("Attemtping to setup driver",system="Driver")
+        self.signalChannelPrefix=str((yield self.node.get()).id)
+        self.signalChannel="node"+self.signalChannelPrefix+".driver"
+        self.signalHandler=SignalHander(self.signalChannel,[(All,self.signalChannel,[self.__call__])])
+        log.msg("Driver setup sucessfully",system="Driver")
     
     def bind(self,port,setId=True):
         self.d=defer.Deferred()
@@ -88,10 +98,17 @@ class Driver(DBObject):
     def disconnect(self,*args,**kwargs):
         self.hardwareHandler.disconnect(*args,**kwargs)
     
+    def pluggedIn(self,port):
+        self.signalHandler.send_message(self.signalChannel,"pluggedIn",{"data":port})
+    def pluggedOut(self,port):
+        self.signalHandler.send_message(self.signalChannel,"pluggedOut",{"data":port})
+    
+    def send_signal(self,signal="",data=None):
+        self.signalHandler.send_message(self.signalChannel,signal,{"data":data})
     
     def send_command(self,data,sender=None):
         if self.logicHandler:
-            self.logicHandler._handle_request(data)
+            self.logicHandler._handle_request(data=data,sender=sender)
         else:
             self.hardwareHandler.send_data(data)
             
@@ -99,7 +116,7 @@ class Driver(DBObject):
         if self.logicHandler:
             self.logicHandler._handle_response(data)
         else:
-            self.signalHandler.send_message(self,"test.driver.dataRecieved",{"data":data})
+            self.signalHandler.send_message(self,self.signalChannel+".dataRecieved",{"data":data})
             self.send_command("a")
 
 class PortDriverBindings(object):
@@ -121,8 +138,10 @@ class PortDriverBindings(object):
     def add_toTested(self,driver,port):
         if not port in self.tested[driver]:
             self.tested[driver].append(port)
-        if not driver in self.tested[port]:
-            self.tested[port].append(driver)
+        try:
+            if not driver in self.tested[port]:
+                self.tested[port].append(driver)
+        except KeyError:pass
         
     def remove_fromTested(self,driver,port):
         if port in self.tested[driver]:
@@ -352,7 +371,7 @@ class DriverManager(object):
                 logicHandler=driverKlass.components["logicHandler"](driver,**params)
                 driver.set_handlers(hardwareHandler,logicHandler)
                 cls.register_driver(driver)
-                
+                yield driver.setup()
                 break
         defer.returnValue(driver)
         
@@ -415,11 +434,8 @@ class DriverManager(object):
         """
         method to iterate over driver and try to bind them to the correct available port
         """
-       # log.msg("SETTING UP DRIVERS, Unbound ports remaining:",cls.bindings.get_unboundPorts(),system="Driver")
         for driver in cls.bindings.get_unboundDrivers():   
             yield cls._start_bindAttempt(driver) 
-        
-        #cls.bindings.portsTestedWithAllDrivers=cls.bindings.get_unboundPorts()
         defer.returnValue(True)
         
     @classmethod
@@ -430,13 +446,6 @@ class DriverManager(object):
         * the port binding was sucessfull
         * all driver/port combos were tried
         """
-         #def add_toTested(self,driver,port):
-       
-        
-          #   def remove_fromTested(self,driver,port):
-        
-    #def get_driverUntestedPorts(self,driver):
-        #print("POUUUUET",cls.bindings.get_driverUntestedPorts(driver))
         for port in cls.bindings.get_driverUntestedPorts(driver):#get_unboundPorts():
             if driver.isConfigured:
                 break
@@ -463,7 +472,7 @@ class DriverManager(object):
         cls.bindings.bind(driver,port)
         yield driver.save()
         log.msg("Node",(yield driver.node.get()).name,"plugged in to port",port,system="Driver")
-         
+        driver.pluggedIn(port)
         
     @classmethod
     @defer.inlineCallbacks  
@@ -497,13 +506,12 @@ class DriverManager(object):
                 removedPorts=None
             return (addedPorts,removedPorts)
                 
-        #portChanges=checkForPortChanges(oldPorts,newPorts)
+     
         addedPorts,removedPorts=checkForPortChanges(oldPorts,newPorts)
-        #print("addedPorts",addedPorts,"removedPorts",removedPorts)
+        
         if addedPorts:     
             cls.bindings.add_ports(list(addedPorts)) 
-            
-        #print("added",addedPorts,"blehh",cls.bindings.get_unboundPorts(),"pouet",cls.bindings.portsTestedWithAllDrivers)
+               
         if addedPorts or (len(cls.bindings.get_unboundDrivers())>0 and len(cls.bindings.get_unboundPorts())>0):
             #log.msg("These ports were added",portChanges[0])   
             cls.driverLock.run(cls.setup_drivers)
@@ -512,10 +520,11 @@ class DriverManager(object):
             oldBoundDrivers=cls.bindings.get_boundDrivers()
             cls.bindings.remove_ports(list(removedPorts)) 
             newBoundDrivers=cls.bindings.get_boundDrivers()
-            
-
+        
             for driver in set(oldBoundDrivers)-set(newBoundDrivers):
-                log.msg("Node",(yield driver.node.get()).name,"plugged out of port",driver.hardwareHandler.port,system="Driver") 
+                port=driver.hardwareHandler.port
+                log.msg("Node",(yield driver.node.get()).name,"plugged out of port",port,system="Driver") 
+                driver.pluggedOut(port)
                 driver.isConfigured=False
                 driver.hardwareHandler.protocol.deviceInitOk=False
         
@@ -525,13 +534,22 @@ class DriverManager(object):
 """
 ####################################################################################
 Driver logic handlers
+
+some things need to be changed:
+*twostep handling for commands needs to be changed to multipart (n complete blocks of
+recieved data to consider the response done
+*for reprap temperature reading, it begs the question of where this would need to be implemented:
+the two part is required for 5d and teacup, but is unlikely to be the same for makerbot: so should this kind of 
+difference defined in the protocol ? and in that case should we define specific methods in the protocols like:
+ "read sensor" ? (read temperature would be waaay to specific)
 """
+
 
 class Command(object):
     """Base command class, encapsulate all request and answer commands, also has a 'special' flag for commands that do no participate in normal flow of gcodes : i
     ie for example , regular poling of temperatures for display (the "OK" from those commands MUST not affect the line by line sending/answering of gcodes)
     """
-    def __init__(self,special=False,twoStep=False,answerRequired=False,request=None,answer=None):
+    def __init__(self,special=False,multiParts=1,answerRequired=False,request=None,answer=None,sender=None):
         """
         Params:
         special: generally used for "system" commands such as M105 (temperature read) as oposed to general, print/movement commands
@@ -542,12 +560,14 @@ class Command(object):
         Answer: what answer did we get
         """
         self.special=special
-        self.twoStep=twoStep
+        self.multiParts=multiParts
+        self.currentPart=1
         self.answerRequired=answerRequired
         self.requestSent=False
         self.answerComplete=False
         self.request=request
         self.answer=answer
+        self.sender=sender
         
     def __str__(self):
         #return str(self.request)+" "+str(self.answer)
@@ -567,7 +587,7 @@ class CommandQueueLogic(object):
         self.commandSlots=bufferSize
         #print("in command queue logic , driver:",driver)
         
-    def _handle_request(self,data,*args,**kwargs):
+    def _handle_request(self,data,sender=None,*args,**kwargs):
         """
         Manages command requests
         """
@@ -584,49 +604,42 @@ class CommandQueueLogic(object):
         params: data the raw response that needs to be treated
         """
         cmd=None        
-        if True:      
-            if len(self.commandBuffer)>0:
-                try:
-                    if self.commandBuffer[0].twoStep:  
-                        self.commandBuffer[0].twoStep=False
-                        cmd=self.commandBuffer[0]
-                    else:
-                        cmd=self.commandBuffer[0]
-                        del self.commandBuffer[0]
-                        cmd.answerComplete=True
-                        cmd.answer=data
-                        self.commandSlots+=1#free a commandSlot
-                       
-                        #self.send_next_command()
-                        
-                except Exception as inst:
-                    log.msg("Failure in handling command ",str(inst),system="Driver")
-                    
-            else:
+              
+        if len(self.commandBuffer)>0:
+            try:
+                if self.commandBuffer[0].currentPart>1:  
+                    self.commandBuffer[0].currentPart-=1
+                    #self.commandBuffer[0].twoStep=False
+                    cmd=self.commandBuffer[0]
+                    cmd.answer+=data
+                else:
+                    cmd=self.commandBuffer[0]
+                    del self.commandBuffer[0]
+                    cmd.answerComplete=True
+                    cmd.answer=data
+                    self.commandSlots+=1#free a commandSlot
+                    self.driver.send_signal("dataRecieved",cmd.answer)
+                    self.send_next_command()       
+            except Exception as inst:
+                log.msg("Failure in handling command ",str(inst),system="Driver")
+        else:
                 cmd=Command(answer=data)
-                cmd.answerComplete=True
-                
-
-        self.driver.signalHandler.send_message(self.driver,"driver.dataRecieved",{"data":cmd.answer})
-         ###one command was completed, send next  
-        #self._handle_request(data="a",answerRequired=True) 
-        self.send_next_command()
+                cmd.answerComplete=True       
         return cmd
      
     def send_next_command(self):
         """Returns next avalailable command in command queue """
         cmd=None
-       # print("in next command: buffer",len(self.commandBuffer),"slots",self.commandSlots)
-        self.deviceHandshakeOk=True   
-        if not self.deviceHandshakeOk:
+       # print("in next command: buffer",len(self.commandBuffer),"slots",self.commandSlots)  
+        if not self.driver.isDeviceHandshakeOk:
             raise Exception("Machine connection not established correctly")
-        elif self.deviceHandshakeOk and len(self.commandBuffer)>0 and self.commandSlots>0:  
-            
+        elif self.driver.isDeviceHandshakeOk and len(self.commandBuffer)>0 and self.commandSlots>0:        
             tmp=self.commandBuffer[0]
             if not tmp.requestSent:            
                 cmd=self.commandBuffer[0].request
                 tmp.requestSent=True
-                self.driver.hardwareHandler.send_data(cmd)
+                self.driver.send_command(cmd)
+        
                 #log.msg("")
                 #self.logger.debug("Driver giving next command %s",str(cmd))
         else:

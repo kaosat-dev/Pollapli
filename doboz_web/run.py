@@ -76,6 +76,7 @@ def configure_all():
     
     #server.chosenServer = servertype
     #server.chosenPort = port
+    dataPath=os.path.join(rootPath,"data")
     filePath=os.path.join(rootPath,"core","server","static")
 #    server.printFilesPath=os.path.join(server.rootPath,"files","machine","printFiles")
 #    server.scanFilesPath=os.path.join(server.rootPath,"files","machine","scanFiles")
@@ -88,7 +89,6 @@ def configure_all():
     """"""""""""""""""""""""""""""""""""
     """Twisted server setup"""
     
-
     if platform.isWindows():
         from twisted.internet import win32eventreactor
         reactor=win32eventreactor        
@@ -99,7 +99,7 @@ def configure_all():
         
     
     from doboz_web.core.server.server import MainServer
-    server=MainServer(port,rootPath,filePath,envPath)
+    server=MainServer(port,rootPath,filePath,dataPath)
     
     """
     starts all server components

@@ -28,26 +28,24 @@ class SerialHardwareHandler(object):
         self.speed=speed
         self.port=None
         self.isConnected=False
-        
         self.notMyPorts=[]
         self.setupMode=False
-        
                 
     def send_data(self,command):
         self.protocol.send_data(command)
         
-    def connect(self,setupMode=False,setIdMode=False,port=None,*args,**kwargs):
+    def connect(self,setupMode=False,port=None,*args,**kwargs):
         self.driver.connectionErrors=0
         self.setupMode=setupMode
-        self.setIdMode=setIdMode
-        self.port=port
+        if port:
+            self.port=port
         self._connect(setupMode,port,*args,**kwargs)
     
     def reconnect(self):
         self.disconnect(clearPort=False)
         self._connect()
         
-    def disconnect(self,clearPort=True):   
+    def disconnect(self,clearPort=False):   
         self.driver.isConnected=False   
         if clearPort:
             self.port=None
@@ -88,7 +86,7 @@ class SerialHardwareHandler(object):
         if self.driver.connectionErrors>=self.driver.maxConnectionErrors:
             try:
                 self.serial.d.cancel()
-                self.disconnect()
+                self.disconnect(clearPort=True)
             except:pass
             if not self.setupMode:
                 log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver")
@@ -183,20 +181,12 @@ class BaseSerialProtocol(Protocol):
         self.driver=driver
         
         self.deviceHandshakeOk=True
-        self.deviceInitOk=True
-        
+        self.deviceInitOk=True    
         #for  timeout stuff
         self.hasRecievedData=False
         self.isProcessing=False
         #self.timeoutTimer=LoopingCall(self._timeoutCheck)
-    
-    def _timeOutEnd(self,*args,**kwargs):
-        print("end of timeout")
         
-    def _timeOutFailure(self,*args,**kwargs):
-        self.timeoutTimer.stop()
-        print("failure of timeout",args,kwargs)
-    
     def _timeoutCheck(self,*args,**kwargs):
         if self.driver.isConnected:
             #print("processing",self.isProcessing)
@@ -212,14 +202,15 @@ class BaseSerialProtocol(Protocol):
         
     def connectionLost(self,reason="connectionLost"):
         log.msg("Device disconnected",system="Driver")  
+        self.driver.send_signal("disconnected")
        # self.timeoutTimer.stop()
         
     def connectionMade(self):
         log.msg("Device connected",system="Driver") 
-        #self.timeoutTimer.start(7,False).addCallbacks(callback=self._timeOutEnd,errback =self._timeOutFailure)
-        reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
-        #start timeout timer
-        #timeout : if after x number of seconds, nothing was recieved
+        self.driver.send_signal("connected")
+        if self.driver.connectionMode!=1:
+            reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
+
           
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """

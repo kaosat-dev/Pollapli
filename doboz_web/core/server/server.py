@@ -21,14 +21,6 @@ from doboz_web.core.file_manager import FileManager
 from doboz_web.core.components.addons.addon_manager import AddOnManager
 from doboz_web.core.components.drivers.driver import DriverManager
 
-def truc(f):    
-    try:
-        line=f.next()
-        print(line)
-        reactor.callLater(0,truc,f)
-    except StopIteration:
-        print("at end of file")
-
 from twisted.application.service import Application
 
 class MainServer():
@@ -39,17 +31,14 @@ class MainServer():
         self.rootPath=rootPath
         self.filePath=filePath
         self.dataPath=dataPath
-        self.logPath=os.path.join(self.rootPath,"data")
+        self.logPath=self.dataPath
         """""""""""""""""""""""""""""""""""""""""
         Initialize various subsystems /set correct paths
         """
         AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
-        EnvironmentManager.envPath=self.dataPath
-        FileManager.rootDir=self.dataPath
-        
-        
+        EnvironmentManager.envPath=os.path.join(self.dataPath,"environments")
+        FileManager.rootDir=self.dataPath        
         self.environmentManager=EnvironmentManager(self.dataPath)
-        
         
         """"""""""""""""""""""""""""""""""""""
         self.exceptionConverter=ExceptionConverter()
