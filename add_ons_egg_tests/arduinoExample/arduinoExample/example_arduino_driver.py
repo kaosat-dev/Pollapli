@@ -5,6 +5,7 @@ from zope.interface import classProvides
 from twisted.python import log,failure
 from twisted.internet import reactor, defer
 import uuid
+import logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
 from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
 from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
@@ -22,23 +23,22 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         handles machine (hardware node etc) initialization
         datab: the incoming data from the machine
         """
-        self.isProcessing=True
+        log.msg("Attempting to validate device handshake",system="Driver",logLevel=logging.INFO)
         if "start" in data:
             self.driver.isDeviceHandshakeOk=True
-            log.msg("Device handshake validated",system="Driver")
-            self.isProcessing=False
+            log.msg("Device handshake validated",system="Driver",logLevel=logging.INFO)
             self._query_deviceInfo()
         else:
-            log.msg("Device hanshake mismatch",system="Driver")
-            self.isProcessing=False
+            log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
             self.driver.reconnect()
+        
     
     def _handle_deviceInit(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
         """
-        self.isProcessing=True
+        log.msg("Attempting to configure device Id",system="Driver",logLevel=logging.CRITICAL)
         def validate_uuid(data):
             if len(str(data))==36:
                 fields=str(data).split('-')
@@ -55,8 +55,8 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                     self.driver.deviceId=data
                     sucess=True
                 elif self.driver.deviceId!= data:
-                    self.isProcessing=False
                     self._set_deviceId()
+                    
                     #self._query_deviceInfo()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
@@ -66,16 +66,12 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             else:
                 if not self.driver.deviceId:
                     self.driver.deviceId=str(uuid.uuid4())
-                self.isProcessing=False
-                #self.driver.reconnect()
                 self._set_deviceId()
-                #self._query_deviceInfo()
         else:
             """ some other connection mode , that still requires id check"""
             if not validate_uuid(data) or self.driver.deviceId!= data:
                 log.msg("Device id not set or not valid",system="Driver")
                 self.driver.connectionErrors+=1
-                self.isProcessing=False
                 self.driver.reconnect()
             else:
                 sucess=True
@@ -84,15 +80,12 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self.driver.isDeviceIdOk=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
-            self.isProcessing=False
             self.driver.disconnect()
             self.driver.d.callback(None)      
         
     def _set_deviceId(self,id=None):
         print("attempting to set device id")
-        self.isProcessing=True
         self.send_data("s "+ self.driver.deviceId)
-        self.isProcessing=False
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """

@@ -17,6 +17,7 @@ from twisted.python.log import PythonLoggingObserver
 from doboz_web.core.components.automation.print_action import PrintAction
 #from doboz_web.core.components.automation.timer_task import TimerTask
 from doboz_web.core.components.automation.task import Task
+from doboz_web.core.components.automation.print_action import PrintAction
 from doboz_web.core.tools.wrapper_list import WrapperList
 
 
@@ -59,7 +60,7 @@ class TaskManager(object):
         defer.returnValue(task)
     
     @defer.inlineCallbacks
-    def add_task(self,name="task",description="",type=None,params={},*args,**kwargs):
+    def add_task(self,name="task",description="",taskType=None,params={},*args,**kwargs):
         """
         Add a new node to the list of nodes of the current environment
         Params:
@@ -70,28 +71,24 @@ class TaskManager(object):
         Connector:the connector to use for this node
         Driver: the driver to use for this node's connector
         """
+                
+        task= yield Task(name,description,type,params).save()
+        task.node.set(self.parentNode)  
+        yield task.setup()
+        task.actions=yield PrintAction(parentTask=task,**params).save()
+        task.actions.task.set(task)
+        self.tasks[task.id]=task
+        task.start()
             
-        if type in self.taskTypes.iterkeys():
-            
-            task= yield Task(name,description,type,params).save()
-            #task.specialty=TaskManager.taskTypes[type](**params)
-            #task= yield TaskManager.taskTypes[type](name,description,**taskParams).save()
-            task.node.set(self.parentNode)         
-            #task.start()
-            self.tasks[task.id]=task
-            
-            print("tasks",self.tasks)
+        print("tasks",self.tasks)
 #            capability= yield NodeManager.nodeTypes[type](name,description).save()
 #            capability.environment.set(self.parentEnv)
 #            capability.node.set(node)
 #            node.capability=capability
             #task.events.OnExited+=self._on_task_exited
-            log.msg("Added  task ",name," of type ",type," with id set to ",str(task.id), logLevel=logging.CRITICAL)
-            defer.returnValue(task)
-        else:
-            log.msg("unknown node type",logLevel=logging.CRITICAL)
-            raise(UnknownNodeType())
-        defer.returnValue(None)
+        log.msg("Added  task ",name," of type ",type," with id set to ",str(task.id), logLevel=logging.CRITICAL)
+        defer.returnValue(task)
+
         
     def get_tasks(self,filter=None):
         """

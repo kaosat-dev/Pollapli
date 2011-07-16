@@ -23,13 +23,14 @@ from doboz_web.core.components.environments.environment import Environment
 from doboz_web.exceptions import EnvironmentAlreadyExists
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.components.automation.task import Task
+from doboz_web.core.components.automation.print_action import PrintAction
 from doboz_web.core.tools.wrapper_list import WrapperList
 
 from doboz_web.core.components.drivers.driver import Driver
 
 Registry.register(Environment, Node)
 Registry.register(Node, Task)
-#Registry.register(Task, Action)
+Registry.register(Task, PrintAction)
 #Registry.register(Task, Condition)
 Registry.register(Node, Driver)
 
@@ -285,7 +286,6 @@ class EnvironmentManager(object):
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              task_id INTEGER NOT NULL,
              actionType TEXT,          
-             type TEXT,
              params TEXT,
              FOREIGN KEY(task_id) REFERENCES tasks(id)
              )''')

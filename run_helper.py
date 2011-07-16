@@ -33,7 +33,7 @@ def helper():
         pass
     try:
         pass
-        #client.post('rest/environments/1/nodes/1/tasks',headers={'Content-Type': 'application/pollapli.taskList+json'},payload='{"name":"testTask","description":"a task for printing 3D models","type":"print","params":{"filepath":"toto.gcode"}}')
+        #client.post('rest/environments/1/nodes/1/tasks',headers={'Content-Type': 'application/pollapli.taskList+json'},payload='{"name":"testTask","description":"a task for printing 3D models","taskType":"print","params":{"filepath":"test.gcode"}}')
     except Exception as inst:
         print("failed to add task",str(inst))
 

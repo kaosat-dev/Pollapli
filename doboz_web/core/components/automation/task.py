@@ -9,9 +9,10 @@ from twistar.registry import Registry
 from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
+
 from louie import dispatcher,error,Any,All
-from doboz_web.core.tools.event_sys import *
 from doboz_web.core.signal_system import SignalHander
+
 
 
 class TaskStatus(object):
@@ -31,7 +32,7 @@ class Task(DBObject):
         self.name=name
         self.description=description
         self.taskType=taskType
-        self.params=params
+        self.params=options
         self.startTime=time.time()        
         self.totalTime=0#for total print/scan time count
         
@@ -39,10 +40,11 @@ class Task(DBObject):
         self.progress=0
         self.status=TaskStatus()
         self.actions=None
-        self.signalhandler=SignalHander("task",[("driver.dataRecieved",Any,[self.__call__])])
+        self.signalHandler=None
+        #self.signalhandler=SignalHander("task",[("driver.dataRecieved",Any,[self.__call__])])
 
-    def __call__(self):
-        print("task recieved message from driver")
+    def __call__(self,*args,**kwargs):
+        pass
         
     def _toDict(self):
         return {"task":{"id":self.id,"name":self.name,"description":self.description,"status":"","progress":self.progress,"link":{"rel":"task"}}}
@@ -51,18 +53,24 @@ class Task(DBObject):
     def setup(self):
         self.signalChannelPrefix=str((yield self.node.get()).id)
         self.signalChannel="node"+self.signalChannelPrefix+".task"+str(self.id)
-        self.signalHandler=SignalHander(self.signalChannel,[(All,self.signalChannel,[self.__call__])])
-        log.msg("Driver setup sucessfully",system="Driver")  
-          
+        self.signalHandler=SignalHander(self.signalChannel)
+        self.signalHandler
+        log.msg("Task setup sucessfully",system="Task",logLevel=logging.CRITICAL) 
+        
     def start(self):
         if self.actions:
-            self.actions.start()
-            
+            self.actions.start()    
     def pause(self):
         pass
     def stop(self):
         pass
-
+    
+    def send_signal(self,signal="",data=None):
+        self.signalHandler.send_message(signal,{"data":data})
+   
+    def set_action(self):
+        """Sets the first action"""
+        
     def check_conditions(self):
         """
         method in charge of verifying all of the tasks conditions

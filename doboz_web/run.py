@@ -20,10 +20,10 @@ def configure_all():
     
     
     logger = logging.getLogger("pollapli.core")
-    logger.setLevel(logging.ERROR)
+    logger.setLevel(logging.CRITICAL)
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.INFO)
+    ch.setLevel(logging.DEBUG)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     """"""""""""""""""""""""""""""""""""

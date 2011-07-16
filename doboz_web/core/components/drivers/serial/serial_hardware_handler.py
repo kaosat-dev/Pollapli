@@ -36,12 +36,11 @@ class SerialHardwareHandler(object):
     def send_data(self,command):
         self.protocol.send_data(command)
         
-    def connect(self,setupMode=False,port=None,*args,**kwargs):
+    def connect(self,port=None,*args,**kwargs):
         self.driver.connectionErrors=0
-        self.setupMode=setupMode
         if port:
             self.port=port
-        self._connect(setupMode,port,*args,**kwargs)
+        self._connect(port,*args,**kwargs)
     
     def reconnect(self):
         self.disconnect(clearPort=False)
@@ -58,7 +57,9 @@ class SerialHardwareHandler(object):
                 try:
                     self.serial.d.cancel()
                 except:pass
-                self.serial.loseConnection()
+                try:
+                    self.serial.loseConnection()
+                except:pass
                 self.serial=None
         except Exception as inst:
             print("error in serial disconnection",str(inst))
@@ -90,11 +91,12 @@ class SerialHardwareHandler(object):
                 self.serial.d.cancel()
                 self.disconnect(clearPort=True)
             except:pass
-            if not self.setupMode:
-                log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver")
+            
+            if self.driver.connectionMode==1:
+                log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver",logLevel=logging.CRITICAL)
             else:
-                log.msg("Failed to establish correct connection with device/identify device by id",system="Driver")
-                reactor.callLater(5,self.driver.d.errback,failure.Failure())
+                log.msg("Failed to establish correct connection with device/identify device by id",system="Driver",logLevel=logging.DEBUG)
+                reactor.callLater(1,self.driver.d.errback,failure.Failure())
                 
 
         
@@ -125,7 +127,7 @@ class SerialHardwareHandler(object):
                 foundPorts= glob.glob('/dev/ttyUSB*')+ glob.glob('/dev/cu*')
             return foundPorts
         #self.logger.info("Serial Ports on  system:",+str(foundPorts))
-        reactor.callLater(0.5,d.callback,None)
+        reactor.callLater(0.1,d.callback,None)
         d.addCallback(_list_ports)
         return d
     
@@ -187,32 +189,43 @@ class BaseSerialProtocol(Protocol):
         #for  timeout stuff
         self.hasRecievedData=False
         self.isProcessing=False
+        self.timeout=None
         #self.timeoutTimer=LoopingCall(self._timeoutCheck)
         
     def _timeoutCheck(self,*args,**kwargs):
         if self.driver.isConnected:
-            #print("processing",self.isProcessing)
-            if not self.hasRecievedData and not self.isProcessing:
-            #if not self.deviceHandshakeOk and not self.deviceInitOk:
-                print("after timeout, still no response, shutting down")
-                #this should be different based on whether we want auto reconnect or not
-                #self.timeoutTimer.stop()
-                self.driver.connectionErrors+=1
-                self.driver.reconnect()
-            else:
-                reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
+            log.msg("Timeout check at ",time.time(),logLevel=logging.DEBUG)
+            self.cancel_timeout()
+            self.driver.connectionErrors+=1
+            self.driver.reconnect()
+        else:
+            self.cancel_timeout()
+
+    def set_timeout(self):
+        log.msg("Setting timeout at ",time.time(),logLevel=logging.DEBUG)    
+        self.timeout=reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
         
+    def cancel_timeout(self):
+        log.msg("Cancel timeout at ",time.time(),logLevel=logging.DEBUG)
+        if self.timeout:
+            try:
+                self.timeout.cancel()
+            except:pass
+            
     def connectionLost(self,reason="connectionLost"):
-        log.msg("Device disconnected",system="Driver")  
-        self.driver.send_signal("disconnected")
+        log.msg("Device disconnected",system="Driver",logLevel=logging.INFO)  
+        if self.driver.connectionMode==1:
+            self.driver.send_signal("disconnected")
+        if self.timeout:
+            try:
+                self.timeout.cancel()
+            except: pass
         
     def connectionMade(self):
-        log.msg("Device connected",system="Driver") 
-        self.driver.send_signal("connected")
-        if self.driver.connectionMode!=1:
-            reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
-
-          
+        log.msg("Device connected",system="Driver",logLevel=logging.INFO)       
+        if self.driver.connectionMode == 1 :
+            self.driver.send_signal("connected")
+            
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
         pass   
@@ -249,7 +262,7 @@ class BaseSerialProtocol(Protocol):
         return data
         
     def dataReceived(self, data):
-        self.hasRecievedData=True
+        self.cancel_timeout()
         try:
             if self.isBuffering:
                 self.buffer+=str(data.encode('utf-8'))
@@ -263,16 +276,17 @@ class BaseSerialProtocol(Protocol):
                 while results is not None:
                     nDataBlock= self.buffer[:results.start()] 
                     nDataBlock=self._format_data_in(nDataBlock)
-                    #log.msg("Data recieved <<: ",nDataBlock,system="Driver")  
+                    log.msg("Data recieved <<: ",nDataBlock,system="Driver",logLevel=logging.DEBUG)  
                     
                     #if self.driver.connectionMode==2:
                     if not self.driver.isConfigured:
-                            if not self.deviceHandshakeOk:
+                            if not self.driver.isDeviceHandshakeOk:
                                 self._handle_deviceHandshake(nDataBlock)
-                            elif not self.deviceInitOk:
+                        
+                            elif not self.driver.isDeviceIdOk:
                                 self._handle_deviceInit(nDataBlock)
                     else:
-                        if not self.deviceHandshakeOk:
+                        if not self.driver.isDeviceHandshakeOk:
                             self._handle_deviceHandshake(nDataBlock)
                         else:
                             self.driver._handle_response(nDataBlock)
@@ -281,18 +295,17 @@ class BaseSerialProtocol(Protocol):
                     try:
                         results =self.regex.search(self.buffer)
                     except:
-                        pass      
-            
+                        pass            
         except Exception as inst:
-            print("error in serial",str(inst))
-        self.hasRecievedData=False
+            log.msg("Critical error in serial",str(inst),system="Driver",logLevel=logging.CRITICAL)
         
     def send_data(self,data,*args,**kwargs):  
         """
         Simple wrapper to send data over serial
         """    
         try:
-            #log.msg("Data sent >>: ",self._format_data_out(data)," done",system="Driver")
+            log.msg("Data sent >>: ",self._format_data_out(data)," done",system="Driver",logLevel=logging.DEBUG)
+            self.set_timeout()
             self.transport.write(self._format_data_out(data).encode('utf-8'))
         except OSError:
             self.logger.critical("serial device not connected or not found on specified port")
