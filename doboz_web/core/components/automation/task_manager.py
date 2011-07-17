@@ -75,8 +75,10 @@ class TaskManager(object):
         task= yield Task(name,description,type,params).save()
         task.node.set(self.parentNode)  
         yield task.setup()
-        task.actions=yield PrintAction(parentTask=task,**params).save()
-        task.actions.task.set(task)
+        
+        action=yield PrintAction(parentTask=task,**params).save()
+        action.task.set(task)
+        task.set_action(action)
         self.tasks[task.id]=task
         task.start()
             

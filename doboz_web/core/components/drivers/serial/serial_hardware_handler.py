@@ -38,7 +38,8 @@ class SerialHardwareHandler(object):
         
     def connect(self,port=None,*args,**kwargs):
         self.driver.connectionErrors=0
-        if port:
+        log.msg("Connecting... Port:",port,system="Driver",logLevel=logging.DEBUG)
+        if port:  
             self.port=port
         self._connect(port,*args,**kwargs)
     
@@ -183,12 +184,7 @@ class BaseSerialProtocol(Protocol):
         self.buffer=""
         self.regex = re.compile(self.seperator)
         self.driver=driver
-        
-        self.deviceHandshakeOk=True
-        self.deviceInitOk=True    
-        #for  timeout stuff
-        self.hasRecievedData=False
-        self.isProcessing=False
+  
         self.timeout=None
         #self.timeoutTimer=LoopingCall(self._timeoutCheck)
         
@@ -215,7 +211,7 @@ class BaseSerialProtocol(Protocol):
     def connectionLost(self,reason="connectionLost"):
         log.msg("Device disconnected",system="Driver",logLevel=logging.INFO)  
         if self.driver.connectionMode==1:
-            self.driver.send_signal("disconnected")
+            self.driver.send_signal("disconnected",self.driver.hardwareHandler.port)
         if self.timeout:
             try:
                 self.timeout.cancel()
@@ -224,7 +220,7 @@ class BaseSerialProtocol(Protocol):
     def connectionMade(self):
         log.msg("Device connected",system="Driver",logLevel=logging.INFO)       
         if self.driver.connectionMode == 1 :
-            self.driver.send_signal("connected")
+            self.driver.send_signal("connected",self.driver.hardwareHandler.port)
             
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """

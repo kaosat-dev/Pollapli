@@ -61,11 +61,7 @@ class Driver(DBObject):
         """
         self.connectionMode=1
         self.d=defer.Deferred()
-        
-        
-    def __call__(self,*args,**kwargs):
-        pass
-    
+         
     def _toDict(self):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
     
@@ -87,9 +83,9 @@ class Driver(DBObject):
         self.signalHandler.add_handler(signal="disconnected")
         self.signalHandler.add_handler(signal="pluggedIn")
         self.signalHandler.add_handler(signal="pluggedOut")
-        self.signalHandler.add_handler(signal="addCommand")
-    
-        #self.logger.info("Driver setup sucessfully")
+        #self.signalHandler.add_handler(signal="dataRecieved")
+        self.signalHandler.add_handler(handler=self.send_command,signal="addCommand")
+
         log.msg("Driver of type",self.driverType ,"setup sucessfully",system="Driver",logLevel=logging.INFO)
         
     def bind(self,port,setId=True):
@@ -107,11 +103,10 @@ class Driver(DBObject):
     
     def pluggedIn(self,port):
         self.signalHandler.send_message("pluggedIn",{"data":port})
-        #log.msg("configured",self.isConfigured,logLevel=logging.CRITICAL)
-        
         #temp hack
-        #self.connectionMode=1
-        #self.connect()
+        self.connectionMode=1
+        self.connect()
+        
     def pluggedOut(self,port):
         self.isConfigured=False  
         self.isDeviceHandshakeOk=False
@@ -119,21 +114,18 @@ class Driver(DBObject):
         self.isConnected=False
         self.signalHandler.send_message("pluggedOut",{"data":port})
     
-    def send_signal(self,signal="",data=None):
-        self.signalHandler.send_message(signal,{"data":data})
+    def send_signal(self,signal="",data=None,out=False):
+        self.signalHandler.send_message(signal,{"data":data},out)
     
-    def send_command(self,data,sender=None):
+    def send_command(self,data,sender=None,*args,**kwargs):
         if self.logicHandler:
             self.logicHandler._handle_request(data=data,sender=sender)
-        else:
-            self.hardwareHandler.send_data(data)
-            
+    def _send_data(self,data,*arrgs,**kwargs):
+        self.hardwareHandler.send_data(data)
+         
     def _handle_response(self,data):
         if self.logicHandler:
             self.logicHandler._handle_response(data)
-        else:
-            self.signalHandler.send_message(self,self.signalChannel+".dataRecieved",{"data":data})
-            self.send_command("a")
 
 class PortDriverBindings(object):
     """
@@ -571,7 +563,7 @@ class Command(object):
     """Base command class, encapsulate all request and answer commands, also has a 'special' flag for commands that do no participate in normal flow of gcodes : i
     ie for example , regular poling of temperatures for display (the "OK" from those commands MUST not affect the line by line sending/answering of gcodes)
     """
-    def __init__(self,special=False,multiParts=1,answerRequired=False,request=None,answer=None,sender=None):
+    def __init__(self,special=False,multiParts=1,answerRequired=True,request=None,answer=None,sender=None):
         """
         Params:
         special: generally used for "system" commands such as M105 (temperature read) as oposed to general, print/movement commands
@@ -613,20 +605,28 @@ class CommandQueueLogic(object):
         """
         Manages command requests
         """
+      
         cmd=Command(**kwargs)
         cmd.request=data
         
         if cmd.answerRequired and len(self.commandBuffer)<self.bufferSize:
+            #print("tutu",data,sender)
             self.commandBuffer.append(cmd)
             if self.commandSlots>1:
                 self.commandSlots-=1
+            #initial case
+            if len(self.commandBuffer)==1:
+                self.send_next_command()
+            
              
     def _handle_response(self,data):
         """handles only commands that got an answer, formats them correctly and sets necesarry flags
         params: data the raw response that needs to be treated
         """
         cmd=None        
-        print("here",len(self.commandBuffer)>0)
+        #print("here",len(self.commandBuffer)>0)
+        #self.driver.send_signal("dataRecieved",data)
+        
         if len(self.commandBuffer)>0:
             try:
                 if self.commandBuffer[0].currentPart>1:  
@@ -654,15 +654,14 @@ class CommandQueueLogic(object):
         cmd=None
        # print("in next command: buffer",len(self.commandBuffer),"slots",self.commandSlots)  
         if not self.driver.isDeviceHandshakeOk:
-            raise Exception("Machine connection not established correctly")
+            pass
+            #raise Exception("Machine connection not established correctly")
         elif self.driver.isDeviceHandshakeOk and len(self.commandBuffer)>0 and self.commandSlots>0:        
             tmp=self.commandBuffer[0]
             if not tmp.requestSent:            
                 cmd=self.commandBuffer[0].request
                 tmp.requestSent=True
-                self.driver.send_command(cmd)
-        
-                #log.msg("")
+                self.driver._send_data(cmd)
                 #self.logger.debug("Driver giving next command %s",str(cmd))
         else:
             if len(self.commandBuffer)>0:

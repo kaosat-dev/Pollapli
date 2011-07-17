@@ -4,16 +4,30 @@ It includes a Web client (using Javascript + Jquery + WebGl) and server (pure Py
 
 //////////////////////////////
 
-UPDATE: 04/17/2011
--The project now comes with buidout scripts for easier deployment : no need to have the dependencies installed: here is how you can setup and run 
+UPDATE: 07/16/2011
+ MAJOR UPDATE :
+WARNING : this version is UNUSABLE in its current state, as it include NO user interface
+* the communication method to the server was changed to a complete REST  api
+* it also uses longpolling : ie no more bruteforce polling
+* a lot if not most of the server's system where heavilly modified or rewritten for a great deal more of clarity,
+features and expandability
+* this version adds support for addons for modularity
+* this version also adds an sqlite database backend 
+* the project is now using the python twisted library
+* this version also support any amount of connected hardware (no guarantees on performance though)
+* plug & play support of arduino based devices
+
+OLD NEWS:
+* The project now comes with buidout scripts for easier deployment : no need to have the dependencies installed: here is how you can setup and run 
 Doboz-Web using buildout:
--check out the code from github
+* check out the code from github
 in command line :
-- navigate to the directory you just checked out the code into 
-- type python bootstrap.py (Optionally you can do pythonVERSIONNUM bootstrap.py : ie i use python2.6 bootstrap.py)
-- type bin/buildout : here you will see buildout getting all the project dependencies and setting up an isolated python environment
+*  navigate to the directory you just checked out the code into 
+* type python bootstrap.py (Optionally you can do pythonVERSIONNUM bootstrap.py : ie i use python2.6 bootstrap.py)
+* type bin/buildout : here you will see buildout getting all the project dependencies and setting up an isolated python environment
 DONE!
 To run the project , just type , at the same place: bin/dobozweb
+For developpers , there are a few helper scripts as well:
 
 Configuration:
 * To change the serial speed and the adapted driver for your firmware, change the speed and driver lines in the config.cfg file in the "Reprap" section:
@@ -24,11 +38,11 @@ the only tested driver so far is Teacup, fived might work (feedbakc appreciated,
 Depencies:
 * For now only tested with python 2.6
 * You will need to have pySerial installed (normally deployed using the buildout method above)
-* You will also need pyParsing (normally deployed using the buildout method above)
+* You will also need the twisted framework : for now you will need to install this seperatly, future versions
+will have it included
 * for webcam support , pygst is required too
 * to generate docs, sphinx and all its dependencies are required
-* By default , the web server is now set to use wsgiref (no external dependency required) : to change that , just change the ServerType in the config.cfg file in the "WebServer" section
-to any other web server supported by Bottle (preferably Tornado for now)
+* the dependency on pyparsing was removed
 
 
 

@@ -34,17 +34,18 @@ class GCodeParser(object):
                         if r:
                             setattr(pos,dim,float(r)) 
                     except Exception as inst:
-                        print("error",inst)
+                        pass
+                        #print("error",inst)
             try:
                 type=result.group('t')
-                print("Type",type)
+                #print("Type",type)
                 if type != "G1" and type !="G0":
                     pos=None
             except:pass
         except Exception as inst:
             pass
             #print(inst)
-        print("ParsedPos",str(pos))
+        #print("ParsedPos",str(pos))
         return pos
             
 if __name__=="__main__":

@@ -53,8 +53,9 @@ class Task(DBObject):
     def setup(self):
         self.signalChannelPrefix=str((yield self.node.get()).id)
         self.signalChannel="node"+self.signalChannelPrefix+".task"+str(self.id)
+        self.driverChannel="node"+self.signalChannelPrefix+".driver"
         self.signalHandler=SignalHander(self.signalChannel)
-        self.signalHandler
+        print("sigchannel",self.signalChannel,"drvchannel",self.driverChannel)
         log.msg("Task setup sucessfully",system="Task",logLevel=logging.CRITICAL) 
         
     def start(self):
@@ -65,11 +66,13 @@ class Task(DBObject):
     def stop(self):
         pass
     
-    def send_signal(self,signal="",data=None):
-        self.signalHandler.send_message(signal,{"data":data})
+    def send_signal(self,signal="",data=None,out=False):
+        self.signalHandler.send_message(signal,{"data":data},out)
    
-    def set_action(self):
+    def set_action(self,action):
         """Sets the first action"""
+        self.actions=action
+        self.signalHandler.add_handler2(handler=self.actions._data_recieved,signal=self.driverChannel+".dataRecieved")
         
     def check_conditions(self):
         """

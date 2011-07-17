@@ -1,4 +1,4 @@
-import os
+import os,time,logging
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
@@ -47,7 +47,7 @@ class PrintAction(DBObject):
         self.lineCount=0
         self.curentLine=None
         self.fileParser=None
-        
+        self.startTime=0
         
         if fileType=="gcode":
             self.fileParser=GCodeParser()
@@ -60,10 +60,10 @@ class PrintAction(DBObject):
         
     def start(self):
         #self._getLineCount()
+        self.startTime=time.time()
         self.printFile=file(self.printFilePath,"r")
-        self._do_step(self.printFile).addCallback(self._step_done)
-        #reactor.callLater(0,self.do_step,self.printFile)  
-    
+        self._do_step(self.printFile).addBoth(self._step_done) 
+        
     def stop(self):
         pass
     
@@ -80,18 +80,23 @@ class PrintAction(DBObject):
         d.addCallback(countLines)
         reactor.callLater(0.2,d.callback)
         return d
-        
+    def _data_recieved(self,data,*args,**kwargs):
+        self._do_step(self.printFile).addBoth(self._step_done)
+            
     def _step_done(self,result,*args,**kwargs):
-        print("step done")
+        
         """gets called when an actions is finished """
         #self.totalTime+=time.time()-self.startTime
-        #self.startTime=time.time()
+        #
                 
         if isinstance(result,failure.Failure):
             self.progress=100
         else:
             line,position=result
             self.lineIndex+=1
+            if self.lineIndex%1000==0:
+                log.msg("1000 steps done in",time.time()-self.startTime,"s",logLevel=logging.CRITICAL)
+                self.startTime=time.time()
             """progress need to be computed base on the number of actions needed for this task to complete"""
             #self.progress+=self.progressFraction
             #self._do_action_step()
@@ -99,7 +104,8 @@ class PrintAction(DBObject):
         #need to set status somewhere
         #self.status="F"
         #self.events.OnExited(self,"OnExited")
-                 
+    
+         
     def _do_step(self,printFile,*args,**kwargs):
         """
         gets the next line in the gCode file, sends it via serial, updates the logFile
@@ -114,19 +120,19 @@ class PrintAction(DBObject):
         """
         d=defer.Deferred()
         def parseAndSend(printFile):
-            try:
+            
                 line=printFile.next()      
                 if line!= "":    
-                    
-                    self.parentTask.send_signal("node1.driver.addCommand",line)
+                    line=line.replace('\n','')
+                    self.parentTask.send_signal(self.parentTask.driverChannel+".addCommand",line,True)
                     #self.logger.debug("Sent command "+ line)
                     pos=self.fileParser.parse(line)  
                 """this action returns a tuple of the current line + the parsed position"""
                 return (line,pos)
-            except StopIteration:
-                print("at end of file")
-                return None
+#            except StopIteration:
+#                print("at end of file")
+#                return None
         d.addCallback(parseAndSend)
-        reactor.callLater(0.1,d.callback,printFile) 
+        reactor.callLater(0,d.callback,printFile) 
         return d
     
