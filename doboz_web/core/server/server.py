@@ -50,8 +50,9 @@ class MainServer():
         self.exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
         self.exceptionConverter.add_exception(NoDriverSet,404,7,"Node has no connector")
         self.exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
-        self.exceptionConverter.add_exception(DeviceHandshakeMismatch,500,9,"Device handshake failed to match the on defined by the driver")
-
+        self.exceptionConverter.add_exception(DeviceHandshakeMismatch,500,9,"Device handshake failed to match the one defined by the driver")
+        self.exceptionConverter.add_exception(InvalidFile,500,10,"Invalid File")
+        
         self.setup()
         
     @defer.inlineCallbacks

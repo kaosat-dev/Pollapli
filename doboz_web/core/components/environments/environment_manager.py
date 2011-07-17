@@ -24,6 +24,7 @@ from doboz_web.exceptions import EnvironmentAlreadyExists
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.components.automation.task import Task
 from doboz_web.core.components.automation.print_action import PrintAction
+from doboz_web.core.components.automation.action import Action
 from doboz_web.core.tools.wrapper_list import WrapperList
 
 from doboz_web.core.components.drivers.driver import Driver
@@ -31,6 +32,7 @@ from doboz_web.core.components.drivers.driver import Driver
 Registry.register(Environment, Node)
 Registry.register(Node, Task)
 Registry.register(Task, PrintAction)
+Registry.register(Task, Action)
 #Registry.register(Task, Condition)
 Registry.register(Node, Driver)
 

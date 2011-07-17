@@ -3,10 +3,7 @@
    :synopsis: main manager of tasks (automation).
 """
 
-import logging
-import time
-import datetime
-import uuid
+import logging,time,datetime,uuid,ast
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
@@ -14,30 +11,27 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-from doboz_web.core.components.automation.print_action import PrintAction
+
 #from doboz_web.core.components.automation.timer_task import TimerTask
 from doboz_web.core.components.automation.task import Task
 from doboz_web.core.components.automation.print_action import PrintAction
+from doboz_web.core.components.automation.action import Action
 from doboz_web.core.tools.wrapper_list import WrapperList
 
 
 class TaskManager(object):
-    taskTypes={}
-    taskTypes["print"]=PrintAction
- #   taskTypes["timer"]=TimerTask
-    taskTypes["task"]=Task
     
     def __init__(self,parentNode):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.automation.taskmanager")
         self.tasks={}
         self.parentNode=parentNode
         self.connector=parentNode.driver
+    
+    @defer.inlineCallbacks
+    def setup(self):         
+        yield self.load(self.parentNode)
+        defer.returnValue(None)
         
-#    def __getattr__(self, attr_name):
-#        if hasattr(self.tasksById[id], attr_name):
-#                return getattr(self.tasksById, attr_name)
-#        else:
-#            raise AttributeError(attr_name)
     
     """
     ####################################################################################
@@ -45,19 +39,50 @@ class TaskManager(object):
     """
     
     @defer.inlineCallbacks
-    def create(parentNode=None,taskType=None,taskParams={},*args,**kwargs):
-        plugins= (yield AddOnManager.get_plugins(idoboz_web.ITask))
+    def create(parentNode=None,taskType=None,taskParams={},*args,**kwargs):     
         task=None
-        for taskKlass in plugins:
-            if taskType==taskKlass.__name__.lower():
-                task=yield Task(taskType=taskType,options=taskParams).save()
-                yield task.save()  
-                task.node.set(parentNode)
-                yield task.setup()
-                break
+        if taskType:
+            plugins= (yield AddOnManager.get_plugins(idoboz_web.ITask))
+            for taskKlass in plugins:
+                if taskType==taskKlass.__name__.lower():
+                    task=yield Task(taskType=taskType,options=taskParams).save()
+                    yield task.save()  
+                    task.node.set(parentNode)
+                    yield task.setup()
+                    break
+        else:
+            task=yield Task(taskType=taskType,options=taskParams).save()
         if not task:
             raise UnknownTask()
         defer.returnValue(task)
+        
+    @defer.inlineCallbacks
+    def load(self,parentNode=None,taskId=None,taskType=None,*args,**kwargs):
+        if taskId is not None:
+            """For retrieval of single task"""
+            task=yield Task.find(where=['node_id = ? and task_id=?', parentNode.id,taskId])
+            defer.returnValue(task)
+        else:
+            tasks=yield Task.find(where=['node_id = ?', parentNode.id])
+            for task in tasks:
+                task.node.set(parentNode) 
+                yield task.setup()
+                #temp hack           
+                actions=yield PrintAction.find(where=['task_id = ?', task.id])              
+                action=actions[0]
+                
+                actionParams=ast.literal_eval(action.params)
+                action.setup(actionParams)
+                
+                action.task.set(task)
+                action.parentTask=task
+                task.set_action(action)
+                #print("action info ptask",action.parentTask,"filename",action.printFileName)
+                self.tasks[task.id]=task
+                
+            
+                
+            defer.returnValue(tasks)
     
     @defer.inlineCallbacks
     def add_task(self,name="task",description="",taskType=None,params={},*args,**kwargs):

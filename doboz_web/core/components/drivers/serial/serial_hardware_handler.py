@@ -274,18 +274,24 @@ class BaseSerialProtocol(Protocol):
                     nDataBlock=self._format_data_in(nDataBlock)
                     log.msg("Data recieved <<: ",nDataBlock,system="Driver",logLevel=logging.DEBUG)  
                     
-                    #if self.driver.connectionMode==2:
-                    if not self.driver.isConfigured:
+                    if not self.driver.connectionMode==3:
+                        if not self.driver.isConfigured:
+                                if not self.driver.isDeviceHandshakeOk:
+                                    self._handle_deviceHandshake(nDataBlock)
+                            
+                                elif not self.driver.isDeviceIdOk:
+                                    self._handle_deviceInit(nDataBlock)
+                        else:
                             if not self.driver.isDeviceHandshakeOk:
                                 self._handle_deviceHandshake(nDataBlock)
-                        
-                            elif not self.driver.isDeviceIdOk:
-                                self._handle_deviceInit(nDataBlock)
+                            else:
+                                self.driver._handle_response(nDataBlock)
                     else:
                         if not self.driver.isDeviceHandshakeOk:
-                            self._handle_deviceHandshake(nDataBlock)
+                                self._handle_deviceHandshake(nDataBlock)
                         else:
                             self.driver._handle_response(nDataBlock)
+                        
                     self.buffer=self.buffer[results.end():]
                     results=None
                     try:

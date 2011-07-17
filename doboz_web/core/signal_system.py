@@ -23,19 +23,14 @@ class SignalHander(object):
     
     def __call__(self,signal=None,sender=None,*args,**kwargs):
         #log.msg(self.channel, " recieved ",signal," from ",sender, "with data" ,args,kwargs,logLevel=logging.CRITICAL)
-        
         realsignal=signal
         try:
             realsignal=signal.split('.')
             realsignal=realsignal[len(realsignal)-1]
         except:
             realsignal=signal
+       
         log.msg(self.channel, " recieved ",realsignal," from ",sender, "with data" ,args,kwargs,logLevel=logging.CRITICAL)
-        
-        try:
-            [callable(**kwargs) for callable in self.thingy[signal,sender]]
-        except Exception as inst:
-            pass#print("error",inst)
     
     def send_message(self,signal=None,message={},out=False,*args,**kwargs):
         if message:

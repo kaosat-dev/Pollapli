@@ -99,7 +99,20 @@ class IDriver_old(Interface):
         """
 
 
-class ITask(Interface):
+class IAction(Interface):
     """
-    task class 
+    action interface definition
     """
+    def start(self):
+        pass
+    def pause(self):
+        pass
+    def stop(self):
+        pass
+    def _data_recieved(self,data,*args,**kwargs):
+        """"""
+    def _step_done(self,result,*args,**kwargs):      
+        """gets called when an actions is finished """
+    def _do_step(self,*args,**kwargs):
+        """actual action stuff """
+    

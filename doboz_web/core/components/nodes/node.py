@@ -2,10 +2,7 @@
 .. py:module:: node
    :synopsis: generic node class, parent of hardware and software nodes
 """
-import logging
-import time
-import datetime
-import uuid
+import logging, time, datetime, uuid,ast
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
@@ -22,7 +19,7 @@ from doboz_web import idoboz_web
 from doboz_web.core.components.addons.addon_manager import AddOnManager
 from doboz_web.core.components.drivers.driver import Driver,DriverManager
 
-import ast
+ 
 
 class Node(DBObject):
     """
@@ -57,6 +54,7 @@ class Node(DBObject):
                 self.driver=yield DriverManager.load(driver)
             defer.returnValue(None) 
         yield Driver.find(where=['node_id = ?', self.id]).addCallback(addDriver,self)
+        yield self.taskManager.setup()
         log.msg("Node with id",self.id, "setup successfully", logLevel=logging.CRITICAL,system="Node")
 
         defer.returnValue(None)
@@ -125,13 +123,13 @@ class Node(DBObject):
         pass
     
     
-    def connect(self):
+    def connect(self,*args,**kwargs):
         d=defer.Deferred()
         def doConnect(driver):
-            driver.connect()
+            driver.connect(*args,**kwargs)
             return driver
         d.addCallback(doConnect)
-        d.callback(self.driver)
+        reactor.callLater(0,d.callback,self.driver)
         return d
            
     def disconnect(self):
@@ -140,7 +138,7 @@ class Node(DBObject):
             driver.disconnect()
             return driver
         d.addCallback(doDisconnect)
-        d.callback(self.driver)
+        reactor.callLater(0,d.callback,self.driver)
         return d
     
     def _on_driver_connected(self,args,kargs):

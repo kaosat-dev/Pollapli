@@ -28,6 +28,9 @@ class NoAvailablePort(Exception):
 class UnknownTask(Exception):
     pass
 
+class InvalidFile(Exception):
+    pass
+
 """"""""""""""""""""""""""""""""""""
 """rest handler exceptions"""
 class ParameterParseException(Exception):

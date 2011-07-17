@@ -59,7 +59,6 @@ class DriverHandler(DefaultRestHandler):
         """
         @defer.inlineCallbacks
         def extract_args(result):
-            print("in extract args",result)
             name=result["name"] or ""
             description=result.get("description") or ""
             id=self.connectorId
@@ -104,7 +103,8 @@ class DriverStatusHandler(DefaultRestHandler):
         @defer.inlineCallbacks
         def extract_args(result):  
             if result["connected"]:
-                defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).connect()))
+                mode=result.get("mode") or 1
+                defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).connect(mode=mode)))
             else:
                 defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).disconnect()))
 
@@ -120,9 +120,8 @@ class DriverStatusHandler(DefaultRestHandler):
         Handler for GET requests of connector status
         """
         def extract_args(result):
-            print(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_connector())            
-
-            return(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_connector())            
+            
+            return(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_driver())            
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.connector.status+json",resource="connector")
         d=RequestParser(request,"connector status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)

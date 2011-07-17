@@ -45,7 +45,9 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                 if len(fields[0])==8 and len(fields[1])==4 and len(fields[2])==4 and len(fields[3])==4 and len(fields[4])==12:
                     return True
             return False
-        
+        if self.driver.connectionErrors>=self.driver.maxConnectionErrors:
+            self.driver.disconnect()
+            self.driver.d.errback(None)  
         sucess=False
         if self.driver.connectionMode==2 or self.driver.connectionMode==0:
             """if we are trying to set the device id"""    
@@ -61,12 +63,15 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
+                    print("here")
                 elif self.driver.deviceId==data:
                     sucess=True     
             else:
                 if not self.driver.deviceId:
                     self.driver.deviceId=str(uuid.uuid4())
+                self.driver.connectionErrors+=1
                 self._set_deviceId()
+                
         else:
             """ some other connection mode , that still requires id check"""
             if not validate_uuid(data) or self.driver.deviceId!= data:
@@ -84,7 +89,6 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self.driver.d.callback(None)      
         
     def _set_deviceId(self,id=None):
-        print("attempting to set device id")
         self.send_data("s "+ self.driver.deviceId)
         
     def _query_deviceInfo(self):

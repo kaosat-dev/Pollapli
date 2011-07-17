@@ -58,6 +58,7 @@ class Driver(DBObject):
         0:setup
         1:normal
         2:setId
+        3:forced: to forcefully connect devices which have no deviceId stored 
         """
         self.connectionMode=1
         self.d=defer.Deferred()
@@ -85,17 +86,33 @@ class Driver(DBObject):
         self.signalHandler.add_handler(signal="pluggedOut")
         #self.signalHandler.add_handler(signal="dataRecieved")
         self.signalHandler.add_handler(handler=self.send_command,signal="addCommand")
-
         log.msg("Driver of type",self.driverType ,"setup sucessfully",system="Driver",logLevel=logging.INFO)
         
     def bind(self,port,setId=True):
         self.d=defer.Deferred()
-        log.msg("Attemtping to bind driver with deviceId:",self.deviceId,"to port",port,system="Driver") 
-        self.hardwareHandler.connect(setupMode=True,setIdMode=setId,port=port)     
+        log.msg("Attemtping to bind driver with deviceId:",self.deviceId,"to port",port,system="Driver",logLevel=logging.DEBUG) 
+        self.hardwareHandler.connect(setIdMode=setId,port=port)     
         return self.d
     
-    def connect(self,*args,**kwargs):
-        self.hardwareHandler.connect()
+    def connect(self,mode=None,*args,**kwargs):
+        if not self.isConnected:
+            if mode is not None:
+                self.connectionMode=mode
+                log.msg("Connecting in mode:",self.connectionMode,system="Driver",logLevel=logging.CRITICAL) 
+                if mode==3:
+                    """special case for forced connection"""
+                    unboundPorts=DriverManager.bindings.get_unboundPorts()
+                    if len(unboundPorts)>0:
+                        port=unboundPorts[0]
+                        log.msg("Connecting in mode:",self.connectionMode,"to port",port,system="Driver",logLevel=logging.CRITICAL)
+                        DriverManager.bindings.bind(self,port)
+                        self.hardwareHandler.connect(port=port)
+                        self.pluggedIn(port)
+                else:
+                    self.hardwareHandler.connect()
+            else:
+                self.hardwareHandler.connect()
+                
     def reconnect(self,*args,**kwargs):
         self.hardwareHandler.reconnect(*args,**kwargs)
     def disconnect(self,*args,**kwargs):
@@ -104,8 +121,8 @@ class Driver(DBObject):
     def pluggedIn(self,port):
         self.signalHandler.send_message("pluggedIn",{"data":port})
         #temp hack
-        self.connectionMode=1
-        self.connect()
+        #self.connectionMode=1
+        #self.connect()
         
     def pluggedOut(self,port):
         self.isConfigured=False  
@@ -608,9 +625,11 @@ class CommandQueueLogic(object):
       
         cmd=Command(**kwargs)
         cmd.request=data
+        cmd.sender=sender
+        
         
         if cmd.answerRequired and len(self.commandBuffer)<self.bufferSize:
-            #print("tutu",data,sender)
+            log.msg("adding command",cmd,"from",cmd.sender,system="Driver",logLevel=logging.DEBUG)
             self.commandBuffer.append(cmd)
             if self.commandSlots>1:
                 self.commandSlots-=1
@@ -626,7 +645,6 @@ class CommandQueueLogic(object):
         cmd=None        
         #print("here",len(self.commandBuffer)>0)
         #self.driver.send_signal("dataRecieved",data)
-        
         if len(self.commandBuffer)>0:
             try:
                 if self.commandBuffer[0].currentPart>1:  
@@ -640,13 +658,16 @@ class CommandQueueLogic(object):
                     cmd.answerComplete=True
                     cmd.answer=data
                     self.commandSlots+=1#free a commandSlot
-                    self.driver.send_signal("dataRecieved",cmd.answer)
+                    #print("recieved data ",cmd.answer,"command sender",cmd.sender )
+                    self.driver.send_signal(cmd.sender+".dataRecieved",cmd.answer,True)
+                   
                     self.send_next_command()       
             except Exception as inst:
                 log.msg("Failure in handling command ",str(inst),system="Driver")
         else:
                 cmd=Command(answer=data)
-                cmd.answerComplete=True       
+                cmd.answerComplete=True   
+                #print("recieved data 2",cmd.answer,"command sender",cmd.sender )    
         return cmd
      
     def send_next_command(self):
