@@ -218,7 +218,8 @@ class BaseSerialProtocol(Protocol):
             except: pass
         
     def connectionMade(self):
-        log.msg("Device connected",system="Driver",logLevel=logging.INFO)       
+        log.msg("Device connected",system="Driver",logLevel=logging.INFO)   
+        self.set_timeout()    
         if self.driver.connectionMode == 1 :
             self.driver.send_signal("connected",self.driver.hardwareHandler.port)
             

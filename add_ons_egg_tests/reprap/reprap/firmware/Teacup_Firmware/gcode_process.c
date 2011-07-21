@@ -517,7 +517,7 @@ void process_gcode_command() {
 			
 			//CUSTOM: get id
 			case 280:
-				sersendf_P();
+				//sersendf_P();
 				break;
 			//CUSTOM: set id
 			case 281:

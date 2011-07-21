@@ -10,7 +10,7 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-from doboz_web.core.components.automation.task_manager import TaskManager
+from doboz_web.core.components.automation.task import TaskManager
 
 from doboz_web.exceptions import UnknownDriver,NoDriverSet
 

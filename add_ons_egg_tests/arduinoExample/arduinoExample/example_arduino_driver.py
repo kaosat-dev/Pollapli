@@ -38,7 +38,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
         """
-        log.msg("Attempting to configure device Id",system="Driver",logLevel=logging.CRITICAL)
+        log.msg("Attempting to configure device Id",system="Driver",logLevel=logging.INFO)
         def validate_uuid(data):
             if len(str(data))==36:
                 fields=str(data).split('-')

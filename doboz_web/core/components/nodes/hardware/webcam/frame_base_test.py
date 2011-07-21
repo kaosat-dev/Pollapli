@@ -61,9 +61,9 @@ class JustATest(Thread):
 
         
     def init_capture(self):
-        source=gst.element_factory_make("v4l2src","webcam_source")
-        #source=gst.element_factory_make("ksvideosrc","webcam_source")
-        #source.set_property("device-index", 0)
+        #source=gst.element_factory_make("v4l2src","webcam_source")
+        source=gst.element_factory_make("ksvideosrc","webcam_source")
+        source.set_property("device-index", 0)
         ffmpegColorSpace=gst.element_factory_make("ffmpegcolorspace","ffMpeg1")
         ffmpegColorSpace2=gst.element_factory_make("ffmpegcolorspace","ffMpeg2")
         clockoverlay=gst.element_factory_make("clockoverlay","clock_overlay") 

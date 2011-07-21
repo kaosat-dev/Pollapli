@@ -12,7 +12,44 @@ from doboz_web.exceptions import InvalidFile
 from doboz_web import idoboz_web
 from doboz_web.core.signal_system import SignalHander
 from doboz_web.core.tools.gcode_parser import GCodeParser
-from doboz_web.core.components.automation.task import ActionStatus
+#from doboz_web.core.components.automation.task import ActionStatus
+
+class ActionStatus(object):
+    def __init__(self,progressIncrement=0,progress=0):
+        self.isStarted=False
+        self.isPaused=False
+        self.progressIncrement=progressIncrement
+        self.progress=progress
+        self.startTime=0       
+        self.totalTime=0
+        
+    def start(self): 
+        self.isStarted=True
+        self.isPaused=False
+        self.progress=0
+        self.startTime=time.time()
+            
+    def stop(self):
+        self.isPaused=True#should it be paused or should is running be set  to false?
+        self.isStarted=False
+        
+    def update_progress(self,value=None,increment=None):
+        if value:
+            self.progress=value
+        elif increment:
+            self.progress+=increment
+        else:
+            self.progress+=self.progressIncrement
+            
+        self.totalTime=time.time()-self.startTime
+        if self.progress==100:
+            self.isPaused=True#should it be paused or should is running be set  to false?
+            self.isStarted=False
+        
+    def _toDict(self):
+        return {"status":{"isStarted":self.isStarted,"isPaused":self.isPaused,"progress":self.progress,\
+                          "progressIncrement":self.progressIncrement,"timeStarted":self.startTime,"timeTotal":self.totalTime}}
+ 
 
 class PrintAction(DBObject): 
     """"
