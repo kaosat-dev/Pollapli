@@ -6,6 +6,25 @@ from twisted.python import log,failure
 from doboz_web.core.components.drivers.driver import Driver,CommandQueueLogic
 from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
 
+"""
+Makerbot protocol infos: (from http://replicat.org/sanguino3g)
+
+A package is used to wrap every command. It ensures that the command received is complete and not corrupted. The package contains the following bytes:
+
+0: start byte, always 0xD5
+1: length of the packet, not including the start byte, length byte or the CRC.
+2: the command byte - this is the first byte of the payload
+*: content of the block, all multibyte values are LSB first (Intel notation)
+n-1: the package ends with a single byte CRC checksum of the payload (Maxim 1-Wire CRC)
+
+Reply Packages
+
+Reply packages are built just like the command packages. The first byte of the payload is the return code 
+for the previous command (see Response Code below). All further bytes depend on the command sent.
+"""
+
+
+
 class MakerbotProtocol(BaseSerialProtocol):
     """
     Class defining the protocol used by this driver: in this case, the reprap teacup protocol 
@@ -98,13 +117,30 @@ class MakerbotProtocol(BaseSerialProtocol):
     def _format_data_out(self,data,*args,**kwargs):
         """
         Formats an outgoing block of data according to some specs/protocol 
-        data: the outgoing data to the device
+        data: the outgoing data to the device provided as an utf8 string
         """
-        data=data.split(';')[0]
-        data=data.strip()
-        data=data.replace(' ','')
-        data=data.replace("\t",'')
-        return data+ "\n"
+        payload=command+content
+        crc=None
+        dataOut=bytearray()
+        dataOut.append(0xD5)
+        dataOut.append(len(payload))
+        dataOut.append(command)
+        dataOut.append(content)
+        dataOut.append(crc)
+        
+
+        return data
+    
+    def _format_data_in(self,data,*args,**kwargs):
+        """
+        Formats an incoming data block according to some specs/protocol 
+        data: the incoming data from the device
+        """
+        data=bytearray(data)
+        responseCode=data[0]
+        responseData=data[1:]
+        
+        return data
         
     def connectionLost(self,reason="connectionLost"):
         self.driver.isDeviceHandshakeOk=False
@@ -115,7 +151,7 @@ class HardwareHandler(SerialHardwareHandler):
     def __init__(self,*args,**kwargs):
         SerialHardwareHandler.__init__(self,protocol=MakerbotProtocol(*args,**kwargs),speed=38400,*args,**kwargs)
 
-class TeacupDriver(object):
+class MakerbotDriver(object):
     """Class defining the components of the driver for the teacup reprap firmware """
     classProvides(IPlugin, idoboz_web.IDriver)
     components={"logicHandler":CommandQueueLogic,"hardwareHandler":HardwareHandler}

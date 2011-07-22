@@ -120,9 +120,6 @@ class Driver(DBObject):
     
     def pluggedIn(self,port):
         self.signalHandler.send_message("pluggedIn",{"data":port})
-        #temp hack
-        #self.connectionMode=1
-        #self.connect()
         
     def pluggedOut(self,port):
         self.isConfigured=False  

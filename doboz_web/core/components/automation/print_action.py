@@ -91,7 +91,7 @@ class PrintAction(DBObject):
         if fileType=="gcode":
             self.fileParser=GCodeParser()
         
-        
+        self.pointCloud=[]
         #for chaining ?
         self.nextTask=None
      
@@ -118,6 +118,7 @@ class PrintAction(DBObject):
             def do_start(result):
                 self.startTime=time.time()    
                 self.printFile=file(self.printFilePath,"r")
+                self.pointCloud=[]
                 self._do_step(self.printFile).addBoth(self._step_done) 
             yield self._getLineCount().addCallback(do_start)
          
@@ -186,6 +187,7 @@ class PrintAction(DBObject):
             self.parentTask.send_signal("action"+self.id+".actionDone")    
         else:
             line,position=result
+            self.pointCloud.append(position)
             self.lineIndex+=1
             self.status.update_progress()
             log.msg("Finished print action step. Status:",self.status._toDict(),system="PrintAction",logLevel=logging.CRITICAL)

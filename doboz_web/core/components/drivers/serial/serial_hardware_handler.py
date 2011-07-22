@@ -234,18 +234,18 @@ class BaseSerialProtocol(Protocol):
     def _handle_deviceHandshake(self,data):
         """
         handles machine (hardware node etc) initialization
-        datab: the incoming data from the machine
+        data: the incoming data from the machine
         """
     def _handle_deviceInit(self,data):
         """
         handles machine (hardware node etc) initialization
-        datab: the incoming data from the machine
+        data: the incoming data from the machine
         """
        
     def _format_data_in(self,data,*args,**kwargs):
         """
-        Formats an incomming data block according to some specs/protocol 
-        data: the incomming data from the device
+        Formats an incoming data block according to some specs/protocol 
+        data: the incoming data from the device
         """
         data=data.replace('\n','')
         data=data.replace('\r','')
