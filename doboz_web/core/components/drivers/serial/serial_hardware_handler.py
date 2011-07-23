@@ -32,13 +32,16 @@ class SerialHardwareHandler(object):
         self.isConnected=False
         self.notMyPorts=[]
         self.setupMode=False
-                
+        
+    def setup(self,speed=19200,*args,**kwargs):      
+        self.speed=speed      
+            
     def send_data(self,command):
         self.protocol.send_data(command)
         
     def connect(self,port=None,*args,**kwargs):
         self.driver.connectionErrors=0
-        log.msg("Connecting... Port:",port,system="Driver",logLevel=logging.DEBUG)
+        log.msg("Connecting... Port:",port," at speed ",self.speed,system="Driver",logLevel=logging.DEBUG)
         if port:  
             self.port=port
         self._connect(port,*args,**kwargs)

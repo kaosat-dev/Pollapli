@@ -46,14 +46,7 @@ class Node(DBObject):
     @defer.inlineCallbacks
     def setup(self):
         
-        @defer.inlineCallbacks
-        def addDriver(drivers,node):
-            if len(drivers)>0:
-                driver=drivers[0]               
-                driver.options=ast.literal_eval(driver.options)
-                self.driver=yield DriverManager.load(driver)
-            defer.returnValue(None) 
-        yield Driver.find(where=['node_id = ?', self.id]).addCallback(addDriver,self)
+        self.driver=yield DriverManager.load(parentNode=self)
         yield self.taskManager.setup()
         log.msg("Node with id",self.id, "setup successfully", logLevel=logging.CRITICAL,system="Node")
 

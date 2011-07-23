@@ -123,8 +123,14 @@ class ArduinoExampleHardwareHandler(SerialHardwareHandler):
 
 
 
-
-class ArduinoExampleDriver(object):
+class ArduinoExampleDriver(Driver):
     """Class defining the components of the driver for a basic arduino,using attached firmware """
-    classProvides(IPlugin, idoboz_web.IDriver)
-    components={"logicHandler":CommandQueueLogic,"hardwareHandler":ArduinoExampleHardwareHandler}
+    classProvides(IPlugin, idoboz_web.IDriver) 
+    TABLENAME="drivers"   
+    def __init__(self,driverType="ArduinoExample",deviceType="Arduino",deviceId="",options={},*args,**kwargs):
+        Driver.__init__(self,driverType,deviceType,deviceId,options,*args,**kwargs)
+        self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
+        self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
+        
+    def hello_world(self):
+        self.send_command('a')

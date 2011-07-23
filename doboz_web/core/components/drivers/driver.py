@@ -1,4 +1,4 @@
-import logging
+import logging,ast
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
@@ -9,8 +9,7 @@ from twisted.python.log import PythonLoggingObserver
 from zope.interface import Interface, Attribute,implements
 from twisted.plugin import IPlugin,getPlugins
 
-from louie import dispatcher,error,Any,All
-import louie
+
 
 from doboz_web.exceptions import UnknownDriver,NoDriverSet,DeviceIdMismatch
 from doboz_web import idoboz_web
@@ -26,24 +25,24 @@ class Driver(DBObject):
      You can think of the events beeing sent out by the driver (dataRecieved etc) as interupts of sorts
     """
     BELONGSTO = ['node']
-    def __init__(self,driverType=None,deviceId="",hardwareHandler=None,hardwareHandlerType=None,logicHandler=None,logicHandlerType=None,options={},*args,**kwargs):
+    def __init__(self,driverType="",deviceType="",deviceId="",options={},*args,**kwargs):
         self.logger = logging.getLogger("pollapli.core.components.driver")      
         self.logger.setLevel(logging.INFO)
         DBObject.__init__(self,**kwargs)
-        self.options=options
-        
+               
+        self.driverType=driverType
+        self.deviceType=deviceType
         self.deviceId=deviceId
         """will be needed to identify a specific device, as the system does not work base on ports"""
-        self.driverType=driverType
-        self.hardwareHandler=hardwareHandler
-        self.logicHandler=logicHandler
-        self.hardwareHandlerType=hardwareHandlerType
-        self.logicHandlerType=logicHandlerType
+        self.options=options
+        
+        self.hardwareHandler=None#hardwareHandler
+        self.logicHandler=None#logicHandler
+
         self.signalHandler=None 
         self.signalChannelPrefix=""
         self.signalChannel=""
         
-        #self.initalSetup=True
         self.isConfigured=False#when the port association has not been set
         self.isDeviceHandshakeOk=False
         self.isDeviceIdOk=False
@@ -66,17 +65,14 @@ class Driver(DBObject):
     def _toDict(self):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
     
-    def set_handlers(self,hardwareHandler=None,logicHandler=None):
-        if hardwareHandler:
-            self.hardwareHandler=hardwareHandler
-            self.hardwareHandlerType=hardwareHandler.__class__.__name__
-        if logicHandler:
-            self.logicHandler=logicHandler
-            self.logicHandlerType=logicHandler.__class__.__name__
-        log.msg("Handlers of driver ",self,":",self.logicHandler,self.hardwareHandler,logLevel=logging.INFO)
-        
     @defer.inlineCallbacks    
-    def setup(self):
+    def setup(self,options=None,*args,**kwargs):
+        #hackish?
+        if options:
+            self.options=options
+            self.logicHandler.setup(**options)
+            self.hardwareHandler.setup(**options)
+            
         self.signalChannelPrefix=str((yield self.node.get()).id)
         self.signalChannel="node"+self.signalChannelPrefix+".driver"
         self.signalHandler=SignalHander(self.signalChannel)
@@ -239,37 +235,38 @@ class PortDriverBindings(object):
         return a list of unbound ports: basically  all ports that have a value of None associated with
         them
         """
-        return [port for port,driver in self.elements.iteritems() if port.__class__!=Driver and not driver]
+        
+        return [port for port,driver in self.elements.iteritems() if port.__class__==str and not driver]
     
     def get_unboundDrivers(self):
         """
         return a list of unbound drivers: basically  all driver that have a value of None associated with
         them
         """
-        return [driver for driver,port in self.elements.iteritems() if driver.__class__==Driver and not port]
+        return [driver for driver,port in self.elements.iteritems() if driver.__class__!=str and not port]
     def get_boundPorts(self):
         """
         return a list of bound ports: basically  all ports that have a driver (not None) associated with
         them
         """
-        return [port for port,driver in self.elements.iteritems() if port.__class__!=Driver and driver]
+        return [port for port,driver in self.elements.iteritems() if port.__class__==str and driver]
     def get_boundDrivers(self):
         """
         return a list of bound drivers: basically  all driver that have a port (not None ) associated with
         them
         """
-        return [driver for driver,port in self.elements.iteritems() if driver.__class__==Driver and port]
+        return [driver for driver,port in self.elements.iteritems() if driver.__class__!=str and port]
     def get_ports(self):
         """
         return a list of all ports: basically  all keys that are NOT of type "Driver"
         """
-        return [port for port in self.elements.iterkeys() if port.__class__!=Driver]
+        return [port for port in self.elements.iterkeys() if port.__class__==str]
         
     def get_drivers(self):
         """
         return a list of all drivers: basically  all keys that are of type "Driver"
         """
-        return [driver for driver in self.elements.iterkeys() if driver.__class__==Driver]
+        return [driver for driver in self.elements.iterkeys() if driver.__class__!=str]
         #return [driver for driver,port in self.elements.iteritems() if driver.__class__==Driver]
     
     def bind(self,driver=None,port=None):
@@ -367,12 +364,11 @@ class DriverManager(object):
     def create(cls,parentNode=None,driverType=None,driverParams={},*args,**kwargs):   
         plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
         driver=None
+        print(driverParams)
         for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
-                driver=yield Driver(driverType=driverType,options=driverParams).save()
-                hardwareHandler=driverKlass.components["hardwareHandler"](driver,**driverParams)
-                logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
-                driver.set_handlers(hardwareHandler,logicHandler)
+                driver=yield driverKlass(driverType=driverType,options=driverParams,**driverParams).save()
+                print ("created driver",driver)
                 yield driver.save()  
                 driver.node.set(parentNode)
                 yield driver.setup()
@@ -384,7 +380,7 @@ class DriverManager(object):
     
     @classmethod    
     @defer.inlineCallbacks
-    def load(cls,driver):
+    def load_old(cls,driver):
         driverType=driver.driverType
         params=driver.options
         plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
@@ -397,6 +393,39 @@ class DriverManager(object):
                 yield driver.setup()
                 break
         defer.returnValue(driver)
+        
+    @classmethod    
+    @defer.inlineCallbacks
+    def load(cls,driverId=None,parentNode=None):
+        dbconfig = Registry.getConfig()
+        plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        
+        @defer.inlineCallbacks
+        def find(drvType):
+            for driverKlass in plugins:
+                if drvType==driverKlass.__name__.lower():
+                    driver=yield driverKlass.find(where=['node_id = ?', parentNode.id],limit=1)
+                    driver.options=ast.literal_eval(driver.options)
+                    yield driver.setup(options=driver.options)
+                    cls.register_driver(driver)
+                    defer.returnValue(driver)
+        
+        if driverId is not None:
+            driverType=yield  dbconfig.select(tablename="drivers", id=driverId,where=['node_id = ? ', parentNode.id,driverId],limit=1)["driverType"]
+            drv=yield find(driverType)
+            log.msg("Found and loaded driver:",drv,logLevel=logging.DEBUG,system="Driver")
+            defer.returnValue(drv)
+            
+        elif parentNode is not None:  
+            driver=None
+            try:
+                driverType=(yield  dbconfig.select(tablename="drivers",where=['node_id = ?', parentNode.id],limit=1))["driverType"]             
+                driver=yield find(driverType)
+                log.msg("Found and loaded driver:",driver,logLevel=logging.DEBUG,system="Driver")
+            except:pass
+            defer.returnValue(driver)
+        
+        
         
     @classmethod 
     @defer.inlineCallbacks
@@ -424,6 +453,7 @@ class DriverManager(object):
     """
     @classmethod
     def register_driver(cls,driver,creation=False):
+        log.msg("Registering driver",driver,logLevel=logging.DEBUG,system="Driver")
         cls.bindings.add_drivers([driver])
         #if creation:
         driver.connectionMode=2
@@ -515,7 +545,6 @@ class DriverManager(object):
         """
         
         oldPorts=cls.bindings.get_ports()
-       
         newPorts=[]
         for handler in cls.hardware_handlers.itervalues():
             newPorts.extend((yield handler.list_ports()))        
@@ -539,14 +568,16 @@ class DriverManager(object):
      
         addedPorts,removedPorts=checkForPortChanges(oldPorts,newPorts)
         
-        if addedPorts:     
+        if addedPorts:  
+            log.msg("Ports added:",addedPorts,logLevel=logging.DEBUG)          
             cls.bindings.add_ports(list(addedPorts)) 
                
         if addedPorts or (len(cls.bindings.get_unboundDrivers())>0 and len(cls.bindings.get_unboundPorts())>0):
-            #log.msg("These ports were added",portChanges[0])   
+            #log.msg("New ports/drivers detected: These ports were added",addedPorts,logLevel=logging.DEBUG)   
             cls.driverLock.run(cls.setup_drivers)
             
-        if removedPorts:                
+        if removedPorts:    
+            log.msg("Ports removed:",removedPorts,logLevel=logging.DEBUG)             
             oldBoundDrivers=cls.bindings.get_boundDrivers()
             cls.bindings.remove_ports(list(removedPorts)) 
             newBoundDrivers=cls.bindings.get_boundDrivers()
@@ -614,6 +645,8 @@ class CommandQueueLogic(object):
         self.commandBuffer=[]
         self.commandSlots=bufferSize
         #print("in command queue logic , driver:",driver)
+    def setup(self,bufferSize=8,*args,**kwargs):
+        self.bufferSize=bufferSize
         
     def _handle_request(self,data,sender=None,*args,**kwargs):
         """

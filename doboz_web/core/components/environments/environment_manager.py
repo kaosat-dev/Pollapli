@@ -268,8 +268,7 @@ class EnvironmentManager(object):
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              node_id INTEGER NOT NULL,
              driverType TEXT NOT NULL,
-             hardwareHandlerType TEXT NOT NULL ,
-             logicHandlerType TEXT NOT NULL,
+             deviceType TEXT NOT NULL ,
              deviceId TEXT,
              options TEXT ,
              FOREIGN KEY(node_id) REFERENCES nodes(id)      
