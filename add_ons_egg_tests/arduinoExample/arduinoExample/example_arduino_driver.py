@@ -21,7 +21,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
     def _handle_deviceHandshake(self,data):
         """
         handles machine (hardware node etc) initialization
-        datab: the incoming data from the machine
+        data: the incoming data from the machine
         """
         log.msg("Attempting to validate device handshake",system="Driver",logLevel=logging.INFO)
         if "start" in data:
@@ -58,7 +58,6 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                     sucess=True
                 elif self.driver.deviceId!= data:
                     self._set_deviceId()
-                    
                     #self._query_deviceInfo()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
@@ -93,9 +92,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
-        self.isProcessing=True
         self.send_data("i")
-        self.isProcessing=False
         
     def _format_data_out(self,data,*args,**kwargs):
         """
@@ -119,7 +116,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
 class ArduinoExampleHardwareHandler(SerialHardwareHandler):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     def __init__(self,*args,**kwargs):
-        SerialHardwareHandler.__init__(self,protocol=ArduinoExampleProtocol(*args,**kwargs),*args,**kwargs)
+        SerialHardwareHandler.__init__(self,protocol=ArduinoExampleProtocol(*args,**kwargs),speed=115200,*args,**kwargs)
 
 
 
@@ -128,9 +125,13 @@ class ArduinoExampleDriver(Driver):
     classProvides(IPlugin, idoboz_web.IDriver) 
     TABLENAME="drivers"   
     def __init__(self,driverType="ArduinoExample",deviceType="Arduino",deviceId="",options={},*args,**kwargs):
-        Driver.__init__(self,driverType,deviceType,deviceId,options,*args,**kwargs)
-        self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
-        self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
+        """
+        very important : the first two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
+        and not instances of those classes
+        """
+        Driver.__init__(self,ArduinoExampleHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,options,*args,**kwargs)
+        #self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
+        #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
         
     def hello_world(self):
         self.send_command('a')

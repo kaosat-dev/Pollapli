@@ -32,9 +32,7 @@ class SerialHardwareHandler(object):
         self.isConnected=False
         self.notMyPorts=[]
         self.setupMode=False
-        
-    def setup(self,speed=19200,*args,**kwargs):      
-        self.speed=speed      
+           
             
     def send_data(self,command):
         self.protocol.send_data(command)
@@ -201,15 +199,17 @@ class BaseSerialProtocol(Protocol):
             self.cancel_timeout()
 
     def set_timeout(self):
-        log.msg("Setting timeout at ",time.time(),logLevel=logging.DEBUG)    
-        self.timeout=reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
+        if self.driver.connectionMode==2:
+            log.msg("Setting timeout at ",time.time(),logLevel=logging.DEBUG)    
+            self.timeout=reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
         
     def cancel_timeout(self):
-        log.msg("Cancel timeout at ",time.time(),logLevel=logging.DEBUG)
-        if self.timeout:
-            try:
-                self.timeout.cancel()
-            except:pass
+        if self.driver.connectionMode==2:
+            if self.timeout:
+                try:
+                    self.timeout.cancel()
+                    log.msg("Cancel timeout at ",time.time(),logLevel=logging.DEBUG)
+                except:pass
             
     def connectionLost(self,reason="connectionLost"):
         log.msg("Device disconnected",system="Driver",logLevel=logging.INFO)  
@@ -266,6 +266,7 @@ class BaseSerialProtocol(Protocol):
         try:
             if self.isBuffering:
                 self.buffer+=str(data.encode('utf-8'))
+                self.set_timeout()
                 #if we have NOT already checked the last state of the data block, then check it
                 results=None
                 try:
@@ -282,7 +283,6 @@ class BaseSerialProtocol(Protocol):
                         if not self.driver.isConfigured:
                                 if not self.driver.isDeviceHandshakeOk:
                                     self._handle_deviceHandshake(nDataBlock)
-                            
                                 elif not self.driver.isDeviceIdOk:
                                     self._handle_deviceInit(nDataBlock)
                         else:
@@ -301,7 +301,7 @@ class BaseSerialProtocol(Protocol):
                     try:
                         results =self.regex.search(self.buffer)
                     except:
-                        pass            
+                        pass      
         except Exception as inst:
             log.msg("Critical error in serial",str(inst),system="Driver",logLevel=logging.CRITICAL)
         

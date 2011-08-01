@@ -128,9 +128,9 @@ class ArduinoExampleDriver(Driver):
     classProvides(IPlugin, idoboz_web.IDriver) 
     TABLENAME="drivers"   
     def __init__(self,driverType="ArduinoExample",deviceType="Arduino",deviceId="",options={},*args,**kwargs):
-        Driver.__init__(self,driverType,deviceType,deviceId,options,*args,**kwargs)
-        self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
-        self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
+        Driver.__init__(self,ArduinoExampleHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,options,*args,**kwargs)
+        #self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
+        #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
         
     def hello_world(self):
         self.send_command('a')

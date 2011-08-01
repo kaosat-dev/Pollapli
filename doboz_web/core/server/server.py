@@ -67,6 +67,7 @@ class MainServer():
         observer = log.PythonLoggingObserver("pollapli.core")
         observer.start()
        
+        
        # log.startLogging(sys.stdout)
        # logfile=os.path.join(self.logPath,"pollapli.log")
        # log.startLogging(open(logfile, 'w'),setStdout=False)

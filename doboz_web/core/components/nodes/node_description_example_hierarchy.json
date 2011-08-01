@@ -1,0 +1,117 @@
+{
+    "node": {
+        "name": "my reprap",
+        "description": "a_clara reprap",
+        "tools": [
+            {
+                "PositioningTool": {
+                    "variables": [
+                        {
+                            "name": "3d_position",
+                            "type": "position",
+                            "components": "x,y,z",
+                            "units": "mm",
+                            "master_variable": true
+                        }
+                    ],
+                    "elements": [
+                        {
+                            "name": "x_stepper",
+                            "type": "stepper_motor",
+                            "var": "3d_position",
+                            "var_channel": "x"
+                        },
+                        {
+                            "name": "y_stepper",
+                            "type": "stepper_motor",
+                            "var": "3d_position",
+                            "var_channel": "y"
+                        },
+                        {
+                            "name": "z_stepper",
+                            "type": "stepper_motor",
+                            "var": "3d_position",
+                            "var_channel": "z"
+                        },
+                        {
+                            "name": "x_startSensor",
+                            "type": "end_sensor",
+                            "var": "3d_position",
+                            "var_channel": "x"
+                        },
+                        {
+                            "name": "x_endSensor",
+                            "type": "end_sensor",
+                            "var": "3d_position",
+                            "var_channel": "x"
+                        },
+                        {
+                            "name": "y_startSensor",
+                            "type": "end_sensor",
+                            "var": "3d_position",
+                            "var_channel": "y"
+                        },
+                        {
+                            "name": "y_endSensor",
+                            "type": "end_sensor",
+                            "var": "3d_position",
+                            "var_channel": "y"
+                        },
+                        {
+                            "name": "z_startSensor",
+                            "type": "end_sensor",
+                            "var": "3d_position",
+                            "var_channel": "z"
+                        },
+                        {
+                            "name": "z_endSensor",
+                            "type": "end_sensor",
+                            "var": "3d_position",
+                            "var_channel": "z"
+                        }
+                    ]
+                }
+            }
+        ],
+        "children": [
+            {
+                "tools": [
+                    {
+                        "PrintHead1": {
+                            "variables": [
+                                {
+                                    "name": "head_temp",
+                                    "type": "temperature",
+                                    "units": "celcius"
+                                },
+                                {
+                                    "name": "filament_extrudate",
+                                    "type": "position",
+                                    "components": "e",
+                                    "units": "mm"
+                                }
+                            ],
+                            "elements": [
+                                {
+                                    "name": "e_stepper",
+                                    "type": "stepper_motor",
+                                    "var": "filament_extrudate",
+                                    "var_channel": "e"
+                                },
+                                {
+                                    "name": "extruder1_heater",
+                                    "type": "heater",
+                                    "var": "head_temp"
+                                },
+                                {
+                                    "name": "extruder1_temp_sensor",
+                                    "type": "temperature_sensor",
+                                    "var": "head_temp"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+            ]
+        }

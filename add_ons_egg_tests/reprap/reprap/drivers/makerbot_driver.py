@@ -16,7 +16,22 @@ A package is used to wrap every command. It ensures that the command received is
 2: the command byte - this is the first byte of the payload
 *: content of the block, all multibyte values are LSB first (Intel notation)
 n-1: the package ends with a single byte CRC checksum of the payload (Maxim 1-Wire CRC)
-
+#            uint8_t 
+#            _crc_ibutton_update(uint8_t crc, uint8_t data) 
+#            { 
+#           uint8_t i; 
+#        
+#           crc = crc ^ data; 
+#           for (i = 0; i < 8; i++) 
+#           { 
+#               if (crc & 0x01) 
+#                   crc = (crc >> 1) ^ 0x8C; 
+#               else 
+#                   crc >>= 1; 
+#           } 
+#        
+#           return crc; 
+#            }
 Reply Packages
 
 Reply packages are built just like the command packages. The first byte of the payload is the return code 
@@ -37,18 +52,12 @@ class MakerbotProtocol(BaseSerialProtocol):
     def _handle_deviceHandshake(self,data):
         """
         handles machine (hardware node etc) initialization
-        datab: the incoming data from the machine
+        data: the incoming data from the machine
         """
-        self.isProcessing=True
-        if "start" in data:
-            self.driver.isDeviceHandshakeOk=True
-            log.msg("Device handshake validated",system="Driver")
-            self.isProcessing=False
-            self._query_deviceInfo()
-        else:
-            log.msg("Device hanshake mismatch",system="Driver")
-            self.isProcessing=False
-            self.driver.reconnect()
+        log.msg("Attempting to validate device handshake",system="Driver",logLevel=logging.INFO)
+        self.driver.isDeviceHandshakeOk=True
+        self._query_deviceInfo()
+        
          
     def _handle_deviceInit(self,data):
         """
@@ -103,29 +112,44 @@ class MakerbotProtocol(BaseSerialProtocol):
             self.driver.d.callback(None)      
         
     def _set_deviceId(self,id=None):
-        print("attempting to set device id")
-        self.isProcessing=True
         self.send_data("s "+ self.driver.deviceId)
-        self.isProcessing=False
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
-        self.isProcessing=True
         self.send_data("i")
-        self.isProcessing=False
         
     def _format_data_out(self,data,*args,**kwargs):
         """
         Formats an outgoing block of data according to some specs/protocol 
         data: the outgoing data to the device provided as an utf8 string
         """
+        
+        """ chksum = 0 xor each byte of the gcode (including the line number and trailing space)
+        """     
+        
+        def compute_crc(crc,data):
+            crc = crc ^ ord(data)
+            for c in range(0,8):
+                if crc & ord(0x01):
+                    crc=crc >>1 ^ 0x8C
+                else:
+                    crc>>1
+            return crc
+
+
+        command,args=data
         payload=command+content
-        crc=None
+    
         dataOut=bytearray()
         dataOut.append(0xD5)
         dataOut.append(len(payload))
         dataOut.append(command)
-        dataOut.append(content)
+        dataOut.append(args)
+        
+        crc = 0
+        for c in payload:
+            crc=compute_crc(crc,c)
+        
         dataOut.append(crc)
         
 
@@ -151,10 +175,89 @@ class HardwareHandler(SerialHardwareHandler):
     def __init__(self,*args,**kwargs):
         SerialHardwareHandler.__init__(self,protocol=MakerbotProtocol(*args,**kwargs),speed=38400,*args,**kwargs)
 
-class MakerbotDriver(object):
+class MakerbotDriver(Driver):
     """Class defining the components of the driver for the teacup reprap firmware """
     classProvides(IPlugin, idoboz_web.IDriver)
-    components={"logicHandler":CommandQueueLogic,"hardwareHandler":HardwareHandler}
+    TABLENAME="drivers"   
+    def __init__(self,driverType="MakerbotDriver",deviceType="3d printer",deviceId="",options={},*args,**kwargs):
+        """
+        very important : the first two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
+        and not instances of those classes
+        """
+        Driver.__init__(self,TeacupHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,options,*args,**kwargs)
+   
+    """potentially generic"""
     
-    
+    def get_firmware_version(self):
+        self.send_command((0x00,None))
+    def get_status(self):
+        pass
+    def get_stats(self):
+        pass
+    def set_debugLevel(self,level):
+        self.send_command((0x76,None))
+    def init(self):
+        self.send_command((0x01,None))
+    def start(self):
+        pass
+    def stop(self,extended=False,motors=False,queue=False):
+        if extended:
+            payload=None
+            if motors:
+                payload=1
+            
+            self.send_command((0x22,None))
+    def pause(self):
+        self.send_command((0x07,None))
+    def queue_position(self,position,extended=False,absolute=True):
+        if extended:
+            self.send_command((0x1,None))
+        else:
+            self.send_command((0x81,None))
+    def get_position(self,extended=False):
+        if extended:
+            self.send_command((0x21,None))
+        else:
+            self.send_command((0x07,None))
+            
+    def set_position(self,position=None,extended=False):
+        if extended:
+            self.send_command((0x21,None))
+        else:
+            payload=position
+            self.send_command((0x82,None))
+            
+    def save_homePosition(self):
+        pass
+    def load_homePosition(self):
+        pass
+    """"""
+    """"""
+    def get_range(self,axes=[]):
+        pass
+    def enableDisable_axes(self,axes={}):
+        pass
+    def set_position_registers(self):
+        pass
+    def clear_buffer(self):
+        pass
+    def get_bufferSize(self):
+        pass
+   
+    def read_eeprom(self):
+        pass
+    def write_eeprom(self):
+        pass
+    #tools
+    def tool_query(self,toolIndex):
+        pass
+    def tool_command(self):
+        pass
+    def change_tool(self):
+        pass#self.send_command("M6")
+        
+    def wait_forTool(self):
+        pass
+    def enable_axes(self):
+        pass
     

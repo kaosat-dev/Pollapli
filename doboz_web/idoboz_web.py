@@ -5,9 +5,16 @@
 from zope.interface import Interface, Attribute
 from twisted.plugin import IPlugin
 
+
+
+class INode(Interface):
+    """
+    Abstract Representation of a physical device
+    """
+
 class IDriver(Interface):
     """
-    An object with specific physical properties
+    An object handling interactions to and from a physical device
     """
     
 class IDriverLogicHandler(Interface):

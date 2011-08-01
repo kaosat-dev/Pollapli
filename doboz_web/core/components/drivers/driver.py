@@ -25,7 +25,7 @@ class Driver(DBObject):
      You can think of the events beeing sent out by the driver (dataRecieved etc) as interupts of sorts
     """
     BELONGSTO = ['node']
-    def __init__(self,driverType="",deviceType="",deviceId="",options={},*args,**kwargs):
+    def __init__(self,hardwareHandlerKlass=None,logicHandlerKlass=None,driverType="",deviceType="",deviceId="",options={},*args,**kwargs):
         self.logger = logging.getLogger("pollapli.core.components.driver")      
         self.logger.setLevel(logging.INFO)
         DBObject.__init__(self,**kwargs)
@@ -34,10 +34,19 @@ class Driver(DBObject):
         self.deviceType=deviceType
         self.deviceId=deviceId
         """will be needed to identify a specific device, as the system does not work base on ports"""
-        self.options=options
+        if not isinstance(options,dict):
+            self.options=ast.literal_eval(options)
+        else:
+            self.options=options
+        """this is a workaround needed when loading a driver from db"""
         
-        self.hardwareHandler=None#hardwareHandler
-        self.logicHandler=None#logicHandler
+        try:
+            self.hardwareHandler=hardwareHandlerKlass(self,**self.options)
+            self.logicHandler=logicHandlerKlass(self,**self.options)
+        except Exception as inst:
+            print ("error",inst)
+        #print("driver options",self.options,"type",self.options.__class__)
+        #print("hwhandlerklass",hardwareHandlerKlass,"logicHandlerKlass",logicHandlerKlass)
 
         self.signalHandler=None 
         self.signalChannelPrefix=""
@@ -66,13 +75,7 @@ class Driver(DBObject):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
     
     @defer.inlineCallbacks    
-    def setup(self,options=None,*args,**kwargs):
-        #hackish?
-        if options:
-            self.options=options
-            self.logicHandler.setup(**options)
-            self.hardwareHandler.setup(**options)
-            
+    def setup(self,*args,**kwargs):     
         self.signalChannelPrefix=str((yield self.node.get()).id)
         self.signalChannel="node"+self.signalChannelPrefix+".driver"
         self.signalHandler=SignalHander(self.signalChannel)
@@ -136,7 +139,24 @@ class Driver(DBObject):
     def _handle_response(self,data):
         if self.logicHandler:
             self.logicHandler._handle_response(data)
-
+    
+    """higher level methods""" 
+    def startup(self):
+        pass
+    def shutdown(self):
+        pass
+    def init(self):
+        pass
+    def get_firmware_version(self):
+        pass
+    def set_debugLevel(self,level):
+        pass
+    
+    def variable_set(self,*args,**kwargs):
+        pass
+    def variable_get(self,params,*args,**kwargs):
+        pass
+    
 class PortDriverBindings(object):
     """
     Helper class for setting and unseting driver /port bindings
@@ -368,7 +388,6 @@ class DriverManager(object):
         for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
                 driver=yield driverKlass(driverType=driverType,options=driverParams,**driverParams).save()
-                print ("created driver",driver)
                 yield driver.save()  
                 driver.node.set(parentNode)
                 yield driver.setup()
@@ -405,8 +424,7 @@ class DriverManager(object):
             for driverKlass in plugins:
                 if drvType==driverKlass.__name__.lower():
                     driver=yield driverKlass.find(where=['node_id = ?', parentNode.id],limit=1)
-                    driver.options=ast.literal_eval(driver.options)
-                    yield driver.setup(options=driver.options)
+                    yield driver.setup()
                     cls.register_driver(driver)
                     defer.returnValue(driver)
         
@@ -495,6 +513,7 @@ class DriverManager(object):
             log.msg("Setting up drivers",logLevel=logging.INFO)
             for driver in unbndDrivers:   
                 yield cls._start_bindAttempt(driver) 
+        reactor.callLater(1,DriverManager.update_deviceList)
         defer.returnValue(True)
         
         
@@ -586,8 +605,10 @@ class DriverManager(object):
                 port=driver.hardwareHandler.port
                 log.msg("Node",(yield driver.node.get()).name,"plugged out of port",port,system="Driver") 
                 driver.pluggedOut(port)
+            reactor.callLater(1,DriverManager.update_deviceList)
         
-        reactor.callLater(1,DriverManager.update_deviceList)
+        if addedPorts is None and removedPorts is None:
+            reactor.callLater(1,DriverManager.update_deviceList)
         
         
 """
@@ -645,8 +666,7 @@ class CommandQueueLogic(object):
         self.commandBuffer=[]
         self.commandSlots=bufferSize
         #print("in command queue logic , driver:",driver)
-    def setup(self,bufferSize=8,*args,**kwargs):
-        self.bufferSize=bufferSize
+    
         
     def _handle_request(self,data,sender=None,*args,**kwargs):
         """

@@ -270,7 +270,7 @@ class EnvironmentManager(object):
              driverType TEXT NOT NULL,
              deviceType TEXT NOT NULL ,
              deviceId TEXT,
-             options TEXT ,
+             options BLOB  ,
              FOREIGN KEY(node_id) REFERENCES nodes(id)      
              )''')
         
