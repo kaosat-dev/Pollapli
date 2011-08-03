@@ -154,7 +154,7 @@ class Driver(DBObject):
     
     def variable_set(self,*args,**kwargs):
         pass
-    def variable_get(self,params,*args,**kwargs):
+    def variable_get(self,variable,params,*args,**kwargs):
         pass
     
 class PortDriverBindings(object):

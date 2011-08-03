@@ -73,12 +73,8 @@
                 }
             },
             {
-                "PrintHead": {
+                "PrintHead1": {
                     "parent": "PositioningTool",
-                    "mappedTo": {
-                        "var": "3d_position",
-                        "channel": "e"
-                    },
                     "variables": [
                         {
                             "name": "head_temp",
@@ -88,7 +84,46 @@
                         {
                             "name": "filament_extrudate",
                             "type": "position",
-                            "components": "e",
+                            "components": "e1",
+                            "units": "mm"
+                        }
+                    ],
+                    "elements": [
+                        {
+                            "name": "e_stepper",
+                            "type": "stepper_motor",
+                            "var": "filament_extrudate",
+                            "var_channel": "e"
+                        },
+                        {
+                            "name": "extruder1_heater",
+                            "type": "heater",
+                            "var": "head_temp"
+                        },
+                         {
+                            "name": "extruder1_fan",
+                            "type": "cooler",
+                            "var": "head_temp"
+                        },
+                        {
+                            "name": "extruder1_temp_sensor",
+                            "type": "temperature_sensor",
+                            "var": "head_temp"
+                        }
+                    ]
+                }
+                "PrintHead2": {
+                    "parent": "PositioningTool",
+                    "variables": [
+                        {
+                            "name": "head_temp",
+                            "type": "temperature",
+                            "units": "celcius"
+                        },
+                        {
+                            "name": "filament_extrudate",
+                            "type": "position",
+                            "components": "e2",
                             "units": "mm"
                         }
                     ],

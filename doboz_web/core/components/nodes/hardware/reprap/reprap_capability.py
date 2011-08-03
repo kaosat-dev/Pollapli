@@ -32,7 +32,6 @@ class ReprapCapability(DBObject):
         #HardwareNode.__init__(self,name,description,type,*args,**kwargs)
         self.startTime=time.time()
         self.rootPath=None
-        self.events=ReprapManagerEvents() 
         self.gcodeSuffix="\n"
         log.msg("Reprap Capability Init Done", system="reprap node", logLevel=logging.CRITICAL)
     

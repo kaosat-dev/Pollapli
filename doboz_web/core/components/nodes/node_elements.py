@@ -17,10 +17,82 @@ class Actor(NodeElement):
     def __init__(self,type="BaseActor",name="",tool="",boundVariable=None,variableChannel=None):
         NodeElement.__init__(self,type,name,tool,boundVariable,variableChannel)
         
-        
+ 
 class Sensor(NodeElement):
     def __init__(self,type="Sensor",name="",tool="",boundVariable=None,variableChannel=None):
         NodeElement.__init__(self,type,name,tool,boundVariable,variableChannel)
+    def compute_value(self):
+        pass
+    
+class GenericNodeElement(object):
+    def __init__(self,name="element",parent=None,isLeaf=False):
+        self.name=name
+        self.children=[]
+        self.parent=parent
+        self.isLeaf=isLeaf
+    def add_child(self,child):
+        if not self.isLeaf:
+            child.parent=self
+            self.children.append(child)
+    def add_children(self,children):
+        for child in children:
+            self.add_child(child)
+    
+    def remove_child(self,child):
+        if not self.isLeaf:
+            child.parent=None
+            self.children.remove(child)
+        
+
+        
+class NodeComponent(object):
+    def __init__(self,name="element",parent=None,isLeaf=False):
+        self.name=name
+        self.children=[]
+        self.parent=parent
+        self.isLeaf=isLeaf
+        
+        self.variables={}
+        self.elements={}
+        
+    def add_element(self,element):
+        self.elements[element.name]=element
+        
+    def add_variable(self,variable):
+        self.variables[variable.name]=variable
+        
+    def attach_sensor(self,variableName,sensorName,sensor=None,channel=None,*args,**kwargs):
+        if self.variables.has_key(variableName):
+            if self.elements.has_key(sensorName):
+                self.variables[variableName].attach_sensor(self.elements[variableName],channel,*args,**kwargs)
+            elif sensor is not None:
+                self.variables[variableName].attach_sensor(sensor,channel,*args,**kwargs)
+        else:
+            raise Exception("Can't attach sensor, This component has not got that variable")
+        
+    def attach_actor(self,variableName,actor,channel=None,*args,**kwargs):
+        if self.variables.has_key(variableName):
+            self.variables[variableName].attach_actor(sensor,channel,*args,**kwargs)
+        else:
+            raise Exception("Can't attach actor,This component has not got that variable")
+    
+    def add_child(self,child):
+        if not self.isLeaf:
+            child.parent=self
+            self.children.append(child)
+    def add_children(self,children):
+        for child in children:
+            self.add_child(child)
+    
+    def remove_child(self,child):
+        if not self.isLeaf:
+            child.parent=None
+            self.children.remove(child)
+        
+class Tool(NodeComponent):
+    def __init__(self,name="",parent=None,isLeaf=False):     
+        NodeComponent.__init__(self, name, parent, isLeaf)
+        
         
 #class Reading(DBObject):
 #    BELONGSTO = ['variable']
@@ -29,21 +101,19 @@ class Sensor(NodeElement):
     
     
 class Variable(object):
-    def __init__(self,node,name,value,type,unit,defaultValue=None,historyStore=None,historyLength=None,implicitSet=False,boundActors=[],boundSensor=[],channels=[]):
+    def __init__(self,node,name,value,type,unit,defaultValue=None,historyStore=None,historyLength=None,implicitSet=False,channels=[]):
         """
         defaultValue: base value to reset the variable to during a reset operation
         historyPersistance/store : None,memory,database,file
         historyLength: how much old values do we store: None, all, or any numeric value
         """
+        #Node.__init__(self,name=name,isLeaf=True)
         self.node=node
         self.name=name
         self.value=value
         self.defaultValue=defaultValue or value
         self.targetValue=None
         self.type=type
-        
-        self.boundActors=boundActors
-        self.boundSensors=boundSensors
         
         self.historyStore=historyStore
         self.history=None
@@ -63,6 +133,7 @@ class Variable(object):
         """
         self.attachedSensors={}
         self.attachedActors={}
+        
          
     def attach_sensor(self,sensor,channel=None,*args,**kwargs):
         realChannel=None
@@ -95,18 +166,20 @@ class Variable(object):
     
     def attach_actors(self,actors,*args,**kwargs):
         """in this case, actors is a list of tupples in the form : (actor,channel)"""
-        for sensor,channel in sensors:
+        for actor,channel in actors:
             self.attach_actor(actor, channel)
     def attach_both(self,sensors,actors):
         self.attach_actors(actors)
         self.attach_sensors(sensors)
-    def get(self):
-        try:
-            getattr(self.node.driver,"get_"+self.name)(value)
-        except Exception as inst:
-            log.mg("Node's driver does not have the request feature",system="Node",logLevel=logging.CRITICAL)
+        
+    def get(self,saveToHistory=False,sender=None):
+        self.node.driver.variable_get(self)
+#        try:
+#            getattr(self.node.driver,"get_"+self.name)(value)
+#        except Exception as inst:
+#            log.mg("Node's driver does not have the request feature",system="Node",logLevel=logging.CRITICAL)
     
-    def set(self,value,relative=False,params=None):
+    def set(self,value,relative=False,params=None,sender=None):
         """ setting is dependent on the type of  variable
         This is a delayed operation: set just initiates the chain of events leading to an actual update
         it calls the driver set method + this variables type :ie  for a position: set_name_position
@@ -148,3 +221,11 @@ class Variable(object):
 """Variable types:
  temperature, pressure, luminosity, humidity,position/distance
 """    
+
+"""units"""
+class Unit(object):
+    pass
+class mm(Unit):
+    pass
+class inch(Unit):
+    pass

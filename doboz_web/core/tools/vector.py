@@ -1,4 +1,4 @@
-class Point(object):
+class Vector(object):
     def __init__(self,components=[]):
         """ components is a list of chars ie ['x','y','z','e'] etc
         """

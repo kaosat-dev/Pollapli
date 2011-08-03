@@ -98,6 +98,8 @@ class NodeHandler(DefaultRestHandler):
         subPath=self.rootUri+"/environments/"+str(self.envId)+"/nodes/"+str(self.nodeId)+"/tasks"
         self.putChild("tasks",TasksHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
 )
+       # self.putChild("structure",TasksHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
+#)
     
     def render_GET(self, request):
         """

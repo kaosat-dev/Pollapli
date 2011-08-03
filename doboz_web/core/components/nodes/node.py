@@ -18,9 +18,25 @@ from twisted.plugin import getPlugins
 from doboz_web import idoboz_web
 from doboz_web.core.components.addons.addon_manager import AddOnManager
 from doboz_web.core.components.drivers.driver import Driver,DriverManager
-from doboz_web.core.tools.point import Point
-
+from doboz_web.core.tools.vector import Vector
+from doboz_web.core.components.nodes.node_elements import NodeComponent,GenericNodeElement,Tool,Variable,Actor,Sensor
  
+ 
+
+class NodeStatus(object):
+    def __init__(self):
+        self.isActive=False
+        
+    def start(self): 
+        self.isActive=True
+            
+    def stop(self):
+        self.isActive=False
+                
+    def _toDict(self):
+        return {"status":{"active":self.isActive}}
+  
+
 class Node(DBObject):
     """
     Base class for all nodes: a hardware node is a software component handling either a physical device such as a webcam, reprap , arduino etc
@@ -34,7 +50,8 @@ class Node(DBObject):
         self.type=type
         self.description=description
         self.options=options
-        self.isRunning=False  
+        
+        self.status=NodeStatus()
         self.driver=None 
         self.taskManager=TaskManager(self)
         
@@ -46,15 +63,29 @@ class Node(DBObject):
         
         """this is to ensure no 'asynch clash' occurs when replacing the current driver"""
         self.driverLock=defer.DeferredSemaphore(1)
-    
+        self.rootElement=NodeComponent("root")
+        
+        """this is for internal comms handling"""
+        self.signalChannelPrefix=str(self.id)
+        self.signalChannel="node"+self.signalChannelPrefix+"."+self.name
+        self.signalHandler=SignalHander(self.signalChannel)
+        self.signalHandler.add_handler(handler=self.variable_get,signal="get")
+        self.signalHandler.add_handler(handler=self.variable_set,signal="set")
+        
     @defer.inlineCallbacks
     def setup(self):
         self.driver=yield DriverManager.load(parentNode=self)
         yield self.taskManager.setup()
         log.msg("Node with id",self.id, "setup successfully", logLevel=logging.CRITICAL,system="Node")
-
+        self.elementsandVarsTest()
         defer.returnValue(None)
+        
+    def variable_set(self,sender,varName,*args,**kwargs):
+        self.variables[varName].set(*args,**kwargs)
+    def variable_get(self,sender,varName,*args,**kwargs):
+        self.variables[varName].set(*args,**kwargs)
     
+    #def variable_test(self):
     
     def elementsandVarsTest(self):
         """test method, for experimental composition of nodes: this creates all the elements for a basic 
@@ -62,7 +93,7 @@ class Node(DBObject):
         
         """CARTESIAN BOT DEFINITION"""
         """3d Position"""
-        pos=Variable(self,"3d_position",Point(['x','y','z']),"vector","mm",None,"memory",3,True,None,None,['x','y','z'])     
+        pos=Variable(self,"position",Vector(['x','y','z']),"vector","mm",None,"memory",3,True,['x','y','z'])     
         """all the motors/actors controlling the 3d Position"""
         mot1=Actor(type="StepperMotor",name="x_motor",tool="cartesianBot",boundVariable=pos,variableChannel='x')
         mot2=Actor(type="StepperMotor",name="y_motor",tool="cartesianBot",boundVariable=pos,variableChannel='y')
@@ -84,7 +115,7 @@ class Node(DBObject):
         """EXTRUDER 1 DEFINITION"""
         """two variables"""
         head_temp=Variable(self,"head_temp",0,"temperature","celcius")
-        extrudate_lng=(self,"filament_extrudate",Point(['e']),"vector","mm")
+        extrudate_lng=Variable(self,"filament_extrudate",Vector(['e']),"vector","mm")
         """all the actors controlling the extrusion of this print head"""
         extrudMot=Actor(type="StepperMotor",name="e_motor1",tool="PrintHead",boundVariable=extrudate_lng,variableChannel='e')
         head_heater=Actor(type="Heater",name="extruder1_heater",tool="PrintHead",boundVariable=head_temp)
@@ -93,6 +124,62 @@ class Node(DBObject):
      
         extrudate_lng.attach_actor(extrudMot,'e')
         head_temp.attach_both([(head_heater,None)],[(head_tempSensor,None)])
+        
+    def elementsandVarsTest2(self):
+        """test method, for experimental composition of nodes: this creates all the elements for a basic 
+        reprap type node"""
+       
+        """CARTESIAN BOT DEFINITION"""
+        cartesianBot=NodeComponent("cartesian_bot",self.rootElement)
+        """3d Position"""
+        pos=Variable(self,"3d_position",Vector(['x','y','z']),"vector","mm",None,"memory",3,True,None,None,['x','y','z'])     
+        """all the motors/actors controlling the 3d Position"""
+        mot1=Actor(type="StepperMotor",name="x_motor",tool="cartesianBot",boundVariable=pos,variableChannel='x')
+        mot2=Actor(type="StepperMotor",name="y_motor",tool="cartesianBot",boundVariable=pos,variableChannel='y')
+        mot3=Actor(type="StepperMotor",name="z_motor",tool="cartesianBot",boundVariable=pos,variableChannel='z')
+        """all the sensors giving feedback on  the 3d Position"""
+        endStop1=Sensor(type="end_sensor",name="x_startSensor",tool="cartesianBot",boundVariable=pos,variableChannel='x')
+        endStop2=Sensor(type="end_sensor",name="x_endSensor",tool="cartesianBot",boundVariable=pos,variableChannel='x')
+        endStop3=Sensor(type="end_sensor",name="y_startSensor",tool="cartesianBot",boundVariable=pos,variableChannel='y')
+        endStop4=Sensor(type="end_sensor",name="y_endSensor",tool="cartesianBot",boundVariable=pos,variableChannel='y')
+        endStop5=Sensor(type="end_sensor",name="z_startSensor",tool="cartesianBot",boundVariable=pos,variableChannel='z')
+        endStop6=Sensor(type="end_sensor",name="z_endSensor",tool="cartesianBot",boundVariable=pos,variableChannel='z')
+        """add all these to the current tool"""
+        cartesianBot.add_child(pos)
+        cartesianBot.add_children([mot1,mot2,mot3,endStop1,endStop2,endStop3,endStop4,endStop5,endStop6])
+        
+        """EXTRUDER 1 DEFINITION"""
+        """two variables"""
+        extruder1=Tool("extruder1")
+        head_temp=Variable(self,"head_temp",0,"temperature","celcius")
+        extrudate_lng=Variable(self,"filament_extrudate",Vector(['e']),"vector","mm")
+        """all the actors controlling the extrusion of this print head"""
+        extrudMot=Actor(type="StepperMotor",name="e_motor1",tool="PrintHead",boundVariable=extrudate_lng,variableChannel='e')
+        head_heater=Actor(type="Heater",name="extruder1_heater",tool="PrintHead",boundVariable=head_temp)
+        """all the sensors giving feedback on the extrusion of this print head"""
+        head_tempSensor=Sensor(type="temperature_sensor",name="extruder1_temp_sensor",tool="PrintHead",boundVariable=head_temp)
+     
+        extrudate_lng.attach_actor(extrudMot,'e')
+        head_temp.attach_both([(head_heater,None)],[(head_tempSensor,None)])
+        
+        """EXTRUDER 2 DEFINITION"""
+        """two variables"""
+        extruder2=Tool("extruder2")
+        head_temp2=Variable(self,"head_temp",0,"temperature","celcius")
+        extrudate_lng2=Variable(self,"filament_extrudate",Vector(['e']),"vector","mm")
+        """all the actors controlling the extrusion of this print head"""
+        extrudMot2=Actor(type="StepperMotor",name="e_motor1",tool="PrintHead",boundVariable=extrudate_lng2,variableChannel='e')
+        head_heater2=Actor(type="Heater",name="extruder1_heater",tool="PrintHead",boundVariable=head_temp2)
+        """all the sensors giving feedback on the extrusion of this print head"""
+        head_tempSensor=Sensor(type="temperature_sensor",name="extruder1_temp_sensor",tool="PrintHead",boundVariable=head_temp2)
+     
+        extrudate_lng2.attach_actor(extrudMot2,'e')
+        head_temp2.attach_both([(head_heater2,None)],[(head_tempSensor2,None)])
+        
+        """"""""""""""""""""""""""""""""
+        cartesianBot.add_child(extruder1)
+        cartesianBot.add_child(extruder2)
+        
         
     def __getattr__(self, attr_name):
         if hasattr(self.taskManager, attr_name):
