@@ -20,7 +20,8 @@ from doboz_web.core.components.addons.addon_manager import AddOnManager
 from doboz_web.core.components.drivers.driver import Driver,DriverManager
 from doboz_web.core.tools.vector import Vector
 from doboz_web.core.components.nodes.node_elements import NodeComponent,GenericNodeElement,Tool,Variable,Actor,Sensor
- 
+from doboz_web.core.signal_system import SignalHander
+
  
 
 class NodeStatus(object):

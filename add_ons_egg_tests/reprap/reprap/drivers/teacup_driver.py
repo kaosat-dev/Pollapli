@@ -28,7 +28,7 @@ class TeacupProtocol(BaseSerialProtocol):
             log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
             self.driver.reconnect()
          
-    def _handle_deviceInit(self,data):
+    def _handle_deviceIdInit(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine

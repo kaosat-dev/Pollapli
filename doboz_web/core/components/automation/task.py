@@ -103,6 +103,9 @@ class Task(DBObject):
     def send_signal(self,signal="",data=None,out=False):
         self.signalHandler.send_message(signal,{"data":data},out)
    
+    def _data_recieved(self,data,*args,**kwargs):
+        self.actions._data_recieved(*args,**kwargs)
+   
     def set_action(self,action):
         """Sets the first action"""
         self.actions=action

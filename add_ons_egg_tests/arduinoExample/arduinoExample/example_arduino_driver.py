@@ -33,7 +33,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self.driver.reconnect()
         
     
-    def _handle_deviceInit(self,data):
+    def _handle_deviceIdInit(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -62,7 +62,7 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
-                    print("here")
+                    
                 elif self.driver.deviceId==data:
                     sucess=True     
             else:
@@ -116,20 +116,19 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
 class ArduinoExampleHardwareHandler(SerialHardwareHandler):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     def __init__(self,*args,**kwargs):
-        SerialHardwareHandler.__init__(self,protocol=ArduinoExampleProtocol(*args,**kwargs),speed=115200,*args,**kwargs)
-
+        SerialHardwareHandler.__init__(self,protocol=ArduinoExampleProtocol(*args,**kwargs),*args,**kwargs)
 
 
 class ArduinoExampleDriver(Driver):
     """Class defining the components of the driver for a basic arduino,using attached firmware """
     classProvides(IPlugin, idoboz_web.IDriver) 
     TABLENAME="drivers"   
-    def __init__(self,driverType="ArduinoExample",deviceType="Arduino",deviceId="",options={},*args,**kwargs):
+    def __init__(self,driverType="ArduinoExample",deviceType="Arduino",deviceId="",connectionType="serial",options={},*args,**kwargs):
         """
         very important : the first two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
         and not instances of those classes
         """
-        Driver.__init__(self,ArduinoExampleHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,options,*args,**kwargs)
+        Driver.__init__(self,ArduinoExampleHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,connectionType,options,*args,**kwargs)
         #self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
         #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
         

@@ -83,7 +83,6 @@ class SerialHardwareHandler(object):
                 #log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
                 self.driver.isConnected=False
                 self.driver.connectionErrors+=1
-                #print("ERROR",inst)
                 log.msg("failed to connect serial driver, attempts left:",self.driver.maxConnectionErrors-self.driver.connectionErrors,system="Driver")
                 if self.driver.connectionErrors<self.driver.maxConnectionErrors:
                     reactor.callLater(self.driver.connectionErrors*5,self._connect)
@@ -126,9 +125,10 @@ class SerialHardwareHandler(object):
                     except EnvironmentError:
                         break
             else:
-                foundPorts= glob.glob('/dev/ttyUSB*')+ glob.glob('/dev/cu*')
+                foundPorts= glob.glob('/dev/ttyUSB*')+ glob.glob('/dev/cu*') 
+                log.msg("Serial Ports on  system:",+str(foundPorts),system="Driver",logLevel=logging.DEBUG)
             return foundPorts
-        #self.logger.info("Serial Ports on  system:",+str(foundPorts))
+        
         reactor.callLater(0.1,d.callback,None)
         d.addCallback(_list_ports)
         return d
@@ -176,18 +176,17 @@ class SerialHardwareHandler(object):
 class DummyProtocol(Protocol):
     pass
 
- 
+
+
 class BaseSerialProtocol(Protocol):
-    """need to add some sort of ability to "ping" a device, with a timeout system"""
+    """basic , text based protocol for serial devices"""
     def __init__(self,driver=None,isBuffering=True,seperator='\r\n'):       
         self.seperator=seperator
         self.isBuffering=isBuffering
         self.buffer=""
         self.regex = re.compile(self.seperator)
         self.driver=driver
-  
         self.timeout=None
-        #self.timeoutTimer=LoopingCall(self._timeoutCheck)
         
     def _timeoutCheck(self,*args,**kwargs):
         if self.driver.isConnected:
@@ -239,7 +238,7 @@ class BaseSerialProtocol(Protocol):
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
         """
-    def _handle_deviceInit(self,data):
+    def _handle_deviceIdInit(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -284,7 +283,7 @@ class BaseSerialProtocol(Protocol):
                                 if not self.driver.isDeviceHandshakeOk:
                                     self._handle_deviceHandshake(nDataBlock)
                                 elif not self.driver.isDeviceIdOk:
-                                    self._handle_deviceInit(nDataBlock)
+                                    self._handle_deviceIdInit(nDataBlock)
                         else:
                             if not self.driver.isDeviceHandshakeOk:
                                 self._handle_deviceHandshake(nDataBlock)

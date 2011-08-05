@@ -7,6 +7,10 @@ import logging
 class SignalChannel(object):
     def __init__(self,channelName):
         pass
+class Command(object):
+    def __init__(self,sender=None):
+        pass
+    
 class SignalHander(object):
     plugin.install_plugin(TwistedDispatchPlugin())
     def __init__(self,channel="",recieversInfo=[]):

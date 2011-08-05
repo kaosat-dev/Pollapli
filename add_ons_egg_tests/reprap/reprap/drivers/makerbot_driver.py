@@ -59,7 +59,7 @@ class MakerbotProtocol(BaseSerialProtocol):
         self._query_deviceInfo()
         
          
-    def _handle_deviceInit(self,data):
+    def _handle_deviceIdInit(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
