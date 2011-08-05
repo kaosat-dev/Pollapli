@@ -18,7 +18,6 @@ from doboz_web.core.tools.wrapper_list import WrapperList
 from doboz_web.exceptions import UnknownNodeType,NodeNotFound
 
 from doboz_web.core.components.nodes.hardware.reprap.reprap_capability import ReprapCapability
-from doboz_web.core.components.nodes.hardware.dummy_capability import DummyCapability
 
 
 class NodeManager(object):
@@ -29,7 +28,7 @@ class NodeManager(object):
     """
     nodeTypes={}
     nodeTypes["reprap"]=ReprapCapability
-    nodeTypes["dummy"]=DummyCapability
+    
     #nodeTypes["webcam"]=WebcamNode
    # nodeTypes["node"]=Node #this is just a dummy node as it is a base class
     

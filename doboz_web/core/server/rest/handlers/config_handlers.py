@@ -13,7 +13,7 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.components.addons.addon_manager import AddOnManager
+from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.updates.update_manager import UpdateManager
 
 class ConfigHandler(DefaultRestHandler):
@@ -22,6 +22,8 @@ class ConfigHandler(DefaultRestHandler):
         DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.configHandler")
         self.valid_contentTypes.append("application/pollapli.config+json")   
+
+        
         self.putChild("updates",UpdatesHandler(self.rootUri+"/updates/",self.exceptionConverter))
         #self.putChild("addons",AddOnsHandler(self.rootUri+"/addons/",self.exceptionConverter))
     def render_GET(self, request):
@@ -74,18 +76,21 @@ class UpdatesHandler(DefaultRestHandler):
     def __init__(self,rootUri="http://localhost",exceptionConverter=None):
         DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.updatesHandler")
-        self.valid_contentTypes.append("application/pollapli.updatesList+json")   
+        self.valid_contentTypes.append("application/pollapli.updatesList+json")  
+        self.validGetParams.append('name')
+        self.validGetParams.append('type')
+        self.validGetParams.append('downloaded')
+        self.validGetParams.append('installed') 
 
     def render_GET(self, request):
         """
         Handler for GET requests of addOns
         """
      
-        #return "some stuff"
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.updateList+json",resource="updates")
         d=RequestParser(request,"updates",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(UpdateManager.get_updates,errback=r._build_response)
-        d.addBoth(r._build_response,jsonify=False)
+        d.addBoth(r._build_response)
         return NOT_DONE_YET
   
             
@@ -96,7 +101,7 @@ class UpdatesHandler(DefaultRestHandler):
         all addons completely
         """
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
-        d=AddOnManager.clear_addOns()
+        d=UpdateManager.clear_addOns()
         d.addBoth(r._build_response)
         return NOT_DONE_YET   
     
@@ -117,7 +122,7 @@ class AddonsHandler(DefaultRestHandler):
         """
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.addonList+json",resource="addOns")
         d=RequestParser(request,"addOns",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
-        d.addCallbacks(AddOnManager.get_addOns,errback=r._build_response)
+        d.addCallbacks(UpdateManager.get_addOns,errback=r._build_response)
         d.addBoth(r._build_response)
         return NOT_DONE_YET
   
@@ -129,6 +134,6 @@ class AddonsHandler(DefaultRestHandler):
         all addons completely
         """
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
-        d=AddOnManager.clear_addOns()
+        d=UpdateManager.clear_addOns()
         d.addBoth(r._build_response)
         return NOT_DONE_YET   

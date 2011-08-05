@@ -20,7 +20,7 @@ from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 
 from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
-from doboz_web.core.components.addons.addon_manager import AddOnManager
+from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.drivers.driver import DriverManager
 
 from twisted.application.service import Application
@@ -33,12 +33,29 @@ class MainServer():
         self.rootPath=rootPath
         self.filePath=filePath
         self.dataPath=dataPath
-        self.logPath=self.dataPath
+        self.logPath=dataPath
+        self.updatesPath=os.path.join(dataPath,"updates")
+        self.addOnsPath=os.path.join(self.rootPath,"addons")
+        self.environmentsPath=os.path.join(self.dataPath,"environments")
+        
+        if not os.path.exists(self.rootPath):
+            os.makedirs(self.rootPath)
+        if not os.path.exists(self.dataPath):
+            os.makedirs(self.dataPath)
+        if not os.path.exists(self.updatesPath):
+            os.makedirs(self.updatesPath)
+        if not os.path.exists(self.addOnsPath):
+            os.makedirs(self.addOnsPath)
+        if not os.path.exists(self.environmentsPath):
+            os.makedirs(self.environmentsPath)
+
+        
         """""""""""""""""""""""""""""""""""""""""
         Initialize various subsystems /set correct paths
         """
-        AddOnManager.addOnPath=os.path.join(self.rootPath,"addons")
-        EnvironmentManager.envPath=os.path.join(self.dataPath,"environments")
+        UpdateManager.addOnPath=self.addOnsPath
+        UpdateManager.updatesPath=self.updatesPath
+        EnvironmentManager.envPath=self.environmentsPath
         FileManager.rootDir=self.dataPath        
         self.environmentManager=EnvironmentManager(self.dataPath)
         
@@ -59,7 +76,7 @@ class MainServer():
         
     @defer.inlineCallbacks
     def setup(self):
-        yield AddOnManager.setup()
+        yield UpdateManager.setup()
         yield DriverManager.setup()
         yield EnvironmentManager.setup()
         

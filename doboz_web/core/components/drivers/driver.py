@@ -13,7 +13,7 @@ from twisted.internet.protocol import Protocol
 from doboz_web.exceptions import UnknownDriver,NoDriverSet,DeviceIdMismatch
 from doboz_web import idoboz_web
 from doboz_web.core.signal_system import SignalHander
-from doboz_web.core.components.addons.addon_manager import AddOnManager
+from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.drivers.serial.serial_hardware_handler import SerialHardwareHandler
 
 
@@ -529,7 +529,7 @@ class DriverManager(object):
     @classmethod 
     @defer.inlineCallbacks
     def create(cls,parentNode=None,driverType=None,driverParams={},*args,**kwargs):   
-        plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        plugins= (yield UpdateManager.get_plugins(idoboz_web.IDriver))
         driver=None
         print(driverParams)
         for driverKlass in plugins:
@@ -549,7 +549,7 @@ class DriverManager(object):
     def load_old(cls,driver):
         driverType=driver.driverType
         params=driver.options
-        plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        plugins= (yield UpdateManager.get_plugins(idoboz_web.IDriver))
         for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
                 hardwareHandler=driverKlass.components["hardwareHandler"](driver,**params)
@@ -564,7 +564,7 @@ class DriverManager(object):
     @defer.inlineCallbacks
     def load(cls,driverId=None,parentNode=None):
         dbconfig = Registry.getConfig()
-        plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        plugins= (yield UpdateManager.get_plugins(idoboz_web.IDriver))
         
         @defer.inlineCallbacks
         def find(drvType):
@@ -597,7 +597,7 @@ class DriverManager(object):
     def update(cls,driver,driverType=None,driverParams={},*args,**kwargs):   
         """ updates the given driver with the new params"""
         driverType=driverType
-        plugins= (yield AddOnManager.get_plugins(idoboz_web.IDriver))
+        plugins= (yield UpdateManager.get_plugins(idoboz_web.IDriver))
         for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
                 driver.driverType=driverType

@@ -16,7 +16,7 @@ from doboz_web.exceptions import UnknownDriver,NoDriverSet
 
 from twisted.plugin import getPlugins
 from doboz_web import idoboz_web
-from doboz_web.core.components.addons.addon_manager import AddOnManager
+from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.drivers.driver import Driver,DriverManager
 from doboz_web.core.tools.vector import Vector
 from doboz_web.core.components.nodes.node_elements import NodeComponent,GenericNodeElement,Tool,Variable,Actor,Sensor

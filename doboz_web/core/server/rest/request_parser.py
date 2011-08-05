@@ -14,7 +14,7 @@ class RequestParser(object):
     @defer.inlineCallbacks
     def ValidateAndParseParams(self):
         if  (yield self._validate_params()):
-             defer.returnValue( (yield self._parse_params()))
+            defer.returnValue( (yield self._parse_params()))
         else:
             raise UnhandledContentTypeException()
         
@@ -24,12 +24,16 @@ class RequestParser(object):
         whether the keys are valid
         """
         d=defer.Deferred()
-        if not self.request.getHeader("Content-Type") in self.validContentTypes:
-             raise UnhandledContentTypeException()
-        if not set(self.request.args.keys()).issubset(set(self.validGetParams)):
-            raise ParameterParseException()
-        d.callback(self.request.getHeader("Content-Type") in self.validContentTypes and \
-        set(self.request.args.keys()).issubset(set(self.validGetParams)))
+        def _validate(result):
+            if not self.request.getHeader("Content-Type") in self.validContentTypes:
+                 raise UnhandledContentTypeException()
+            if not set(self.request.args.keys()).issubset(set(self.validGetParams)):
+                raise ParameterParseException()
+            return True
+        d.addCallback(_validate)
+        reactor.callLater(0.1,d.callback,None)
+#        reactor.callLater(0.1,d.callback,self.request.getHeader("Content-Type") in self.validContentTypes and \
+#        set(self.request.args.keys()).issubset(set(self.validGetParams)))
         return d
         
     def _parse_params(self):
@@ -37,20 +41,32 @@ class RequestParser(object):
         method parses query params into a dictionary of lists for filter criteria
         """
         d=defer.Deferred()
-        params={}
-        if self.request.method=="POST" or self.request.method=="PUT":
-            data=self.request.content.getvalue()
-            if data != None or data != '':
-                """ In python pre 2.6.5, bug in unicode dict keys"""
-                try:
-                    params=json.loads(data,encoding='utf8')
-                    params=self._stringify_data(params)
-                except ValueError:
-                    raise ParameterParseException()
-        elif self.request.method=="GET":
-            for key in self.request.args.keys():         
-                    params[key]=[int(elem) if elem.isdigit()  else elem for elem in self.request.args[key] ]    
-        reactor.callLater(0.2,d.callback,params)
+        def _parse(result):
+            params={}
+            if self.request.method=="POST" or self.request.method=="PUT":
+                data=self.request.content.getvalue()
+                if data != None or data != '':
+                    """ In python pre 2.6.5, bug in unicode dict keys"""
+                    try:
+                        params=json.loads(data,encoding='utf8')
+                        params=self._stringify_data(params)
+                    except ValueError:
+                        raise ParameterParseException()
+            elif self.request.method=="GET":
+                def convertElem(elem):
+                    if elem.isdigit():
+                        return int(elem)
+                    elif elem.lower()=="false":
+                        return False
+                    elif elem.lower()=="true":
+                        return True
+                    else:
+                         return elem
+                for key in self.request.args.keys():  
+                    params[key]=[convertElem(elem) for elem in self.request.args[key] ]
+            return params   
+        d.addCallback(_parse)
+        reactor.callLater(0.1,d.callback,None)
         return d
     
     def _stringify_data(self,obj):

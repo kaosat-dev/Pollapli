@@ -144,7 +144,7 @@ class TaskManager(object):
     def create(parentNode=None,taskType=None,taskParams={},*args,**kwargs):     
         task=None
         if taskType:
-            plugins= (yield AddOnManager.get_plugins(idoboz_web.ITask))
+            plugins= (yield UpdateManager.get_plugins(idoboz_web.ITask))
             for taskKlass in plugins:
                 if taskType==taskKlass.__name__.lower():
                     task=yield Task(taskType=taskType,options=taskParams).save()
