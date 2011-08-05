@@ -122,6 +122,9 @@ class AddOnManager(object):
     Helper Methods    
     """
     @classmethod
+    def download_addon(cls,url):
+        pass
+    @classmethod
     def download_addons(cls):
         updateInfoPath=os.path.join(FileManager.rootDir,"updates.txt") 
         def addon_download_complete(result):
