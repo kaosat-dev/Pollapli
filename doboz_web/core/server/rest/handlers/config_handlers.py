@@ -13,28 +13,30 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
+from doboz_web.core.components.addons.addon_manager import AddOnManager
+from doboz_web.core.components.updates.update_manager import UpdateManager
 
 class ConfigHandler(DefaultRestHandler):
     isLeaf=False
     def __init__(self,rootUri="http://localhost",exceptionConverter=None):
         DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.environmentsHandler")
-        self.valid_contentTypes.append("application/pollapli.environment+json")   
-        self.putChild("nodes",NodesHandler(self.rootUri+"/environments/"+str(self.envId),self.exceptionConverter,self.environmentManager,self.envId)  
-)
-
-    
+        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.configHandler")
+        self.valid_contentTypes.append("application/pollapli.config+json")   
+        self.putChild("updates",UpdatesHandler(self.rootUri+"/updates/",self.exceptionConverter))
+        #self.putChild("addons",AddOnsHandler(self.rootUri+"/addons/",self.exceptionConverter))
     def render_GET(self, request):
         """
-        Handler for GET requests of environment
+        Handler for GET requests of config
         """
-        def extract_args(result):
-            return(self.environmentManager.get_environment(self.envId))            
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environment+json",resource="environment")
-        d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
-        d.addCallbacks(extract_args,errback=r._build_response)
-        d.addBoth(r._build_response)     
-        return NOT_DONE_YET
+        
+#        def extract_args(result):
+#            return(self.environmentManager.get_environment(self.envId))            
+#        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environment+json",resource="environment")
+#        d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
+#        d.addCallbacks(extract_args,errback=r._build_response)
+#        d.addBoth(r._build_response)     
+#        return NOT_DONE_YET
+        return "bla"
   
     def render_PUT(self,request):
         """
@@ -65,6 +67,38 @@ class ConfigHandler(DefaultRestHandler):
         d=self.environmentManager.remove_environment(self.envId)
         d.addBoth(r._build_response)
         return NOT_DONE_YET   
+
+
+class UpdatesHandler(DefaultRestHandler):
+    isLeaf=False
+    def __init__(self,rootUri="http://localhost",exceptionConverter=None):
+        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.updatesHandler")
+        self.valid_contentTypes.append("application/pollapli.updatesList+json")   
+
+    def render_GET(self, request):
+        """
+        Handler for GET requests of addOns
+        """
+     
+        #return "some stuff"
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.updateList+json",resource="updates")
+        d=RequestParser(request,"updates",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
+        d.addCallbacks(UpdateManager.get_updates,errback=r._build_response)
+        d.addBoth(r._build_response,jsonify=False)
+        return NOT_DONE_YET
+  
+            
+    def render_DELETE(self,request):
+        """ 
+        Handler for DELETE requests of addOns
+        WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes
+        all addons completely
+        """
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        d=AddOnManager.clear_addOns()
+        d.addBoth(r._build_response)
+        return NOT_DONE_YET   
     
 class AddonsHandler(DefaultRestHandler):
     isLeaf=False
@@ -77,7 +111,6 @@ class AddonsHandler(DefaultRestHandler):
         self.putChild("addons",NodesHandler(self.rootUri+"/environments/"+str(self.envId),self.exceptionConverter,self.environmentManager,self.envId)  
 )
 
-    
     def render_GET(self, request):
         """
         Handler for GET requests of addOns

@@ -14,6 +14,8 @@ from twisted.internet import reactor, defer
 
 from doboz_web.core.components.environments.environment_manager import EnvironmentManager
 from doboz_web.core.server.rest.handlers.environment_handlers import EnvironmentsHandler
+from doboz_web.core.server.rest.handlers.config_handlers import ConfigHandler
+
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 
 from doboz_web.exceptions import *
@@ -77,9 +79,12 @@ class MainServer():
         root.putChild("rest",restRoot)
         try:
             restRoot.putChild("environments", EnvironmentsHandler("http://localhost",self.exceptionConverter,self.environmentManager))
+            restRoot.putChild("config", ConfigHandler("http://localhost",self.exceptionConverter))
+
         except Exception as inst:
-            log.msg("Error in environments resource creation",str(inst), system="server", logLevel=logging.CRITICAL)
-         
+            log.msg("Error in base rest resources creation",str(inst), system="server", logLevel=logging.CRITICAL)
+        
+        
         factory = Site(root)
         reactor.listenTCP(self.port, factory)
         log.msg("Server started!", system="server", logLevel=logging.CRITICAL)

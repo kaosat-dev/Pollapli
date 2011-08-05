@@ -1,6 +1,4 @@
-import json
-import sys
-import traceback
+import json, sys, traceback,logging
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.web import resource, http
@@ -20,10 +18,11 @@ class ResponseGenerator(object):
         d = defer.Deferred()
         return d
         
-    def _build_response(self,payload):
+    def _build_response(self,payload,jsonify=True):
         """
         build a simple response
         """
+        log.msg("building response using payload:",payload,", jsonify:",jsonify,logLevel=logging.CRITICAL)
         #callback=request.GET.get('callback', '').strip() 
         response=""
         callback=None
@@ -37,18 +36,22 @@ class ResponseGenerator(object):
             self.request.setResponseCode(self.status)
             self.request.setHeader("Content-Type", self.contentType)   
             
-            try:
-                payload=payload._toDict() or ''  
-                payload=DataFormater(self.resource,self.request.path).format(payload)
-            except Exception as inst:
-                payload=""  
-                #print("response error",str(inst))   
-                #traceback.print_exc(file=sys.stdout)
+            if jsonify:
+                try:
+                    payload=payload._toDict() or ''  
+                    payload=DataFormater(self.resource,self.request.path).format(payload)
+                except Exception as inst:
+                    payload=""  
+                    #print("response error",str(inst))   
+                    #traceback.print_exc(file=sys.stdout)
             
         if callback:
             payload= callback+"("+payload+")" 
         response=payload
-        self.request.write(json.dumps(response))
+        if jsonify:
+            self.request.write(json.dumps(response))
+        else:
+            self.request.write(str(response))
         self.request.finish()
         
     def _handle_errors(self,failure):  

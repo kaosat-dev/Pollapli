@@ -2,13 +2,8 @@
 .. py:module:: addon_manager
    :synopsis: manager of addons : add ons are packages of plugins + extras, and this manager handles the references to all of them
 """
-import logging
-import uuid
-import pkgutil
-import zipfile 
+import logging, uuid, pkgutil,zipfile ,os,sys,json
 from zipfile import ZipFile
-import os
-import sys
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
@@ -17,6 +12,7 @@ from twisted.plugin import getPlugins,IPlugin
 
 from doboz_web.core.components.addons.addon import AddOn
 from doboz_web.core.tools.wrapper_list import WrapperList
+from doboz_web.core.file_manager import FileManager
 #from doboz_web.exceptions import UnknownaddOnType,addOnNotFound
 
 
@@ -27,13 +23,16 @@ class AddOnManager(object):
     """
     addons={}
     addOnPath=None
+    #downloader=Downloader()
+    
     def __init__(self):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.addOns.addonManager")
     
     @classmethod
     @defer.inlineCallbacks
-    def setup(self):          
-        yield AddOnManager.update_addOns()
+    def setup(cls):          
+        #yield cls.download_addons()
+        yield cls.update_addOns()
         log.msg("AddOn Manager setup succesfully ",system="AddOn Manager")
         
         defer.returnValue(None)
@@ -122,6 +121,34 @@ class AddOnManager(object):
     ####################################################################################
     Helper Methods    
     """
+    @classmethod
+    def download_addons(cls):
+        updateInfoPath=os.path.join(FileManager.rootDir,"updates.txt") 
+        def addon_download_complete(result):
+            print("add on downloaded succefully")
+        @defer.inlineCallbacks
+        def info_download_complete(result):
+             print "Progress: 100 Download Complete. "
+             jsonstuff=file(updateInfoPath,"r")
+             updateInfos=json.loads(jsonstuff.read())
+             jsonstuff.close()
+             print("Loaded update json:",updateInfos)
+             print("Addons found",updateInfos["AddOns"])
+             print("Addon Path",updateInfos["AddOns"][0]["file"])
+             for addOn in updateInfos["AddOns"]:
+                 addOnFile=addOn["file"].encode('ascii','ignore')
+                 yield downloadWithProgress("http://kaosat.net/pollapli/"+addOnFile,os.path.join(cls.addOnPath,addOnFile))\
+                 .addCallback(addon_download_complete).addErrback(download_failed)
+                 
+             yield cls.update_addOns()
+        def download_failed(failure):
+            print "Error:", failure.getErrorMessage( )
+   
+        
+        return downloadWithProgress("http://kaosat.net/pollapli/pollapli_updates.txt",updateInfoPath)\
+    .addCallback(info_download_complete).addErrback(download_failed)
+       # return downloadWithProgress("http://www.kaosat.net/index.html","kpouer.html").addCallback(downloadComplete).addErrback(downloadError)
+    
     @classmethod
     def extract_addons(cls):
         """
@@ -223,4 +250,47 @@ class AddOnManager(object):
         d.addCallback(activate)
         reactor.callLater(2,d.callback,AddOnManager.addons)
         return d
+
+from twisted.web import client
    
+class Downloader(client.HTTPDownloader):
+    def gotHeader(self,headers):
+        print("GOT HEADERS")
+        self.currentLength=0.0
+        if self.status=='200':
+            if header.has_key('content-length'):
+                self.totalLength=int(headers['content-length'][0])
+            else:
+                self.totalLength=0
+            self.currentLength=0.0
+        return client.HTTPDownloader.gotHeader(self,headers)
+            
+    def pagePart(self, data):
+        if not hasattr(self,"currentLength"):
+            self.currentLength=0.0
+        if not hasattr(self,"totalLength"):
+            self.totalLength=0
+        
+        if self.status == '200':
+            
+            self.currentLength += len(data)
+            if self.totalLength:
+                percent = "%i%%" % ((self.currentLength/self.totalLength)*100)
+            else:
+                percent = '%d K' % (self.currentLength/1000)
+            print "Progress: " + percent
+        return client.HTTPDownloader.pagePart(self, data)
+    
+def downloadWithProgress(url, file, contextFactory=None, *args, **kwargs):
+        scheme, host, port, path = client._parse(url)
+        factory = Downloader(url, file, *args, **kwargs)
+        if scheme == 'https':
+            from twisted.internet import ssl
+            if contextFactory is None:
+                contextFactory = ssl.ClientContextFactory( )
+                reactor.connectSSL(host, port, factory, contextFactory)
+        else:
+            reactor.connectTCP(host, port, factory)
+        return factory.deferred
+    
+

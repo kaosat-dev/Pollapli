@@ -1,0 +1,31 @@
+{
+    "Core": {
+        "version": "0.5.0"
+    },
+    "AddOns": [
+        {
+            "name": "Virtual device add on",
+            "version": "0.0.1",
+            "description": "justatest fsdfsdfsdfsdfsfsdfsfsfs",
+            "tags": [
+                "core",
+                "general"
+            ],
+            "img": "virtualDevice.png",
+            "file": "VirtualDeviceAddOn-0.0.1-py2.6.egg"
+        },
+	 {
+            "name": "Doboz_Web",
+            "version": "0.5.0",
+            "description": "This is the doboz-web project, a system for remote monitoring and control of Reprap/Repstrap/Makerbots/3dprinters",
+            "tags": [
+                "reprap",
+                "repstap",
+"makerbot",
+"3d printer"
+            ],
+            "img": "doboz_web.jpg",
+            "file": "ReprapAddOn-0.0.1-py2.6.egg"
+        }
+    ]
+}
