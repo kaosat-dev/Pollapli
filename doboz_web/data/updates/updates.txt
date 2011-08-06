@@ -10,7 +10,8 @@
                 "general"
             ],
             "img": "virtualDevice.png",
-            "file": "VirtualDeviceAddOn-0.0.1-py2.6.egg"
+            "file": "VirtualDeviceAddOn-0.0.1-py2.6.egg",
+            "fileHash": "80e157c0f10baef206ee2de03fae7449"
         },
         {
             "type": "addon",
@@ -24,20 +25,22 @@
                 "3d printer"
             ],
             "img": "doboz_web.jpg",
-            "file": "ReprapAddOn-0.0.1-py2.6.egg"
+            "file": "ReprapAddOn-0.0.1-py2.6.egg",
+            "fileHash": "cb0414dbdf294362c3ef7cc71c15985es"
         },
         {
             "type": "addon",
             "name": "Arduino Example",
-            "version": "0.0.1",
+            "version": "0.0.4",
             "description": "demo addon , for handling a basic arduio type device",
             "tags": [
                 "arduino",
-"demo",
-"example"
+                "demo",
+                "example"
             ],
             "img": "doboz_web.jpg",
-            "file": "ArduinoExampleAddOn-0.0.1-py2.6.egg"
+            "file": "ArduinoExampleAddOn-0.0.1-py2.6.egg",
+            "fileHash": "50f3085bfc3422bade2709f2b389bfb9"
         }
     ]
 }

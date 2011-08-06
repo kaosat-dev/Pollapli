@@ -128,6 +128,39 @@ class AddonsHandler(DefaultRestHandler):
   
             
     def render_DELETE(self,request):
+        """     
+        Handler for DELETE requests of addOns
+        WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes
+        all addons completely
+        """
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        d=UpdateManager.clear_addOns()
+        d.addBoth(r._build_response)
+        return NOT_DONE_YET   
+    
+class GlobalEventsHandler(DefaultRestHandler):
+    isLeaf=False
+    def __init__(self,rootUri="http://localhost",exceptionConverter=None):
+        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.pluginsHandler")
+        self.environmentManager=environmentManager
+        self.envId=envId   
+        self.valid_contentTypes.append("application/pollapli.addonList+json")   
+        self.putChild("addons",NodesHandler(self.rootUri+"/environments/"+str(self.envId),self.exceptionConverter,self.environmentManager,self.envId)  
+)
+
+    def render_GET(self, request):
+        """
+        Handler for GET requests of addOns
+        """
+        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.addonList+json",resource="addOns")
+        d=RequestParser(request,"addOns",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
+        d.addCallbacks(UpdateManager.get_addOns,errback=r._build_response)
+        d.addBoth(r._build_response)
+        return NOT_DONE_YET
+  
+            
+    def render_DELETE(self,request):
         """ 
         Handler for DELETE requests of addOns
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes

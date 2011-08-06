@@ -200,6 +200,9 @@ class Driver(DBObject):
         configSteps={}
         configSteps[0]=["_handle_deviceHandshake","_handle_deviceIdInit"]
         configSteps[1]=["_handle_deviceHandshake","_handle_deviceIdInit","some_other_method"]
+        
+        #just a test
+        self.signalHandler=SignalHander("driver_manager")
          
     def _toDict(self):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
@@ -207,12 +210,9 @@ class Driver(DBObject):
     @defer.inlineCallbacks    
     def setup(self,*args,**kwargs):     
         self.signalChannelPrefix=str((yield self.node.get()).id)
-        self.signalChannel="node"+self.signalChannelPrefix+".driver"
-        self.signalHandler=SignalHander(self.signalChannel)
-        self.signalHandler.add_handler(signal="connected")
-        self.signalHandler.add_handler(signal="disconnected")
-        self.signalHandler.add_handler(signal="pluggedIn")
-        self.signalHandler.add_handler(signal="pluggedOut")
+#        self.signalChannel="node"+self.signalChannelPrefix+".driver"
+#        self.signalHandler=SignalHander(self.signalChannel)
+
         #self.signalHandler.add_handler(signal="dataRecieved")
         self.signalHandler.add_handler(handler=self.send_command,signal="addCommand")
         log.msg("Driver of type",self.driverType ,"setup sucessfully",system="Driver",logLevel=logging.INFO)
@@ -247,18 +247,20 @@ class Driver(DBObject):
     def disconnect(self,*args,**kwargs):
         self.hardwareHandler.disconnect(*args,**kwargs)
     
-    def pluggedIn(self,port):
-        self.signalHandler.send_message("pluggedIn",{"data":port})
+    def pluggedIn(self,port):    
+        self.signalHandler.send_message("driver.plugged_In",self,port)
+   
         
     def pluggedOut(self,port):
         self.isConfigured=False  
         self.isDeviceHandshakeOk=False
         self.isDeviceIdOk=False
         self.isConnected=False
-        self.signalHandler.send_message("pluggedOut",{"data":port})
+        self.signalHandler.send_message("driver.plugged_Out",self,port)
+        #self.signalHandler.send_message("pluggedOut",{"data":port})
     
     def send_signal(self,signal="",data=None,out=False):
-        self.signalHandler.send_message(signal,{"data":data},out)
+        self.signalHandler.send_message(signal,self,data)
     
     def send_command(self,data,sender=None,*args,**kwargs):
         if self.logicHandler:
@@ -656,9 +658,10 @@ class DriverManager(object):
         """
         method to iterate over driver and try to bind them to the correct available port
         """
-                  
+        
         unbndDrivers=cls.connectionsInfos[connectionType].get_unboundDrivers()
-        if len(unbndDrivers):
+        if len(unbndDrivers)>0:
+         
             log.msg("Setting up drivers",logLevel=logging.INFO)
             for driver in unbndDrivers:   
                 yield cls._start_bindAttempt(driver,cls.connectionsInfos[connectionType].bindings) 

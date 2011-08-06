@@ -2,16 +2,20 @@
 .. py:module:: addon_manager
    :synopsis: manager of addons : add ons are packages of plugins + extras, and this manager handles the references to all of them
 """
-import logging, uuid, pkgutil,zipfile ,os,sys,json,shutil
+import logging, uuid, pkgutil,zipfile ,os,sys,json,shutil,time,traceback
 from zipfile import ZipFile
-from twisted.internet import reactor, defer
+from twisted.internet import reactor, defer,task
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from twisted.plugin import getPlugins,IPlugin
 from twisted.web import client
 
+from doboz_web.exceptions import UnknownUpdate
 from doboz_web.core.tools.wrapper_list import WrapperList
 from doboz_web.core.file_manager import FileManager
+from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools import checksum_tools
+
 
 class Update(object):
     """update class: for all type of updates (standard update or addon)
@@ -57,7 +61,11 @@ class UpdateManager(object):
     addons={}
     addOnPath=None
     updatesPath=None
-   
+    maxDownloadAttempts=5
+    signalChannel="update_manager"
+    signalHandler=SignalHander(signalChannel)
+    
+    
     @classmethod
     @defer.inlineCallbacks
     def setup(cls):    
@@ -68,16 +76,19 @@ class UpdateManager(object):
         of available updates, but it does NOT download or install those updates
         """      
         yield cls.update_addOns()
-        yield cls.update_updateList()
+        yield cls.refresh_updateList()
         
         """just for testing"""
         yield cls.download_update("Virtual device add on")
         yield cls.install_update("Virtual device add on")
         yield cls.download_update("Arduino Example")
         yield cls.install_update("Arduino Example")
+        
+        cls.updateCheck= task.LoopingCall(cls.refresh_updateList)
+        cls.updateCheck.start(interval=240,now=False)
         log.msg("Update Manager setup succesfully ",system="Update Manager")
         defer.returnValue(None)
-    
+        
     """
     ####################################################################################
     The following are the "CRUD" (Create, read, update,delete) methods for the general handling of updates/addons
@@ -187,33 +198,63 @@ class UpdateManager(object):
     Helper Methods    
     """
     @classmethod
-    def update_updateList(cls,category=None):
+    def refresh_updateList(cls,category=None):
+        """Fetches the remote update list, downloads it, and if there were any changes, updates
+        the in memory update list accordingly
+        TODO: add last change date checking to file
+        """
+        log.msg("checking for new updates : time",time.time(),logLevel=logging.CRITICAL)
+        
         downloadUrl="http://kaosat.net/pollapli/"
         updateInfoPath=os.path.join(cls.updatesPath,"updates.txt") 
         def mycmp(a, b):
             from pkg_resources import parse_version as V
             return cmp(V(a),V(b))
+         
         
         def info_download_complete(result):
             updateFile=file(updateInfoPath,"r")
             updateInfos=json.loads(updateFile.read())
             updateFile.close()
             addOnCount=0
-            for update in updateInfos["updates"]:               
-                oldUpdate=cls.updates.get(update["name"])    
+            
+            foundUpdates=updateInfos["updates"]  
+            newUpdates=[]
+            updates={}
+    
+            for update in foundUpdates:
+                update["downloadUrl"]=downloadUrl+update["file"].encode('ascii','ignore')
+                update["img"]=downloadUrl+update["img"].encode('ascii','ignore')
+                newUpdate=Update.from_dict(update)
+                updates[newUpdate.name]=newUpdate
+            
+            """we do a old vs new dif"""
+            olds=set(cls.updates.keys())
+            news=set(updates.keys())
+            addedUpdates=list(news-olds)
+            removedUpdates=list(olds-news)
+            
+            """remove not used, and no more valid updates"""
+            for updateName in removedUpdates:
+                update=cls.updates[updateName]
+                if not update.installed and not update.downloaded:
+                    del cls.updates[update.name]
+            
+            for updateName in updates:       
+                oldUpdate=cls.updates.get(updateName)    
+                newUpdate=updates.get(updateName)
                 addUpdate=True
                 if oldUpdate is not None:
-                    if mycmp(oldUpdate.version,update["version"])>=0:
+                    if mycmp(oldUpdate.version,newUpdate.version)>=0:                        
                         addUpdate=False
-                
                 if addUpdate:
-                    update["downloadUrl"]=downloadUrl+update["file"].encode('ascii','ignore')
-                    update["img"]=downloadUrl+update["img"].encode('ascii','ignore')
-                    newUpdate=Update.from_dict(update)
-                    log.msg("New update found and added",str(newUpdate),system="Update Manager",logLevel=logging.DEBUG)
-                    cls.updates[newUpdate.name]=newUpdate
-            
-            return json.dumps(updateInfos)
+                    cls.updates[updateName]=newUpdate
+                    newUpdates.append(newUpdate)
+                
+
+            if len(newUpdates)>0:
+                cls.signalHandler.send_message("new_updates_available",cls,newUpdates)
+        
         def download_failed(failure):
             log.msg("Failed to download update master list: error:",failure.getErrorMessage( ),system="Update Manager",logLevel=logging.CRITICAL)
         
@@ -223,15 +264,31 @@ class UpdateManager(object):
     
     @classmethod
     def download_update(cls,name):
-        """downloads the specified update"""
-        
-        def update_download_complete(result,update):
+        """downloads the specified update, if the download was successfull, it checks the update's md5 checksum
+        versus the one stored in the update info for integretiy, and if succefull, dispatches a success message
+        """
+        def update_download_succeeded(result,update):
             update.downloaded=True
+            cls.signalHandler.send_message("update.download_succeeded",cls,update)
+            log.msg("Successfully downloaded update ",update.name,system="Update Manager",logLevel=logging.DEBUG)
+            
+        def update_download_failed(failure,update,downloadAttempts):
+            downloadAttempts+=1
+            log.msg("Failed to download update or checksum error",update.name," error:",failure.getErrorMessage(),"attempt",downloadAttempts,system="Update Manager",logLevel=logging.CRITICAL)
+            
+            if downloadAttempts>=cls.maxDownloadAttempts:
+                cls.signalHandler.send_message("update.download_failed",cls,update)
+                log.msg("Failed to download update or checksum error after all attemps",update.name," error:",failure.getErrorMessage(),system="Update Manager",logLevel=logging.CRITICAL)
+            
+            else:
+               return downloadWithProgress(update.downloadUrl,downloadPath)\
+    .addCallback(checksum_tools.compare_hash,update.fileHash,downloadPath).addCallbacks(callback=update_download_succeeded,callbackArgs=[update],errback=update_download_failed,errbackArgs=[update,downloadAttempts])
         
-        def update_download_failed(failure,update):
-            log.msg("Failed to download update",update.name," error:",failure.getErrorMessage(),system="Update Manager",logLevel=logging.CRITICAL)
-        
+        update=cls.updates.get(name)
+        if update==None:
+            raise UnknownUpdate()
         update=cls.updates[name]
+        downloadAttempts=0
         downloadPath=None
         if update.type=="addon":
             downloadPath=os.path.join(cls.updatesPath,update.file)
@@ -240,30 +297,34 @@ class UpdateManager(object):
             pass
         
         return downloadWithProgress(update.downloadUrl,downloadPath)\
-    .addCallback(update_download_complete,update).addErrback(update_download_failed)
-    
+    .addCallback(checksum_tools.compare_hash,update.fileHash,downloadPath).addCallbacks(callback=update_download_succeeded,callbackArgs=[update],errback=update_download_failed,errbackArgs=[update,downloadAttempts])#.addErrback(update_download_failed,update)
+     
     @classmethod
     @defer.inlineCallbacks
     def install_update(cls,name):
         """installs the specified update"""
         def install_succeeded(result,update):
             update.installed=True
-            log.msg("Successfully installed update ",update.name,system="Update Manager",logLevel=logging.CRITICAL)
             if os.path.exists(originalFilePath):
                 os.remove(originalFilePath)
+            cls.signalHandler.send_message("update.install_succeeded",cls,update)
+            log.msg("Successfully installed update ",update.name,system="Update Manager",logLevel=logging.DEBUG)
             return True
+        
         def install_failed(failure,update,*args,**kwargs):
-            log.msg("Failed to install update",update.name," error:",failure.getErrorMessage(),system="Update Manager",logLevel=logging.CRITICAL)
+            cls.signalHandler.send_message("update.install_failed",cls,update)
+            log.msg("Failed to install update",update.name," error:",failure.getErrorMessage(),system="Update Manager",logLevel=logging.CRITICAL)      
             return False
             
         update=cls.updates[name]
-        originalFilePath=os.path.join(cls.updatesPath,update.file)
-        if update.type=="addon":
-            shutil.copy2(originalFilePath, os.path.join(cls.addOnPath,update.file))
-            update.installPath=cls.addOnPath
-            yield cls.update_addOns().addCallbacks(callback=install_succeeded,callbackArgs=[update],errback=install_failed,errbackArgs=[update])
-        elif update.type=="update":
-            pass
+        if update.downloaded:
+            originalFilePath=os.path.join(cls.updatesPath,update.file)
+            if update.type=="addon":
+                shutil.copy2(originalFilePath, os.path.join(cls.addOnPath,update.file))
+                update.installPath=cls.addOnPath
+                yield cls.update_addOns().addCallbacks(callback=install_succeeded,callbackArgs=[update],errback=install_failed,errbackArgs=[update])
+            elif update.type=="update":
+                pass
        
     
 
@@ -367,7 +428,7 @@ class UpdateManager(object):
                         addOn.enabled=activate
                     
         d.addCallback(activate)
-        reactor.callLater(2,d.callback,cls.addons)
+        reactor.callLater(0.2,d.callback,cls.addons)
         return d
     
     

@@ -28,6 +28,9 @@ class NoAvailablePort(Exception):
 class UnknownTask(Exception):
     pass
 
+class UnknownUpdate(Exception):
+    pass
+
 class InvalidFile(Exception):
     pass
 

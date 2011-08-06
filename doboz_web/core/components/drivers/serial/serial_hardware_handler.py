@@ -97,7 +97,7 @@ class SerialHardwareHandler(object):
                 log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver",logLevel=logging.CRITICAL)
             else:
                 log.msg("Failed to establish correct connection with device/identify device by id",system="Driver",logLevel=logging.DEBUG)
-                reactor.callLater(1,self.driver.d.errback,failure.Failure())
+                reactor.callLater(0.1,self.driver.d.errback,failure.Failure())
                 
 
         

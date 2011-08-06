@@ -4,8 +4,7 @@ from doboz_web import idoboz_web
 from zope.interface import classProvides
 from twisted.python import log,failure
 from twisted.internet import reactor, defer
-import uuid
-import logging
+import uuid,logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
 from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
 from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler

@@ -22,6 +22,8 @@ from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
 from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.drivers.driver import DriverManager
+from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools import checksum_tools
 
 from twisted.application.service import Application
 from twisted.python import log
@@ -72,7 +74,28 @@ class MainServer():
         self.exceptionConverter.add_exception(DeviceHandshakeMismatch,500,9,"Device handshake failed to match the one defined by the driver")
         self.exceptionConverter.add_exception(InvalidFile,500,10,"Invalid File")
         
+        self.signalChannel="main_signal_listener"
+        self.signalHandler=SignalHander(self.signalChannel)
+        self.signalHandler.add_handler(channel="driver_manager")   
+        self.signalHandler.add_handler(channel="update_manager")
+        
         self.setup()
+        self.do_stuff()
+    @defer.inlineCallbacks
+    def do_stuff(self):
+        #filePath="D:\\data\\projects\\Doboz\\add_ons_egg_tests\\virtualDevice\\dist\\VirtualDeviceAddOn-0.0.1-py2.6.egg"
+        rootAddonsPath="D:\\data\\projects\\Doboz\\add_ons_egg_tests\\"
+        filePath=os.path.join(rootAddonsPath,"virtualDevice\\dist\\VirtualDeviceAddOn-0.0.1-py2.6.egg")
+        filePath=os.path.join(rootAddonsPath,"arduinoExample\\dist\\ArduinoExampleAddOn-0.0.1-py2.6.egg")
+        #filePath=os.path.join(rootAddonsPath,"reprap\\dist\\ReprapAddOn-0.0.1-py2.6.egg")
+        
+        hash=yield checksum_tools.generate_hash(filePath)
+        print ("md5 hash",hash)
+        hashCompare=yield checksum_tools.compare_hash("80e157c0f10baef206ee2de03fae7449",filePath)
+        print("md5 compare", hashCompare)
+    
+    def __call__(self,*args,**kwargs):
+        print("server recieved message",args,kwargs)
         
     @defer.inlineCallbacks
     def setup(self):
