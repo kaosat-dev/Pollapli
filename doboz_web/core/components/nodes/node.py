@@ -1,6 +1,6 @@
 """
 .. py:module:: node
-   :synopsis: generic node class, parent of hardware and software nodes
+   :synopsis: generic node class, parent of hardware and software nodes, node manager class etc
 """
 import logging, time, datetime, uuid,ast
 from twisted.internet import reactor, defer
@@ -10,17 +10,18 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-from doboz_web.core.components.automation.task import TaskManager
-
-from doboz_web.exceptions import UnknownDriver,NoDriverSet
-
 from twisted.plugin import getPlugins
+
 from doboz_web import idoboz_web
+from doboz_web.exceptions import UnknownDriver,NoDriverSet
 from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.drivers.driver import Driver,DriverManager
 from doboz_web.core.tools.vector import Vector
 from doboz_web.core.components.nodes.node_elements import NodeComponent,GenericNodeElement,Tool,Variable,Actor,Sensor
+from doboz_web.core.tools.wrapper_list import WrapperList
+from doboz_web.exceptions import UnknownNodeType,NodeNotFound
 from doboz_web.core.signal_system import SignalHander
+#from doboz_web.core.components.nodes.hardware.reprap.reprap_capability import ReprapCapability
 
  
 
@@ -54,7 +55,7 @@ class Node(DBObject):
         
         self.status=NodeStatus()
         self.driver=None 
-        self.taskManager=TaskManager(self)
+        
         
         #################
         self.variables=[]
@@ -76,7 +77,7 @@ class Node(DBObject):
     @defer.inlineCallbacks
     def setup(self):
         self.driver=yield DriverManager.load(parentNode=self)
-        yield self.taskManager.setup()
+        
         log.msg("Node with id",self.id, "setup successfully", logLevel=logging.CRITICAL,system="Node")
         self.elementsandVarsTest()
         defer.returnValue(None)
@@ -182,11 +183,7 @@ class Node(DBObject):
         cartesianBot.add_child(extruder2)
         
         
-    def __getattr__(self, attr_name):
-        if hasattr(self.taskManager, attr_name):
-            return getattr(self.taskManager, attr_name)
-        else:
-            raise AttributeError(attr_name) 
+    
            
     def _toDict(self):
         return {"node":{"id":self.id,"name":self.name,"description":self.description,"type":self.type,"driver":{"status":{"connected":True},"type":None,"driver":None},"link":{"rel":"node"}}}
@@ -271,4 +268,155 @@ class Node(DBObject):
         reactor.callLater(0,d.callback,self.driver)
         return d
 
+class NodeManager(object):
+    """
+    Class for managing nodes: works as a container, a handler
+    and a central managment point for the list of avalailable nodes
+    (for future plugin based system)
+    """
+    nodeTypes={}
+    #nodeTypes["reprap"]=ReprapCapability
+    
+    def __init__(self,parentEnv):
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.nodeManager")
+        self.parentEnv=parentEnv
+        self.nodes={}
+        self.lastNodeId=0
+        self.signalChannel="node_manager"
+        self.signalHandler=SignalHander(self.signalChannel)
+     
+    @defer.inlineCallbacks    
+    def setup(self):
+        
+        @defer.inlineCallbacks
+        def addNode(nodes,nodeTypes):
+            for node in nodes:
+                node.environment.set(self.parentEnv)
+                self.nodes[node.id]=node
+                yield node.setup()
+               
+        yield Node.all().addCallback(addNode,self.nodeTypes)
+        defer.returnValue(None)
+        
+    """
+    ####################################################################################
+    The following are the "CRUD" (Create, read, update,delete) methods for the general handling of nodes
+    """
+    @defer.inlineCallbacks
+    def add_node(self,name="node",description="",type=None,connector=None,driver=None,*args,**kwargs):
+        """
+        Add a new node to the list of nodes of the current environment
+        Params:
+        name: the name of the node
+        Desciption: short description of node
+        type: the type of the node : very important , as it will be used to instanciate the correct class
+        instance
+        Connector:the connector to use for this node
+        Driver: the driver to use for this node's connector
+        """
+            
+        
+        node= yield Node(name,description,type).save()
+        node.environment.set(self.parentEnv)
+        self.nodes[node.id]=node
 
+        log.msg("Added  node ",name," with id set to ",str(node.id), logLevel=logging.CRITICAL)
+        self.signalHandler.send_message("node.created",self,node)
+        defer.returnValue(node)
+        
+        defer.returnValue(None)
+    
+    def get_nodes(self,filter=None):
+        """
+        Returns the list of nodes, filtered by  the filter param
+        the filter is a dictionary of list, with each key beeing an attribute
+        to check, and the values in the list , values of that param to check against
+        """
+        d=defer.Deferred()
+        
+        def filter_check(node,filter):
+            for key in filter.keys():
+                if not getattr(node, key) in filter[key]:
+                    return False
+            return True
+      
+        def get(filter,nodesList):
+            if filter:
+                return WrapperList(data=[node for node in nodesList if filter_check(node,filter)],rootType="nodes")
+            else:               
+                return WrapperList(data=nodesList,rootType="nodes")
+            
+        d.addCallback(get,self.nodes.values())
+        reactor.callLater(0.5,d.callback,filter)
+        return d
+    
+    def get_node(self,id):
+        if not id in self.nodes.keys():
+            raise NodeNotFound()
+        return self.nodes[id]
+    
+    def update_node(self,id,name,description):
+        """Method for node update"""
+        print("updating node")
+        return self.nodes[id]
+        #self.nodes[id].update()
+    
+    def delete_node(self,id):
+        """
+        Remove a node : this needs a whole set of checks, 
+        as it would delete an node completely 
+        Params:
+        id: the id of the node
+        """
+        d=defer.Deferred()
+        def remove(id,nodes):
+            nodeName=nodes[id].name
+            nodes[id].delete()
+            del nodes[id]
+            log.msg("Removed node ",nodeName,"with id ",id,logLevel=logging.CRITICAL)
+        d.addCallback(remove,self.nodes)
+        reactor.callLater(0,d.callback,id)
+        return d
+            
+    @defer.inlineCallbacks
+    def clear_nodes(self):
+        """
+        Removes & deletes ALL the nodes, should be used with care
+        """
+        for node in self.nodes.values():
+            yield self.delete_node(node.id)        
+        defer.returnValue(None)
+   
+    """
+    ####################################################################################
+    Helper Methods    
+    """
+        
+    def set_driver(self,nodeId,**kwargs):
+        """Method to set a nodes connector's driver 
+        Params:
+        nodeId: the id of the node
+        WARNING: cheap hack for now, always defaults to serial
+        connector
+        """
+        #real clumsy, will be switched with better dynamic driver instanciation
+        driver=None
+        if kwargs["type"]== "teacup":
+            del kwargs["type"]
+            driver=TeacupDriver(**kwargs)
+        elif kwargs["type"]=="fived":
+            del kwargs["type"]
+            driver=FiveDDriver(**kwargs)
+        if driver:
+            self.nodes[nodeId].connector.set_driver(driver)  
+            self.logger.critical("Set driver for connector of node %d with params %s",nodeId,str(kwargs))
+        else:
+            raise Exception("unknown driver ")
+        
+    def start_node(self,nodeId,**kwargs):
+        self.nodes[nodeId].start(**kwargs)
+        
+    def stop_node(self,nodeId):
+        self.nodes[nodeId].stop()
+    
+  

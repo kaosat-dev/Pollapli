@@ -1,32 +1,39 @@
 """
-.. py:module:: environment
-   :synopsis: all things environment
+.. py:module:: environment_manager
+   :synopsis: all things environment related : environment class and environment manager class.
 """
-import os
-import random
-import logging
-import imp
-import inspect
-
-from doboz_web.core.components.nodes.node_manager import NodeManager
+import os, random, logging,imp,inspect, time, datetime, shutil, imp
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
+from twisted.python.log import PythonLoggingObserver
 
+
+from doboz_web.exceptions import EnvironmentAlreadyExists
+from doboz_web.core.components.nodes.node import Node
+from doboz_web.core.components.automation.task import Task
+from doboz_web.core.components.automation.print_action import PrintAction
+from doboz_web.core.components.automation.action import Action
+from doboz_web.core.tools.wrapper_list import WrapperList
+from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.components.drivers.driver import Driver
+from doboz_web.core.components.nodes.node import NodeManager
+from doboz_web.core.components.automation.task import TaskManager
 
 class Environment(DBObject):
     HASMANY = ['nodes']
+    HASMANY = ['tasks']
     def __init__(self,path="/",name="home",description="Add Description here",status="active",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.components.environment")
         self.path=path
         self.name=name
         self.description=description
         self.status=status
         self.nodeManager=NodeManager(self)
+        self.taskManager=TaskManager(self)
                  
     """
     ####################################################################################
@@ -36,10 +43,10 @@ class Environment(DBObject):
     @defer.inlineCallbacks
     def setup(self):
         """
-        Function to instanciate the whole environment from disk (db)
-        This is usually called at first start or after a server restart
+        Method configuring additional elements of the current environment
         """
         yield self.nodeManager.setup()
+        yield self.taskManager.setup()
         #create db if not existent else just connect to it
 #        dbPath=self.path+os.sep+self.name+"_db"
 #        if not os.path.exists(dbPath):    
@@ -47,8 +54,6 @@ class Environment(DBObject):
 #            self.db.add_environment(self.name,self.description)
 #        else:
 #            self.db=db_manager_SQLLITE(dbPath)
-            
-      
         log.msg("Environment ",self.name ,"with id", self.id," setup correctly", logLevel=logging.CRITICAL, system="environment")
         defer.returnValue(None)
         
@@ -58,153 +63,332 @@ class Environment(DBObject):
         """
         #self.nodeManager.tearDown()     
 
-
     def get_environmentInfo(self):
         return self.name
         
     def _toDict(self):
         result={"environment":{"id":self.id,"name":self.name,"description":self.description,"status":self.status,"link":{"rel":"environment"}}}
         return result
-    
+
     def __getattr__(self, attr_name):
         if hasattr(self.nodeManager, attr_name):
-                return getattr(self.nodeManager, attr_name)
+            return getattr(self.nodeManager, attr_name)
+        elif hasattr(self.taskManager, attr_name):
+            return getattr(self.taskManager, attr_name)
         else:
             raise AttributeError(attr_name)
 
     def update(self,name,description,status):
-        print("update in env")
         self.status=status
         self.description=description
+        log.msg("Environment ",name," updated succesfully",system="Environement manager",logLevel=logging.INFO)
         return self
+        
+
+Registry.register(Environment, Node)
+Registry.register(Environment, Task)
+Registry.register(Task, PrintAction)
+Registry.register(Task, Action)
+#Registry.register(Task, Condition)
+Registry.register(Node, Driver)
+
+
+class EnvironmentManager(object):
+    """
+    Class acting as a central access point for all the functionality of environments
+    """
+    envPath=None
+    environments={}
+    idCounter=1
+    def __init__(self,envPath):
+        self.logger=log.PythonLoggingObserver("dobozweb.core.components.environments.environmentManager")
+        self.path=EnvironmentManager.envPath
+        self.idCounter=EnvironmentManager.idCounter
+        
+        self.signalChannel="environment_manager"
+        self.signalHandler=SignalHander(self.signalChannel)
+    
+    @classmethod
+    @defer.inlineCallbacks
+    def setup(cls,*args,**kwargs):
+        """Retrieve all existing environments from disk"""
+        maxFoundId=1
+        for fileDir in os.listdir(EnvironmentManager.envPath): 
+            if os.path.isdir(os.path.join(EnvironmentManager.envPath,fileDir)):        
+                   
+                envName= fileDir
+                envPath=os.path.join(EnvironmentManager.envPath,envName)
+                dbPath=os.path.join(envPath,envName)+".db"
+                if os.path.exists(dbPath):
+                    Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbPath,check_same_thread=False)
+                    
+                    @defer.inlineCallbacks        
+                    def addEnv(env,maxFoundId):
+                        EnvironmentManager.environments[env[0].id]=env[0]
+                        yield env[0].setup()
+                        if env[0].id>maxFoundId:
+                            maxFoundId=env[0].id
+                        
+                        defer.returnValue(maxFoundId)
+                    
+                    maxFoundId=yield Environment.find().addCallback(addEnv,maxFoundId)
+                    EnvironmentManager.idCounter=maxFoundId+1
+                    #temporary: this should be recalled from db from within the environments ?
+        
+        log.msg("Environment manager setup correctly", system="environement manager", logLevel=logging.CRITICAL)
+        
+    def __getattr__(self, attr_name):
+        for env in self.environments.values():
+            if hasattr(env, attr_name):
+                return getattr(env, attr_name)
+        raise AttributeError(attr_name)
+        
+        
+    def stop(self):
+        """
+        Shuts down the environment manager and everything associated with it : ie EVERYTHING !!
+        Should not be called in most cases
+        """
+        pass
+
     """
     ####################################################################################
-    The following functions are typically hardware manager/hardware nodes and sensors related, pass through methods for the most part
-    """  
+    The following are the "CRUD" (Create, read, update,delete) methods for the general handling of environements
+    """
+    @defer.inlineCallbacks
+    def add_environment(self,name="home_test",description="Add Description here",status="frozen"):
+        """
+        Add an environment to the list of managed environements : 
+        Automatically creates a new folder and launches the new environement auto creation
+        Params:
+        EnvName: the name of the environment
+        description:a short description of the environment
+        status: either frozen or live : whether the environment is active or not
+        """
+        envPath=os.path.join(self.path,name)  
+        dbpath=os.path.join(envPath,name)+".db"
+        
+        #if such an environment does not exist, add it
+        doCreate=True
+        if name in os.listdir(self.path):
+            if os.path.exists(os.path.join(self.path,name,dbpath)):
+                doCreate=False
+        else:
+            os.mkdir(envPath)
+        
+        if doCreate:
+            Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbpath,check_same_thread=False)
+            
+            env=Environment(path=envPath,name=name,description=description,status=status)
+            yield self._generateDatabase()
+            yield env.save()  
+            
+            """rather horrid hack of sorts, required to have different, sequential id in the different dbs"""
+            self.force_id(self.idCounter)  
+            Registry.DBPOOL.close()
+            Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbpath,check_same_thread=False)
+            
+            def addEnv(env):
+                self.environments[env[0].id]=env[0]
+                self.idCounter+=1
+            yield Environment.find().addCallback(addEnv)
+            
+            env=self.environments[self.idCounter-1]
+            self.signalHandler.send_message("environment.created",self,env)
+            log.msg("Adding environment named:",name ," description:",description,"with id",env.id, system="environment manager", logLevel=logging.CRITICAL)         
+            defer.returnValue(env)
+        else:
+            raise EnvironmentAlreadyExists()
+
+        defer.returnValue(None) 
     
-#    def add_node(self,type,name="",description="",params=None):
-#        """
-#        Add a node to this environement, via its node manager (passthrough function)
-#        Params:
-#        name:the name of the node
-#        Desciption: short description of node
-#        NodeType: nodetype id
-#        """
+
+    def get_environments(self,filter=None):
+        """
+        Returns the list of environments, filtered by  the filter param
+        the filter is a dictionary of list, with each key beeing an attribute
+        to check, and the values in the list , values of that param to check against
+        """
+        d=defer.Deferred()
+        
+        def filter_check(env,filter):
+            for key in filter.keys():
+                if not getattr(env, key) in filter[key]:
+                    return False
+            return True
       
-        #self.nodeManager.add_node(type,params)
-        
-    def remove_node(self,nodeId):
-        """
-        Remove a hardware node from this environement , via its node manager (passthrough function)
-        Params:nodeId : the id of the node we want removed
-        """
-        #self.nodeManager.remove_node(nodeId)
-        
-    def set_connectorToNode(self,nodeName):
-        """
-        Set a node's connector
-        """
-        #self.n
+        def get(filter,envsList):
+            if filter:
+                #return [env for env in self.environments if getattr(env, "id") in filter["id"]]
+                #return [env for env in self.environments if [True for key in filter.keys() if getattr(env, key)in filter[key]]]
+              
+                return WrapperList(data=[env for env in envsList if filter_check(env,filter)],rootType="environments")
+            else:
+                return WrapperList(data=envsList,rootType="environments")
+            
+        d.addCallback(get,self.environments.values())
+        reactor.callLater(0.5,d.callback,filter)
+        return d
     
-    def add_actor(self,title,description,type,mode,params,node,port):
+    def get_environment(self,envId):
+        return self.environments[envId]
+    
+    def update_environment(self,id,name,description,status):
+        #print("updating env",id,name,description,status)
+        return self.environments[id].update(name,description,status)
+    
+    def remove_environment(self,id):
         """
-        Add an actor to this environement, via its node manager (passthrough function)
+        Remove an environment : this needs a whole set of checks, 
+        as it would delete an environment completely (very dangerous)
         Params:
-        title:the name of the actor
-        Desciption: short description of actor
-        Mode: mode id
-        Params: its working parameters
-        Node: its parent node id
-        """ 
-        #self.nodeManager.add_actor(node,params) 
-          
-    def remove_actor(self,actorId):
+        name: the name of the environment
         """
-        Remove a actor from this environement , via its node manager (passthrough function)
-        Params:actorId : the id of the actor we want removed
-        """
-    
-    def add_sensor(self,node,params):
+        d=defer.Deferred()
+        def remove(id,envs,path):
+            try:
+                Registry.DBPOOL.close()
+                envName=envs[id].name
+                envPath=os.path.join(path,envName)    
+                #self.environments[envName].shutdown()
+                del envs[id]
+                if os.path.isdir(envPath): 
+                    shutil.rmtree(envPath)
+                            #self.logger.critical("Removed and deleted envrionment: '%s' at : '%s'",envName,envPath) 
+                    log.msg("Removed environment ",envName,"with id ",id, system="environment manager",logLevel=logging.CRITICAL)
+            except:
+                pass
+                #should raise  specific exception
+                #raise Exception("failed to delete env")
+        d.addCallback(remove,self.environments,self.path)
+        reactor.callLater(0,d.callback,id)
+        return d
+
         
+    @defer.inlineCallbacks
+    def clear_environments(self):
         """
-        Add a sensor to this environement, via its node manager (passthrough function)
-        Params:
-        title:the name of the sensor
-        Desciption: short description of sensor
-        Mode: mode id
-        Node: its parent node id
-        port: its pin/port (might be too arduino specific
-        """ 
-        #self.nodeManager.add_sensor(node,params)   
-        
-    def remove_sensor(self,sensorId):
+        Removes & deletes ALL the environments, should be used with care
         """
-        Remove a sensor from this environement , via its node manager (passthrough function)
-        Params:sensorId : the id of the sensor we want removed
-        """
-        #self.nodeManager.remove_sensor(sensorId)    
-    
-    def add_sensorType(self,title,description):
-        """
-        Add a sensor type to this environement : might be usefull to make this a passthrough method too , to have for example a dictionarry
-        inside the node mgr which maps sensorType ids to their names or whatver
-        Params:
-        title:the name of the sensor type
-        Desciption: short description of sensor type   
-        """ 
-        #self.db.add_sensorType(title,description)
-        
-    def remove_sensorType(self,title):
-        """
-        Remove a sensor from this environement , via its node manager (passthrough function)
-        Params:sensorId : the id of the node we want removed
-        """
-        #self.db.delete_sensorType(title)   
-    
+        print(self.environments)
+        for env in self.environments.values():
+            yield self.remove_environment(env.id)        
+        defer.returnValue(None)
     """
     ####################################################################################
-    The following methods are typically called by the scheduler / or scheduler related
-    """       
+    Helper Methods    
+    """
+    @defer.inlineCallbacks
+    def force_id(self,id):     
+        query=   '''UPDATE environments SET id ='''+str(id)+''' where id=1'''
+        yield Registry.DBPOOL.runQuery(query)
+        defer.returnValue(None)
     
-    #self.nodeManager.add_sensorSchedule(target,targetParams,startTime,function,functionparams,interval,title,description)
-    #too db specific ?    
-    def add_sensorSchedule(self,target,targetParams,startTime,function,functionparams,interval,name,description):  
-        target=target.lower() 
-#        if target == "environment":    
-#            print("add task to environment")
-#        elif target == "node":
-#            print("add task to environment")
-#        elif target == "sensor":
-#            print("add task to sensor")   
-        #print("locals",locals())
+    @defer.inlineCallbacks
+    def _generateMasterDatabase(self):
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE environments(
+             id INTEGER PRIMARY KEY ,
+             name TEXT,
+             status TEXT NOT NULL DEFAULT "Live",
+             description TEXT
+             )''')
+    @defer.inlineCallbacks
+    def _generateDatabase(self):
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE addons(
+             id INTEGER PRIMARY KEY,
+             name TEXT,
+             description TEXT,
+             active boolean NOT NULL default true           
+             )''')
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE environments(
+             id INTEGER PRIMARY KEY,
+             name TEXT,
+             description TEXT,
+             status TEXT NOT NULL DEFAULT "Live"
+             )''')
         
-        sensorId=targetParams.get("sensorId",None) 
-        nodeId=targetParams.get("nodeId",None) 
-        #self.nodeManager.add_sensorSchedule(target,targetParams,startTime,function,functionparams,interval,name,description)
-        self.nodeManager.add_sensorSchedule2(nodeId,sensorId,startTime,function,functionparams,interval,name,description)
-    
-    def remove_task(self,title):
-        """
-        Removes a task from the database as well as the scheduler
-        """
-        #self.db.delete_task(title)
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE nodes(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             environment_id INTEGER NOT NULL,
+             type TEXT NOT NULL ,
+             name TEXT,          
+             description TEXT,
+             recipe TEXT,
+            FOREIGN KEY(environment_id) REFERENCES environments(id) 
+             )''')
         
-    def retrieve_data(self,sensorId):
-        """
-        Enqueue/call a data retrieval command on one sensor: this should NOT be blocking, but asynch
-        """
-        self.nodeManager.retieve_data(sensorId)
+      #FOREIGN KEY(node_id) REFERENCES nodes(id)  
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE drivers(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             node_id INTEGER NOT NULL,
+             driverType TEXT NOT NULL,
+             deviceType TEXT NOT NULL ,
+             deviceId TEXT,
+             options BLOB  ,
+             FOREIGN KEY(node_id) REFERENCES nodes(id)      
+             )''')
         
-    def get_sensorData(self,nodeId,sensorId,startDate,endDate):
-        pass    
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE tasks(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             environment_id INTEGER NOT NULL,
+             name TEXT,          
+             description TEXT,
+             type TEXT,
+             params TEXT,
+             FOREIGN KEY(environment_id) REFERENCES environments(id)  
+             )''')
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE actions(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             task_id INTEGER NOT NULL,
+             actionType TEXT,          
+             params TEXT,
+             FOREIGN KEY(task_id) REFERENCES tasks(id)
+             )''')
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE conditions(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             task_id INTEGER NOT NULL,
+             name TEXT,          
+             description TEXT,
+             FOREIGN KEY(task_id) REFERENCES tasks(id)
+             )''')
         
-    #too arduino specific
-    def set_portDependency(self,port,parentPort,threshold,compareType):
-        pass
-    
-    def set_trigger(self,slave,master,threshold,compareType):
-        pass
-    
-    
-    
+       
+             
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE sensors(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             node_id INTEGER NOT NULL,
+             captureType TEXT NOT NULL,
+             captureMode TEXT NOT NULL DEFAULT "Analog",
+             type TEXT NOT NULL ,
+             realName TEXT NOT NULL,
+             name TEXT,
+             description TEXT,
+             FOREIGN KEY(node_id) REFERENCES nodes(id)
+             )''')
+        
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE readings(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             node_id INTEGER NOT NULL,
+             sensor_id INTEGER NOT NULL,
+             data INTEGER NOT NULL,
+             dateTime TEXT NOT NULL,
+             FOREIGN KEY(node_id) REFERENCES nodes(id),
+             FOREIGN KEY(sensor_id) REFERENCES sensors(id)
+             )''')
+        
+        defer.returnValue(None)
+      
+#        Registry.DBPOOL.runQuery('''CREATE TABLE Actors(
+#            id INTEGER PRIMARY KEY AUTOINCREMENT,
+#             env_id INTEGER NOT NULL,
+#             node_id INTEGER NOT NULL,
+#             auto_id INTEGER NOT NULL DEFAULT 1,
+#             realName TEXT NOT NULL,
+#             params TEXT,
+#             name TEXT,
+#             description TEXT,
+#             FOREIGN KEY(env_id) REFERENCES Environments(id),
+#             FOREIGN KEY(node_id) REFERENCES Nodes(id),
+#             FOREIGN KEY(auto_id) REFERENCES Automation(id)
+#             )''').addCallback(self._dbGeneratedOk) 
     

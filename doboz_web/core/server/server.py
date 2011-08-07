@@ -12,7 +12,7 @@ from twisted.plugin import pluginPackagePaths
 from twisted.internet import reactor, defer
 
 
-from doboz_web.core.components.environments.environment_manager import EnvironmentManager
+from doboz_web.core.components.environments.environment import EnvironmentManager
 from doboz_web.core.server.rest.handlers.environment_handlers import EnvironmentsHandler
 from doboz_web.core.server.rest.handlers.config_handlers import ConfigHandler
 
@@ -78,6 +78,8 @@ class MainServer():
         self.signalHandler=SignalHander(self.signalChannel)
         self.signalHandler.add_handler(channel="driver_manager")   
         self.signalHandler.add_handler(channel="update_manager")
+        self.signalHandler.add_handler(channel="environment_manager")
+        self.signalHandler.add_handler(channel="node_manager")
         
         self.setup()
         self.do_stuff()

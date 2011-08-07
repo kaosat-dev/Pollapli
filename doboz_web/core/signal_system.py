@@ -32,32 +32,13 @@ class SignalHander(object):
         pass
     
     def __call__(self,signal=None,sender=None,*args,**kwargs):
-        #log.msg(self.channel, " recieved ",signal," from ",sender, "with data" ,args,kwargs,logLevel=logging.CRITICAL)
-        realsignal=signal
-        try:
-            realsignal=signal.split('.')
-            realsignal=realsignal[len(realsignal)-1]
-        except:
-            realsignal=signal
        
-        log.msg(self.channel, " recieved ",realsignal," from ",sender, "with data" ,args,kwargs,logLevel=logging.CRITICAL)
+        log.msg(self.channel, " recieved ",signal," from ",sender, "with data" ,args,kwargs,logLevel=logging.CRITICAL)
     
-    def send_message_old(self,sender=None,signal=None,message=None,*args,**kwargs):
-        log.msg("sending message ",message," from ",sender, "with signal" ,signal,logLevel=logging.DEBUG)
-
-        realsig=self.channel+'.'+signal
-             
-        if sender is None:
-            err=louie.send(realsig, self.channel,**message or {})
-        else:
-            err=louie.send(realsig, sender,**message or {})
             
     def send_message(self,message="",sender=None,params=None,*args,**kwargs):
         realParams={"data":params,"realsender":sender}
-        
         log.msg("sending message ",message," from ",sender, "to channel" ,self.channel,"with params",realParams,logLevel=logging.DEBUG)
-
-        
         err=louie.send(message, self.channel,**realParams )
         
         

@@ -20,7 +20,7 @@ def helper():
     except:
         pass
     try:
-        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"testNode","type":"dummy","description":"just a test node"}')
+        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"testNode","type":"reprap","description":"just a test node"}')
     except:
         pass
     try:
@@ -28,7 +28,7 @@ def helper():
     except:
         pass
     try:
-        client.post('rest/environments/1/nodes/2/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"arduinoexampledriver","driverParams":{"speed":115200}}')
+        client.post('rest/environments/1/nodes/2/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"virtualdevicedriver","driverParams":{"speed":19200}}')
     except:
         pass
     try:

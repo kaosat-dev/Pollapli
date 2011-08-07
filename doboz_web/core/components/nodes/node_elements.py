@@ -6,6 +6,7 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
+from twisted.internet.defer import DeferredQueue
 
 class NodeElement(object):
     """A sub element of a node : such as actor, sensor etc """
@@ -133,6 +134,8 @@ class Variable(object):
         """
         self.attachedSensors={}
         self.attachedActors={}
+        
+        self.commanqueue=DeferredQueue()
         
          
     def attach_sensor(self,sensor,channel=None,*args,**kwargs):

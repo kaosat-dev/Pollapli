@@ -43,7 +43,7 @@ class TaskStatus(object):
  
     
 class Task(DBObject):
-    BELONGSTO   = ['node']      
+    BELONGSTO   = ['environment']      
     """
     Base class for tasks (printing , scanning etc
     """
@@ -70,9 +70,9 @@ class Task(DBObject):
     
     @defer.inlineCallbacks  
     def setup(self):
-        self.signalChannelPrefix=str((yield self.node.get()).id)
-        self.signalChannel="node"+self.signalChannelPrefix+".task"+str(self.id)
-        self.driverChannel="node"+self.signalChannelPrefix+".driver"
+        self.signalChannelPrefix=str((yield self.environment.get()).id)
+        self.signalChannel="environment"+self.signalChannelPrefix+".task"+str(self.id)
+        self.driverChannel="environment"+self.signalChannelPrefix+".driver"
         self.signalHandler=SignalHander(self.signalChannel)
         log.msg("Task setup sucessfully",system="Task",logLevel=logging.CRITICAL) 
     
@@ -124,14 +124,14 @@ class Task(DBObject):
 
 class TaskManager(object):
     
-    def __init__(self,parentNode):
+    def __init__(self,parentEnvironment):
         self.tasks={}
-        self.parentNode=parentNode
-        self.connector=parentNode.driver
+        self.parentEnvironment=parentEnvironment
+    
     
     @defer.inlineCallbacks
     def setup(self):         
-        yield self.load(self.parentNode)
+        yield self.load(self.parentEnvironment)
         defer.returnValue(None)
         
     
@@ -141,7 +141,7 @@ class TaskManager(object):
     """
     
     @defer.inlineCallbacks
-    def create(parentNode=None,taskType=None,taskParams={},*args,**kwargs):     
+    def create(parentEnvironment=None,taskType=None,taskParams={},*args,**kwargs):     
         task=None
         if taskType:
             plugins= (yield UpdateManager.get_plugins(idoboz_web.ITask))
@@ -149,7 +149,7 @@ class TaskManager(object):
                 if taskType==taskKlass.__name__.lower():
                     task=yield Task(taskType=taskType,options=taskParams).save()
                     yield task.save()  
-                    task.node.set(parentNode)
+                    task.environment.set(parentEnvironment)
                     yield task.setup()
                     break
         else:
@@ -159,15 +159,15 @@ class TaskManager(object):
         defer.returnValue(task)
         
     @defer.inlineCallbacks
-    def load(self,parentNode=None,taskId=None,taskType=None,*args,**kwargs):
+    def load(self,parentEnvironment=None,taskId=None,taskType=None,*args,**kwargs):
         if taskId is not None:
             """For retrieval of single task"""
-            task=yield Task.find(where=['node_id = ? and task_id=?', parentNode.id,taskId])
+            task=yield Task.find(where=['environment_id = ? and task_id=?', parentEnvironment.id,taskId])
             defer.returnValue(task)
         else:
-            tasks=yield Task.find(where=['node_id = ?', parentNode.id])
+            tasks=yield Task.find(where=['environment_id = ?', parentEnvironment.id])
             for task in tasks:
-                task.node.set(parentNode) 
+                task.environment.set(parentEnvironment) 
                 yield task.setup()
                 #temp hack           
                 actions=yield PrintAction.find(where=['task_id = ?', task.id])              
@@ -189,18 +189,18 @@ class TaskManager(object):
     @defer.inlineCallbacks
     def add_task(self,name="task",description="",taskType=None,params={},*args,**kwargs):
         """
-        Add a new node to the list of nodes of the current environment
+        Add a new task to the list of task of the current environment
         Params:
-        name: the name of the node
-        Desciption: short description of node
-        type: the type of the node : very important , as it will be used to instanciate the correct class
+        name: the name of the task
+        Desciption: short description of task
+        type: the type of the task : very important , as it will be used to instanciate the correct class
         instance
-        Connector:the connector to use for this node
-        Driver: the driver to use for this node's connector
+        Connector:the connector to use for this taks
+       
         """
                 
         task= yield Task(name,description,type,params).save()
-        task.node.set(self.parentNode)  
+        task.environment.set(self.parentEnvironment)  
         yield task.setup()
         
         action=yield PrintAction(parentTask=task,**params).save()
@@ -210,10 +210,10 @@ class TaskManager(object):
         task.start()
             
         print("tasks",self.tasks)
-#            capability= yield NodeManager.nodeTypes[type](name,description).save()
+#            capability= yield NodeManager.environmentTypes[type](name,description).save()
 #            capability.environment.set(self.parentEnv)
-#            capability.node.set(node)
-#            node.capability=capability
+#            capability.environment.set(environment)
+#            environment.capability=capability
             #task.events.OnExited+=self._on_task_exited
         log.msg("Added  task ",name," of type ",type," with id set to ",str(task.id), logLevel=logging.CRITICAL)
         defer.returnValue(task)
@@ -237,7 +237,7 @@ class TaskManager(object):
             print("taskList",tasksList)
             if filter:
                 
-                return WrapperList(data=[task for task in nodesList if filter_check(task,filter)],rootType="tasks")
+                return WrapperList(data=[task for task in environmentsList if filter_check(task,filter)],rootType="tasks")
             else:               
                 return WrapperList(data=tasksList,rootType="tasks")
             
