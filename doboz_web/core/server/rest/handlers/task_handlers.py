@@ -14,7 +14,7 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.server.rest.exception_converter import ExceptionConverter
+
 
 class TasksHandler(DefaultRestHandler):
     """
@@ -23,8 +23,8 @@ class TasksHandler(DefaultRestHandler):
     Listing all tasks
     """
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.tasksHandler")
         self.environmentManager=environmentManager
         self.envId=envId
@@ -35,7 +35,7 @@ class TasksHandler(DefaultRestHandler):
       
     def getChild(self, id, request):
         try:
-            return TaskHandler(self.rootUri,self.exceptionConverter,self.environmentManager,self.envId,int(id))  
+            return TaskHandler(self.rootUri,self.environmentManager,self.envId,int(id))  
         except ValueError :
              return self#no id , so return self
     
@@ -52,7 +52,7 @@ class TasksHandler(DefaultRestHandler):
             params=result.get("params")
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_task(name=name,description=description,type=type,params=params)))
              
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.task+json",resource="task")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task+json",resource="task")
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -62,7 +62,7 @@ class TasksHandler(DefaultRestHandler):
         """
         Handler for GET requests of tasks
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.taskList+json",resource="tasks")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.taskList+json",resource="tasks")
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environment(self.envId).get_tasks,errback=r._build_response)
         d.addBoth(r._build_response)
@@ -74,7 +74,7 @@ class TasksHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes ALL
         tasks within a node
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        r=ResponseGenerator(request,status=200)
         d= self.environmentManager.get_environment(self.envId).clear_nodes()
         d.addBoth(r._build_response)
         return NOT_DONE_YET
@@ -89,8 +89,8 @@ class TaskHandler(DefaultRestHandler):
     Listing all tasks
     """
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,taskId=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None,taskId=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.taskHandler")
         self.environmentManager=environmentManager
         self.envId=envId
@@ -99,7 +99,7 @@ class TaskHandler(DefaultRestHandler):
         self.validGetParams.append('id')
         #self.validGetParams.append('type')
         subPath=self.rootUri+"/status"
-        self.putChild("status",TaskStatusHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.taskId)  
+        self.putChild("status",TaskStatusHandler(subPath,self.environmentManager,self.envId,self.taskId)  
 )
 
     
@@ -116,7 +116,7 @@ class TaskHandler(DefaultRestHandler):
             params=result.get("params")
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_task(name=name,description=description,type=type,params=params)))
              
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.task+json",resource="task")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task+json",resource="task")
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -126,7 +126,7 @@ class TaskHandler(DefaultRestHandler):
         """
         Handler for GET requests of tasks
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.task+json",resource="task")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.task+json",resource="task")
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environment(self.envId).get_tasks,errback=r._build_response)
         d.addBoth(r._build_response)
@@ -138,7 +138,7 @@ class TaskHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes ALL
         tasks within a node
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        r=ResponseGenerator(request,status=200)
         d= self.environmentManager.get_environment(self.envId).clear_nodes()
         d.addBoth(r._build_response)
         return NOT_DONE_YET  
@@ -148,8 +148,8 @@ Task status rest handler
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 class TaskStatusHandler(DefaultRestHandler):
     isLeaf=True
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,taskId=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None,taskId=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.taskStatusHandler")
         self.environmentManager=environmentManager
         self.envId=envId   
@@ -174,7 +174,7 @@ class TaskStatusHandler(DefaultRestHandler):
             elif stop:
                 defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_task(self.taskId).stop()))
             
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.task.status+json",resource="taskstatus")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task.status+json",resource="taskstatus")
         d=RequestParser(request,"task status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -187,7 +187,7 @@ class TaskStatusHandler(DefaultRestHandler):
         """
         def extract_args(result):
             return(self.environmentManager.get_environment(self.envId).get_task(self.taskId).status)            
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.task.status+json",resource="taskstatus")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.task.status+json",resource="taskstatus")
         d=RequestParser(request,"task status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
         d.addBoth(r._build_response)     

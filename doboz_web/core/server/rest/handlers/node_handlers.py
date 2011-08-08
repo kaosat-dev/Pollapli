@@ -14,7 +14,6 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.core.server.rest.handlers.driver_handlers import DriverHandler
 
 class NodesHandler(DefaultRestHandler):
@@ -25,9 +24,8 @@ class NodesHandler(DefaultRestHandler):
     etc
     """
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.nodesHandler")
+    def __init__(self,rootUri="",environmentManager=None,envId=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.environmentManager=environmentManager
         
         self.envId=envId
@@ -37,7 +35,7 @@ class NodesHandler(DefaultRestHandler):
       
     def getChild(self, id, request):
         try:
-            return NodeHandler(self.rootUri,self.exceptionConverter,self.environmentManager,self.envId,int(id))  
+            return NodeHandler(self.rootUri+"/"+str(id),self.environmentManager,self.envId,int(id))  
         except ValueError :
              return self#no id , so return self
     
@@ -53,7 +51,7 @@ class NodesHandler(DefaultRestHandler):
             type=result.get("type") 
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_node(name=name,description=description,type=type)))
              
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.node+json",resource="node")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.node+json",resource="node",rootUri=self.rootUri)
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -64,7 +62,7 @@ class NodesHandler(DefaultRestHandler):
         """
         Handler for GET requests of nodes
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.nodeList+json",resource="nodes")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.nodeList+json",resource="nodes",rootUri=self.rootUri)
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()      
         d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).get_nodes(params),errback=r._build_response)
         d.addBoth(r._build_response)
@@ -78,7 +76,7 @@ class NodesHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes ALL
         nodes
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d= self.environmentManager.get_environment(self.envId).clear_nodes()
         d.addBoth(r._build_response)
         d.callback(None)
@@ -89,23 +87,22 @@ Single node rest handler
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 class NodeHandler(DefaultRestHandler):
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,nodeId=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="",environmentManager=None,envId=None,nodeId=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.nodeHandler")
         self.environmentManager=environmentManager
         self.envId=envId   
         self.nodeId=nodeId
         self.valid_contentTypes.append("application/pollapli.node+json")   
-        subPath=self.rootUri+"/environments/"+str(self.envId)+"/nodes/"+str(self.nodeId)+"/drivers"
-        self.putChild("driver",DriverHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
+        subPath=self.rootUri+"/driver"
+        self.putChild("driver",DriverHandler(subPath,self.environmentManager,self.envId,self.nodeId)  
 )
        
-    
     def render_GET(self, request):
         """
         Handler for GET requests of node
         """   
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.node+json",resource="node")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.node+json",resource="node",rootUri=self.rootUri)
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(lambda params:self.environmentManager.get_environment(self.envId).get_node(self.nodeId),errback=r._build_response)
         d.addBoth(r._build_response)     
@@ -124,7 +121,7 @@ class NodeHandler(DefaultRestHandler):
             id=self.nodeId
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).update_node(id=id,name=name,description=description)))
         
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.node+json",resource="node")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.node+json",resource="node",rootUri=self.rootUri)
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -137,7 +134,7 @@ class NodeHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes the
         current environment completely
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d=self.environmentManager.get_environment(self.envId).delete_node(self.nodeId)
         d.addBoth(r._build_response)
         d.callback(None)

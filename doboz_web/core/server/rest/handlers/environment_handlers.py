@@ -14,7 +14,6 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.core.server.rest.handlers.node_handlers import NodesHandler
 from doboz_web.core.server.rest.handlers.task_handlers import TasksHandler
 
@@ -25,8 +24,8 @@ class EnvironmentsHandler(DefaultRestHandler):
     Listing all environments
     """
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="",environmentManager=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.environmentsHandler")
         self.environmentManager=environmentManager
         
@@ -36,7 +35,7 @@ class EnvironmentsHandler(DefaultRestHandler):
       
     def getChild(self, id, request):
         try:
-            return EnvironmentHandler(self.rootUri+"/environments",self.exceptionConverter,self.environmentManager,int(id))  
+            return EnvironmentHandler(self.rootUri+"/"+str(id),self.environmentManager,int(id))  
         except ValueError :
              return self#no id , so return self
     
@@ -52,7 +51,7 @@ class EnvironmentsHandler(DefaultRestHandler):
             status=result.get("status") or "live"
             defer.returnValue((yield self.environmentManager.add_environment(name=name,description=description,status=status)))
              
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.environment+json",resource="environment")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.environment+json",resource="environment",rootUri=self.rootUri)
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -63,7 +62,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         """
         Handler for GET requests of environments
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environmentList+json",resource="environments")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.environmentList+json",resource="environments",rootUri=self.rootUri)
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environments,errback=r._build_response)
         d.addBoth(r._build_response)
@@ -76,7 +75,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes ALL
         environments
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d= self.environmentManager.clear_environments()
         d.addBoth(r._build_response)
         d.callback(None)
@@ -87,18 +86,20 @@ Single environment rest handler
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 class EnvironmentHandler(DefaultRestHandler):
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="",environmentManager=None,envId=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.environmentsHandler")
         self.environmentManager=environmentManager
         self.envId=envId   
         self.valid_contentTypes.append("application/pollapli.environment+json")   
-        self.putChild("nodes",NodesHandler(self.rootUri+"/environments/"+str(self.envId),self.exceptionConverter,self.environmentManager,self.envId)  
+        
+        subPath=self.rootUri+"/nodes"
+        self.putChild("nodes",NodesHandler(subPath,self.environmentManager,self.envId)  
 )
-        subPath=self.rootUri+"/environments/"+str(self.envId)+"/tasks"
-        self.putChild("tasks",TasksHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId)  
+        subPath=self.rootUri+"/tasks"
+        self.putChild("tasks",TasksHandler(subPath,self.environmentManager,self.envId)  
 )
-       # self.putChild("structure",TasksHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
+       # self.putChild("structure",TasksHandler(subPath,self.environmentManager,self.envId,self.nodeId)  
 #)
         
     def render_GET(self, request):
@@ -107,7 +108,7 @@ class EnvironmentHandler(DefaultRestHandler):
         """
         def extract_args(result):
             return(self.environmentManager.get_environment(self.envId))            
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environment+json",resource="environment")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.environment+json",resource="environment",rootUri=self.rootUri)
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
         d.addBoth(r._build_response)  
@@ -127,7 +128,7 @@ class EnvironmentHandler(DefaultRestHandler):
             id=self.envId
             defer.returnValue((yield self.environmentManager.update_environment(id=id,name=name,description=description,status=status)))
         
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environment+json",resource="environment")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.environment+json",resource="environment",rootUri=self.rootUri)
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -140,7 +141,7 @@ class EnvironmentHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes the
         current environment completely
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d=self.environmentManager.remove_environment(self.envId)
         d.addBoth(r._build_response)
         d.callback(None)

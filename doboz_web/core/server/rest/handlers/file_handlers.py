@@ -14,7 +14,7 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.server.rest.exception_converter import ExceptionConverter
+
 
 class FilesHandler(DefaultRestHandler):
     """
@@ -23,8 +23,8 @@ class FilesHandler(DefaultRestHandler):
     Listing all environments
     """
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="http://localhost"):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.filessHandler")
         
         self.valid_contentTypes.append("application/pollapli.fileList+json")   
@@ -48,7 +48,7 @@ class FilesHandler(DefaultRestHandler):
             status=result.get("status") or "live"
             defer.returnValue((yield self.environmentManager.add_environment(name=name,description=description,status=status)))
              
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.environment+json",resource="environment")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.environment+json",resource="environment")
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -62,7 +62,7 @@ class FilesHandler(DefaultRestHandler):
 #        try:     
 #            finalFileList=map(self.fullPrintFileInfo, fileList)
 #            data={"files": finalFileList }
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environmentsList+json",resource="environments")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.environmentsList+json",resource="environments")
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environments,errback=r._build_response)
         d.addBoth(r._build_response)
@@ -78,7 +78,7 @@ class FilesHandler(DefaultRestHandler):
 #            filePath=os.path.join(server.rootPath,"files","machine","printFiles",fileName)
 #            os.remove(filePath)
 #            self.logger.critical("Deleted file: %s",fileName)
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        r=ResponseGenerator(request,status=200)
         d= self.environmentManager.clear_environments()
         d.addBoth(r._build_response)
         return NOT_DONE_YET   

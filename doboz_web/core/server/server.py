@@ -61,17 +61,17 @@ class MainServer():
         self.environmentManager=EnvironmentManager(self.dataPath)
         
         """"""""""""""""""""""""""""""""""""""
-        self.exceptionConverter=ExceptionConverter()
-        self.exceptionConverter.add_exception(ParameterParseException,400 ,1,"Params parse error")
-        self.exceptionConverter.add_exception(UnhandledContentTypeException,415 ,2,"Bad content type")
-        self.exceptionConverter.add_exception(EnvironmentAlreadyExists,409 ,3,"Environment already exists")
-        self.exceptionConverter.add_exception(EnvironmentNotFound,404 ,4,"Environment not found")
-        self.exceptionConverter.add_exception(UnknownNodeType,500 ,5,"Unknown node type")
-        self.exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
-        self.exceptionConverter.add_exception(NoDriverSet,404,7,"Node has no connector")
-        self.exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
-        self.exceptionConverter.add_exception(DeviceHandshakeMismatch,500,9,"Device handshake failed to match the one defined by the driver")
-        self.exceptionConverter.add_exception(InvalidFile,500,10,"Invalid File")
+        exceptionConverter=ExceptionConverter()
+        exceptionConverter.add_exception(ParameterParseException,400 ,1,"Params parse error")
+        exceptionConverter.add_exception(UnhandledContentTypeException,415 ,2,"Bad content type")
+        exceptionConverter.add_exception(EnvironmentAlreadyExists,409 ,3,"Environment already exists")
+        exceptionConverter.add_exception(EnvironmentNotFound,404 ,4,"Environment not found")
+        exceptionConverter.add_exception(UnknownNodeType,500 ,5,"Unknown node type")
+        exceptionConverter.add_exception(NodeNotFound,404 ,6,"Node not found")
+        exceptionConverter.add_exception(NoDriverSet,404,7,"Node has no connector")
+        exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
+        exceptionConverter.add_exception(DeviceHandshakeMismatch,500,9,"Device handshake failed to match the one defined by the driver")
+        exceptionConverter.add_exception(InvalidFile,500,10,"Invalid File")
         
         self.signalChannel="main_signal_listener"
         self.signalHandler=SignalHander(self.signalChannel)
@@ -81,7 +81,7 @@ class MainServer():
         self.signalHandler.add_handler(channel="node_manager")
         
         self.setup()
-        self.formatter_tests()
+        #self.formatter_tests()
     @defer.inlineCallbacks
     def do_stuff(self):
         #filePath="D:\\data\\projects\\Doboz\\add_ons_egg_tests\\virtualDevice\\dist\\VirtualDeviceAddOn-0.0.1-py2.6.egg"
@@ -138,10 +138,10 @@ class MainServer():
                 self.id=ThingWithId.id
                 ThingWithId.id+=1
                 self.thingy=thingy
-        print("single item: ",formater.format(OtherThing(),"Otherthing"))
-        print("single item: ",formater.format(Tutu(),"tutu"))
-        print("multiple items: ",formater.format([subThing("min",0.5,3),subThing()],"kpouer"))
-        print("multiple items: ",formater.format([ThingWithId(),ThingWithId()],"wobbly"))
+        print("single item: ",formater.format(OtherThing(),"Otherthing","http://localhost/otherthing"))
+        print("single item: ",formater.format(Tutu(),"tutu","http://localhost/tutu"))
+        print("multiple items: ",formater.format([subThing("min",0.5,3),subThing()],"kpouer","http://localhost/kpouer"))
+        print("multiple items: ",formater.format([ThingWithId(),ThingWithId()],"wobbly","http://localhost/wobbly"))
        
     @defer.inlineCallbacks
     def setup(self):
@@ -164,8 +164,6 @@ class MainServer():
     def start(self):
         observer = log.PythonLoggingObserver("pollapli.core")
         observer.start()
-       
-        
        # log.startLogging(sys.stdout)
        # logfile=os.path.join(self.logPath,"pollapli.log")
        # log.startLogging(open(logfile, 'w'),setStdout=False)
@@ -174,8 +172,8 @@ class MainServer():
         restRoot=Resource()
         root.putChild("rest",restRoot)
         try:
-            restRoot.putChild("environments", EnvironmentsHandler("http://localhost",self.exceptionConverter,self.environmentManager))
-            restRoot.putChild("config", ConfigHandler("http://localhost",self.exceptionConverter))
+            restRoot.putChild("environments", EnvironmentsHandler("/rest/environments",self.environmentManager))
+            restRoot.putChild("config", ConfigHandler("/rest/config"))
 
         except Exception as inst:
             log.msg("Error in base rest resources creation",str(inst), system="server", logLevel=logging.CRITICAL)

@@ -6,7 +6,7 @@ class ErrorMessage(object):
     def _toDict(self):
         return {"error":{"errorCode":self.errorCode,"errorMessage":self.errorMessage}} 
          
-class ExceptionConverter(object):
+class _ExceptionConverter(object):
     """Utility class that converts an exception to an errorCode/errorMessage tuple
     This is meant only to have a standardized responseCode/errorCode/errorMessage combo for the 
     rest api 
@@ -27,3 +27,7 @@ class ExceptionConverter(object):
            return ErrorMessage(500,-1,"Other Error") 
     def get_exceptionList(self):
         return self.exceptionsToCodes.keys()
+
+#pseudo singleton
+_exceptionConverter = _ExceptionConverter()
+def ExceptionConverter(): return _exceptionConverter

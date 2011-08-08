@@ -14,15 +14,15 @@ from doboz_web.core.server.rest.response_generator import ResponseGenerator
 
 class DriverHandler(DefaultRestHandler):
     isLeaf=False
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,nodeId=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="",environmentManager=None,envId=None,nodeId=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.driverHandler")
         self.environmentManager=environmentManager
         self.envId=envId   
         self.nodeId=nodeId
         self.valid_contentTypes.append("application/pollapli.driver+json")   
         subPath=self.rootUri+"/status"
-        self.putChild("status",DriverStatusHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
+        self.putChild("status",DriverStatusHandler(subPath,self.environmentManager,self.envId,self.nodeId)  
 )
     
     def render_POST(self,request):
@@ -34,7 +34,7 @@ class DriverHandler(DefaultRestHandler):
            # print("in extract args",result)
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).set_driver(**result)))
         
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=201,contentType="application/pollapli.driver+json",resource="driver")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.driver+json",resource="driver",rootUri=self.rootUri)
         d=RequestParser(request,"driver",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -48,7 +48,7 @@ class DriverHandler(DefaultRestHandler):
         
         def extract_args(result):
             return(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_driver())            
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.driver+json",resource="driver")
+        r=ResponseGenerator(request,contentType="application/pollapli.driver+json",resource="driver",rootUri=self.rootUri)
         d=RequestParser(request,"driver",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
         d.addBoth(r._build_response)   
@@ -66,7 +66,7 @@ class DriverHandler(DefaultRestHandler):
             id=self.connectorId
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).update_node(id=id,name=name,description=description)))
         
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.driver+json",resource="driver")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.driver+json",resource="driver",rootUri=self.rootUri)
         d=RequestParser(request,"driver",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -79,7 +79,7 @@ class DriverHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it disconnects and
         removes the driver completely
         """
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
+        r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d=self.environmentManager.get_environment(self.envId).get_node(self.nodeId).delete_driver()
         d.addBoth(r._build_response)
         d.callback(None)
@@ -91,8 +91,8 @@ Connector status rest handler
 
 class DriverStatusHandler(DefaultRestHandler):
     isLeaf=True
-    def __init__(self,rootUri="http://localhost",exceptionConverter=None,environmentManager=None,envId=None,nodeId=None):
-        DefaultRestHandler.__init__(self,rootUri,exceptionConverter)
+    def __init__(self,rootUri="http://localhost",environmentManager=None,envId=None,nodeId=None):
+        DefaultRestHandler.__init__(self,rootUri)
         self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.driverStatusHandler")
         self.environmentManager=environmentManager
         self.envId=envId   
@@ -112,7 +112,7 @@ class DriverStatusHandler(DefaultRestHandler):
             else:
                 defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_node(self.nodeId).disconnect()))
 
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.driver.status+json",resource="driver")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.driver.status+json",resource="driver status",rootUri=self.rootUri)
         d=RequestParser(request,"driver status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
@@ -122,13 +122,12 @@ class DriverStatusHandler(DefaultRestHandler):
     
     def render_GET(self, request):
         """
-        Handler for GET requests of connector status
+        Handler for GET requests of driver status
         """
-        def extract_args(result):
-            
+        def extract_args(result):    
             return(self.environmentManager.get_environment(self.envId).get_node(self.nodeId).get_driver())            
-        r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.connector.status+json",resource="connector")
-        d=RequestParser(request,"connector status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
+        r=ResponseGenerator(request,contentType="application/pollapli.driver.status+json",resource="driver status",rootUri=self.rootUri)
+        d=RequestParser(request,"driver status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
         d.addBoth(r._build_response)   
         d.callback(None)  
