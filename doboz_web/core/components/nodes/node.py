@@ -26,6 +26,7 @@ from doboz_web.core.signal_system import SignalHander
  
 
 class NodeStatus(object):
+    EXPOSE=["isActive"]
     def __init__(self):
         self.isActive=False
         
@@ -45,6 +46,8 @@ class Node(DBObject):
     or some software node (pachube etc)
     """
     BELONGSTO = ['environment']
+    EXPOSE=["name","description","id","type","status","driver"]
+    
     def __init__(self,type="node",name="base_node",description="base node",options={},*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.node")
@@ -289,13 +292,13 @@ class NodeManager(object):
     def setup(self):
         
         @defer.inlineCallbacks
-        def addNode(nodes,nodeTypes):
+        def addNode(nodes):
             for node in nodes:
                 node.environment.set(self.parentEnv)
                 self.nodes[node.id]=node
                 yield node.setup()
                
-        yield Node.all().addCallback(addNode,self.nodeTypes)
+        yield Node.all().addCallback(addNode)
         defer.returnValue(None)
         
     """

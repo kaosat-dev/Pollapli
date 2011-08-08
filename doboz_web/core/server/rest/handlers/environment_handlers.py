@@ -16,9 +16,7 @@ from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.core.server.rest.handlers.node_handlers import NodesHandler
-
-
-
+from doboz_web.core.server.rest.handlers.task_handlers import TasksHandler
 
 class EnvironmentsHandler(DefaultRestHandler):
     """
@@ -58,6 +56,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
     
     def render_GET(self, request):
@@ -68,6 +67,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environments,errback=r._build_response)
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
     
     def render_DELETE(self,request):
@@ -79,6 +79,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
         d= self.environmentManager.clear_environments()
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET   
     
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""  
@@ -94,6 +95,11 @@ class EnvironmentHandler(DefaultRestHandler):
         self.valid_contentTypes.append("application/pollapli.environment+json")   
         self.putChild("nodes",NodesHandler(self.rootUri+"/environments/"+str(self.envId),self.exceptionConverter,self.environmentManager,self.envId)  
 )
+        subPath=self.rootUri+"/environments/"+str(self.envId)+"/tasks"
+        self.putChild("tasks",TasksHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId)  
+)
+       # self.putChild("structure",TasksHandler(subPath,self.exceptionConverter,self.environmentManager,self.envId,self.nodeId)  
+#)
         
     def render_GET(self, request):
         """
@@ -104,7 +110,8 @@ class EnvironmentHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.environment+json",resource="environment")
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
-        d.addBoth(r._build_response)     
+        d.addBoth(r._build_response)  
+        d.callback(None)   
         return NOT_DONE_YET
   
     def render_PUT(self,request):
@@ -124,6 +131,7 @@ class EnvironmentHandler(DefaultRestHandler):
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
             
     def render_DELETE(self,request):
@@ -135,4 +143,5 @@ class EnvironmentHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
         d=self.environmentManager.remove_environment(self.envId)
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET   

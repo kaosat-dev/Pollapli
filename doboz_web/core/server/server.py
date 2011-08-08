@@ -12,18 +12,17 @@ from twisted.plugin import pluginPackagePaths
 from twisted.internet import reactor, defer
 
 
-from doboz_web.core.components.environments.environment import EnvironmentManager
+from doboz_web.core.components.environments.environment import EnvironmentManager,Environment
 from doboz_web.core.server.rest.handlers.environment_handlers import EnvironmentsHandler
 from doboz_web.core.server.rest.handlers.config_handlers import ConfigHandler
-
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-
 from doboz_web.exceptions import *
 from doboz_web.core.file_manager import FileManager
 from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.drivers.driver import DriverManager
 from doboz_web.core.signal_system import SignalHander
 from doboz_web.core.tools import checksum_tools
+from doboz_web.core.server.rest.data_formater   import JsonFormater
 
 from twisted.application.service import Application
 from twisted.python import log
@@ -82,7 +81,7 @@ class MainServer():
         self.signalHandler.add_handler(channel="node_manager")
         
         self.setup()
-        self.do_stuff()
+        self.formatter_tests()
     @defer.inlineCallbacks
     def do_stuff(self):
         #filePath="D:\\data\\projects\\Doboz\\add_ons_egg_tests\\virtualDevice\\dist\\VirtualDeviceAddOn-0.0.1-py2.6.egg"
@@ -96,11 +95,66 @@ class MainServer():
         hashCompare=yield checksum_tools.compare_hash("80e157c0f10baef206ee2de03fae7449",filePath)
         print("md5 compare", hashCompare)
     
-    def __call__(self,*args,**kwargs):
-        print("server recieved message",args,kwargs)
+    def formatter_tests(self):
+        formater=JsonFormater(resource="Tutu",rootUri="http://localhost",ignoredAttrs=["blah","blob"],addedAttrs={"gateaux":75},list=False)
         
+        
+        
+        class subThing(object):
+           EXPOSE=["strengh","width","height"]
+           def __init__(self,strengh="Max",width=10,height=7):
+               self.strengh=strengh
+               self.width=width
+               self.height=height
+        class Thing(object):
+            #EXPOSE=["subThings"]
+            def __init__(self):
+                self.subThings=[]
+                self.subThings.append(subThing("truc")) 
+                self.subThings.append(subThing("muche")) 
+        class OtherThing(object): 
+            EXPOSE=["var","subThing1","subThing2"]
+            def __init__(self,var="somevalue"):
+                self.var=var    
+                self.subThing1=subThing()
+                self.subThing2=subThing("min")
+                
+        class Tutu(object):
+           id=0
+           EXPOSE=["id","thing.subThings"]
+           def __init__(self,blob="blob",blib=42,blah="nii"):
+               self.blob=blob
+               self.blib=blib
+               self.blah=blah
+               self.id=Tutu.id
+               self.name="truc"
+               self.thing=Thing()
+               Tutu.id+=1
+               
+        class ThingWithId(object):
+            id=0
+            EXPOSE=["id","thingy"]
+            def __init__(self,thingy="thing"):
+                self.id=ThingWithId.id
+                ThingWithId.id+=1
+                self.thingy=thingy
+        print("single item: ",formater.format(OtherThing(),"Otherthing"))
+        print("single item: ",formater.format(Tutu(),"tutu"))
+        print("multiple items: ",formater.format([subThing("min",0.5,3),subThing()],"kpouer"))
+        print("multiple items: ",formater.format([ThingWithId(),ThingWithId()],"wobbly"))
+       
     @defer.inlineCallbacks
     def setup(self):
+        """configure all systems """
+        from twisted.enterprise import adbapi
+        from twistar.registry import Registry
+        envPath=os.path.join(EnvironmentManager.envPath,"home")
+        dbPath=os.path.join(envPath,"home")+".db"
+        Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbPath,check_same_thread=False)
+        """this is a required but very cheap hack: since twistard does not support multiple databases,
+        we do not have a "master" database, which causes problems because of the dependencies, and initialization
+        order of different elements, so for now, the "home" database is enforced"""
+        
         yield UpdateManager.setup()
         yield DriverManager.setup()
         yield EnvironmentManager.setup()

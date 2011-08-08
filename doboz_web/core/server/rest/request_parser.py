@@ -11,37 +11,63 @@ class RequestParser(object):
         self.validContentTypes=validContentTypes
         self.validGetParams=validGetParams
     
-    @defer.inlineCallbacks
-    def ValidateAndParseParams(self):
-        if  (yield self._validate_params()):
-            defer.returnValue( (yield self._parse_params()))
-        else:
-            raise UnhandledContentTypeException()
-        
-    def _validate_params(self):
+   
+    def ValidateAndParseParams(self,*args,**kwargs):       
+        d=defer.Deferred()     
+        d.addCallback(self._validate_params)       
+        d.addCallbacks(self._parse_params,errback=self._failure_redirect)
+        return d
+    
+    def _failure_redirect(self,failure,*args,**kwargs):
+        return failure
+    
+    def _validate_params(self,*args,**kwargs):
         """
         method to validate the orginial request/query: checks both for contentype AND for GET requests,
         whether the keys are valid
         """
-        d=defer.Deferred()
-        def _validate(result):
-            if not self.request.getHeader("Content-Type") in self.validContentTypes:
-                 raise UnhandledContentTypeException()
-            if not set(self.request.args.keys()).issubset(set(self.validGetParams)):
-                raise ParameterParseException()
-            return True
-        d.addCallback(_validate)
-        reactor.callLater(0.1,d.callback,None)
-#        reactor.callLater(0.1,d.callback,self.request.getHeader("Content-Type") in self.validContentTypes and \
-#        set(self.request.args.keys()).issubset(set(self.validGetParams)))
-        return d
+        if not self.request.getHeader("Content-Type") in self.validContentTypes:
+            raise UnhandledContentTypeException()
+        if not set(self.request.args.keys()).issubset(set(self.validGetParams)):
+            raise ParameterParseException()
         
-    def _parse_params(self):
+        return defer.succeed(True)
+    
+    def _parse_params(self,*args,**kwargs):
+        """
+        method parses query params into a dictionary of lists for filter criteria
+        """
+        params={}
+        if self.request.method=="POST" or self.request.method=="PUT":
+            data=self.request.content.getvalue()
+            if data != None or data != '':
+                """ In python pre 2.6.5, bug in unicode dict keys"""
+                try:
+                    params=json.loads(data,encoding='utf8')
+                    params=self._stringify_data(params)
+                except ValueError:
+                    raise ParameterParseException()
+        elif self.request.method=="GET":
+            def convertElem(elem):
+                if elem.isdigit():
+                   return int(elem)
+                elif elem.lower()=="false":
+                    return False
+                elif elem.lower()=="true":
+                    return True
+                else:
+                     return elem
+            for key in self.request.args.keys():  
+                params[key]=[convertElem(elem) for elem in self.request.args[key] ]
+        return defer.succeed( params) 
+    
+    def _parse_params_old(self,*args,**kwargs):
         """
         method parses query params into a dictionary of lists for filter criteria
         """
         d=defer.Deferred()
         def _parse(result):
+            print("i am beeing called too")
             params={}
             if self.request.method=="POST" or self.request.method=="PUT":
                 data=self.request.content.getvalue()
@@ -64,9 +90,11 @@ class RequestParser(object):
                          return elem
                 for key in self.request.args.keys():  
                     params[key]=[convertElem(elem) for elem in self.request.args[key] ]
-            return params   
-        d.addCallback(_parse)
-        reactor.callLater(0.1,d.callback,None)
+            return params 
+            #defer.succeed(params)  
+        #d.addCallback(_parse)
+        d.addCallbacks(callback=_parse,errback=self._failure_redirect)
+        #reactor.callLater(0.1,d.callback,None)
         return d
     
     def _stringify_data(self,obj):

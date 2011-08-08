@@ -57,6 +57,7 @@ class ConfigHandler(DefaultRestHandler):
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
             
     def render_DELETE(self,request):
@@ -68,6 +69,7 @@ class ConfigHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
         d=self.environmentManager.remove_environment(self.envId)
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET   
 
 
@@ -91,6 +93,7 @@ class UpdatesHandler(DefaultRestHandler):
         d=RequestParser(request,"updates",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(UpdateManager.get_updates,errback=r._build_response)
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
   
             
@@ -103,6 +106,7 @@ class UpdatesHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
         d=UpdateManager.clear_addOns()
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET   
     
 class AddonsHandler(DefaultRestHandler):
@@ -124,6 +128,7 @@ class AddonsHandler(DefaultRestHandler):
         d=RequestParser(request,"addOns",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(UpdateManager.get_addOns,errback=r._build_response)
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
   
             
@@ -136,6 +141,7 @@ class AddonsHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
         d=UpdateManager.clear_addOns()
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET   
     
 class GlobalEventsHandler(DefaultRestHandler):
@@ -157,6 +163,7 @@ class GlobalEventsHandler(DefaultRestHandler):
         d=RequestParser(request,"addOns",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(UpdateManager.get_addOns,errback=r._build_response)
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
   
             
@@ -169,4 +176,5 @@ class GlobalEventsHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
         d=UpdateManager.clear_addOns()
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET   

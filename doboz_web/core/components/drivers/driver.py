@@ -142,6 +142,7 @@ class Driver(DBObject):
      You can think of the events beeing sent out by the driver (dataRecieved etc) as interupts of sorts
     """
     BELONGSTO = ['node']
+    EXPOSE=["driverType","deviceType","deviceId","options","isConnected","isPluggedIn"]
     def __init__(self,hardwareHandlerKlass=None,logicHandlerKlass=None,driverType="",deviceType="",deviceId="",connectionType="",options={},*args,**kwargs):
         self.logger = logging.getLogger("pollapli.core.components.driver")      
         self.logger.setLevel(logging.INFO)
@@ -174,6 +175,7 @@ class Driver(DBObject):
         self.isDeviceHandshakeOk=False
         self.isDeviceIdOk=False
         self.isConnected=False
+        self.isPluggedIn=False
         
         self.connectionType=connectionType
         self.connectionErrors=0
@@ -249,13 +251,14 @@ class Driver(DBObject):
     
     def pluggedIn(self,port):    
         self.signalHandler.send_message("driver.plugged_In",self,port)
-   
+        self.isPluggedIn=True
         
     def pluggedOut(self,port):
         self.isConfigured=False  
         self.isDeviceHandshakeOk=False
         self.isDeviceIdOk=False
         self.isConnected=False
+        self.isPluggedIn=False
         self.signalHandler.send_message("driver.plugged_Out",self,port)
         #self.signalHandler.send_message("pluggedOut",{"data":port})
     
@@ -507,18 +510,10 @@ class DriverManager(object):
  
     """"""""""""""""""
     
-    def __init__(self):
-        
-        log.msg("starting driver factory", logLevel=logging.CRITICAL)
-        """example
-        port_to_driver['com4']=a driver instance
-        port_to_deviceId['com4]
-        or 
-        """
     
     @classmethod 
     def setup(self,*args,**kwargs):
-        log.msg("Driver Manager setup succesfully",system="Driver Manager")
+        log.msg("Driver Manager setup succesfully",system="Driver Manager",logLevel=logging.CRITICAL)
         d=defer.Deferred()
         reactor.callLater(3,DriverManager.update_deviceList)
         d.callback(None)        

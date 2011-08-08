@@ -9,6 +9,9 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from twisted.plugin import getPlugins,IPlugin
 from twisted.web import client
+from twistar.registry import Registry
+from twistar.dbobject import DBObject
+from twistar.dbconfig.base import InteractionBase
 
 from doboz_web.exceptions import UnknownUpdate
 from doboz_web.core.tools.wrapper_list import WrapperList
@@ -17,7 +20,8 @@ from doboz_web.core.signal_system import SignalHander
 from doboz_web.core.tools import checksum_tools
 
 
-class Update(object):
+class Update(DBObject):
+    
     """update class: for all type of updates (standard update or addon)
     Contains all needed info for handling of updates"""
     
@@ -29,7 +33,8 @@ class Update(object):
             setattr(update,key,value)   
         return update
     
-    def __init__(self,type=None,name=None,description=None,version=None,downloadUrl=None,img=None,tags=None,installPath=None,enabled=False):
+    def __init__(self,type=None,name=None,description=None,version=None,downloadUrl=None,img=None,tags=None,installPath=None,enabled=False,*args,**kwargs):
+        DBObject.__init__(self,**kwargs)
         self.type=type
         self.name=name
         self.description=description
@@ -79,10 +84,10 @@ class UpdateManager(object):
         yield cls.refresh_updateList()
         
         """just for testing"""
-        yield cls.download_update("Virtual device add on")
-        yield cls.install_update("Virtual device add on")
-        yield cls.download_update("Arduino Example")
-        yield cls.install_update("Arduino Example")
+#        yield cls.download_update("Virtual device add on")
+#        yield cls.install_update("Virtual device add on")
+#        yield cls.download_update("Arduino Example")
+#        yield cls.install_update("Arduino Example")
         
         cls.updateCheck= task.LoopingCall(cls.refresh_updateList)
         cls.updateCheck.start(interval=240,now=False)
@@ -147,7 +152,7 @@ class UpdateManager(object):
             return True
         @defer.inlineCallbacks
         def _get_updates(filter,updateList):
-            yield cls.update_updateList()
+            yield cls.refresh_updateList()
             if filter:
                 defer.returnValue( WrapperList(data=[update for update in updateList if filter_check(update,filter)],rootType="updates"))
             else:               

@@ -38,6 +38,7 @@ class DriverHandler(DefaultRestHandler):
         d=RequestParser(request,"driver",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
     
     def render_GET(self, request):
@@ -50,7 +51,8 @@ class DriverHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.driver+json",resource="driver")
         d=RequestParser(request,"driver",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
-        d.addBoth(r._build_response)     
+        d.addBoth(r._build_response)   
+        d.callback(None)  
         return NOT_DONE_YET
   
     def render_PUT(self,request):
@@ -68,6 +70,7 @@ class DriverHandler(DefaultRestHandler):
         d=RequestParser(request,"driver",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
             
     def render_DELETE(self,request):
@@ -79,6 +82,7 @@ class DriverHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200)
         d=self.environmentManager.get_environment(self.envId).get_node(self.nodeId).delete_driver()
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET   
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""  
@@ -112,6 +116,7 @@ class DriverStatusHandler(DefaultRestHandler):
         d=RequestParser(request,"driver status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        d.callback(None)
         return NOT_DONE_YET
    
     
@@ -125,6 +130,7 @@ class DriverStatusHandler(DefaultRestHandler):
         r=ResponseGenerator(request,exceptionConverter=self.exceptionConverter,status=200,contentType="application/pollapli.connector.status+json",resource="connector")
         d=RequestParser(request,"connector status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
-        d.addBoth(r._build_response)     
+        d.addBoth(r._build_response)   
+        d.callback(None)  
         return NOT_DONE_YET
   

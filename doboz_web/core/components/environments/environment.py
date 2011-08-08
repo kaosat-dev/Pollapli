@@ -12,7 +12,7 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 
 
-from doboz_web.exceptions import EnvironmentAlreadyExists
+from doboz_web.exceptions import EnvironmentAlreadyExists,EnvironmentNotFound
 from doboz_web.core.components.nodes.node import Node
 from doboz_web.core.components.automation.task import Task
 from doboz_web.core.components.automation.print_action import PrintAction
@@ -26,6 +26,8 @@ from doboz_web.core.components.automation.task import TaskManager
 class Environment(DBObject):
     HASMANY = ['nodes']
     HASMANY = ['tasks']
+    EXPOSE=["name","description","id","status","taskManager.tasks","nodeManager.nodes"]
+    
     def __init__(self,path="/",name="home",description="Add Description here",status="active",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.path=path
@@ -47,6 +49,7 @@ class Environment(DBObject):
         """
         yield self.nodeManager.setup()
         yield self.taskManager.setup()
+        
         #create db if not existent else just connect to it
 #        dbPath=self.path+os.sep+self.name+"_db"
 #        if not os.path.exists(dbPath):    
@@ -115,13 +118,11 @@ class EnvironmentManager(object):
         maxFoundId=1
         for fileDir in os.listdir(EnvironmentManager.envPath): 
             if os.path.isdir(os.path.join(EnvironmentManager.envPath,fileDir)):        
-                   
                 envName= fileDir
                 envPath=os.path.join(EnvironmentManager.envPath,envName)
                 dbPath=os.path.join(envPath,envName)+".db"
                 if os.path.exists(dbPath):
                     Registry.DBPOOL = adbapi.ConnectionPool("sqlite3",database=dbPath,check_same_thread=False)
-                    
                     @defer.inlineCallbacks        
                     def addEnv(env,maxFoundId):
                         EnvironmentManager.environments[env[0].id]=env[0]
@@ -230,8 +231,11 @@ class EnvironmentManager(object):
         reactor.callLater(0.5,d.callback,filter)
         return d
     
-    def get_environment(self,envId):
-        return self.environments[envId]
+    def get_environment(self,envId):      
+        env=self.environments.get(envId)
+        if env is None:
+            raise EnvironmentNotFound()
+        return env
     
     def update_environment(self,id,name,description,status):
         #print("updating env",id,name,description,status)
@@ -374,6 +378,16 @@ class EnvironmentManager(object):
              dateTime TEXT NOT NULL,
              FOREIGN KEY(node_id) REFERENCES nodes(id),
              FOREIGN KEY(sensor_id) REFERENCES sensors(id)
+             )''')
+        """this should be in the master db, but will have to do for now (only support for one environment,
+        because of the limitations of twistar: one db )"""
+        
+        yield Registry.DBPOOL.runQuery('''CREATE TABLE updates(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             type TEXT NOT NULL,
+             name TEXT NOT NULL,
+             description TEXT,
+             version TEXT NOT NULL
              )''')
         
         defer.returnValue(None)

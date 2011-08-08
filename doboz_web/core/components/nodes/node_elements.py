@@ -100,7 +100,11 @@ class Tool(NodeComponent):
 #    def __init__(self):
 #        DBObject.__init__(self,**kwargs)
     
-    
+class Command(object):
+    def __init__(self,type=None):
+        self.type=type#numerical value representing the command type
+        self.answered=False
+        
 class Variable(object):
     def __init__(self,node,name,value,type,unit,defaultValue=None,historyStore=None,historyLength=None,implicitSet=False,channels=[]):
         """
