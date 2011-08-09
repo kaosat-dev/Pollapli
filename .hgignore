@@ -6,10 +6,14 @@ parts/*
 eggs/*
 Doboz_Web.egg-info/*
 .settings/*
-doboz_web/core/print_server/files/machine/*
-doboz_web/data/*
-dummy_run.py
 *.pyc
 *.pyo
 .project
 .installed.cfg
+
+
+
+syntax: regexp
+^doboz_web/data/environments/home$
+^doboz_web/data/environments/home/home\.db$
+^doboz_web/data$
