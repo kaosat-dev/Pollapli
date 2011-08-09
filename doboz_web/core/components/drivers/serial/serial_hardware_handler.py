@@ -1,11 +1,13 @@
 from twisted.internet.protocol import Protocol, Factory
 #from twisted.internet.serialport import SerialPort
-from doboz_web.core.patches._win32serialport import SerialPort
-import re
-import sys
-import itertools
-import time
-import logging
+
+
+
+import re, sys, itertools,time, logging,glob
+if sys.platform == "win32":
+    from doboz_web.core.patches._win32serialport import SerialPort
+else:
+    from twisted.internet.serialport import SerialPort
 from twisted.internet import reactor, defer
 from twisted.internet.task import LoopingCall
 from twisted.python import log,failure
@@ -22,7 +24,7 @@ class SerialHardwareHandler(object):
     blackListPorts=["COM3"]
     availablePorts=[]
 
-    def __init__(self,driver=None,protocol=None,speed=19200,*args,**kwargs):
+    def __init__(self,driver=None,protocol=None,speed=115200,*args,**kwargs):
         self.logger=logging.getLogger("pollapli.core.components.driver")
         self.driver=driver
         self.serial=None    
@@ -126,7 +128,7 @@ class SerialHardwareHandler(object):
                         break
             else:
                 foundPorts= glob.glob('/dev/ttyUSB*')+ glob.glob('/dev/cu*') 
-                log.msg("Serial Ports on  system:",+str(foundPorts),system="Driver",logLevel=logging.DEBUG)
+            log.msg("Serial Ports on  system:",str(foundPorts),system="Driver",logLevel=logging.DEBUG)
             return foundPorts
         
         reactor.callLater(0.1,d.callback,None)
@@ -309,9 +311,14 @@ class BaseSerialProtocol(Protocol):
         Simple wrapper to send data over serial
         """    
         try:
-            log.msg("Data sent >>: ",self._format_data_out(data)," done",system="Driver",logLevel=logging.DEBUG)
+            import unicodedata       
+            data=self._format_data_out(data)
+            if isinstance(data,unicode):
+                data=unicodedata.normalize('NFKD', data).encode('ascii','ignore')
+
+            log.msg("Data sent >>: ",data," done",system="Driver",logLevel=logging.DEBUG)
             self.set_timeout()
-            self.transport.write(self._format_data_out(data).encode('utf-8'))
+            self.transport.write(data)
         except OSError:
             self.logger.critical("serial device not connected or not found on specified port")
         
@@ -321,8 +328,7 @@ class SerialWrapper(SerialPort):
           SerialPort.__init__(self,*args,**kwargs)
           self._tempDataBuffer=[]
           self.d=defer.Deferred()
-      def writeSomeData(self,*args,**kwargs):
-          pass
+
       
       def connectionLost(self,reason="connectionLost"):
           SerialPort.connectionLost(self,reason)

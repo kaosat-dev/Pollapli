@@ -1,6 +1,16 @@
 import unittest
 from urllib2 import*
-from restclient import Resource
+import httplib2
+#from restclient import Resource
+
+
+class Resource(object):
+    def __init__(self,url):
+        self.url=url
+    def post(self,url,headers,payload):
+        h = httplib2.Http(".cache")
+        h.request(self.url+"/"+url, "POST", body=payload, headers=headers)
+
 
 def helper():
     """

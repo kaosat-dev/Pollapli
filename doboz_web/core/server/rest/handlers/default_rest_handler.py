@@ -24,7 +24,10 @@ class DefaultRestHandler(Resource):
         """
         what kind of query params does the Get method accept
         """
-        self.validGetParams=[]        
+        self.validGetParams=[]   
+        #for jquery jsonp callbacks     
+        self.validGetParams.append('callback')
+        self.validGetParams.append('_')
     
     def render_GET(self, request):
         """Default GET handler"""

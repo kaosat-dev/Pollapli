@@ -180,7 +180,7 @@ class Driver(DBObject):
         self.connectionType=connectionType
         self.connectionErrors=0
         self.maxConnectionErrors=2
-        self.connectionTimeout=3
+        self.connectionTimeout=4
         
         """
         Modes :

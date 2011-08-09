@@ -2,12 +2,150 @@
 <head>
 <title>Pollapli experimental web ui</title>
 <meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
-<script  type="text/javascript" src="/js/jquery-1.4.4.min.js"></script>
-<script type="text/javascript" src="/js/jquery-ui-1.8.10.custom.min.js"></script>
+<link type="text/css" href="/css/pollapli_default_theme/jquery-ui-1.8.14.custom.css" rel="Stylesheet" id="mainCss"/> 
+<link type="text/css" href="/css/pollapli-extra.css" rel="Stylesheet" />  
+<script  type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
+<script type="text/javascript" src="/js/jquery-ui-1.8.14.custom.min.js"></script>
 <script  type="text/javascript" src="/pollapli_ui_toolkit.js"></script>
+<script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
+
+<script type="text/javascript">
+var mainUrl="http://"+window.location.host+"/"
+var manager=new Manager(mainUrl); 
+
+$(document).ready(
+  function() 
+  {
+    
+    manager.init();
+  }
+);
+
+
+
+</script>
 </head>
 <body>
-Bla bla
-Manage Tasks Data Tools        Settings 
+  <script type="text/x-jqote-template" id="environments_tmpl">
+ <tr>
+  <td>
+   <%= this.name %>
+  </td>
+  <td>
+   <%= this.description %>
+  </td>
+  <td class="right">
+   <%= this.status %>
+  </td>
+  <td>
+   <%= this.link.href %>
+  </td>
+ </tr>
+</script>
+
+<script type="text/x-jqote-template" id="nodes_tmpl"> 
+          <![CDATA[
+ <tr>
+  <td>
+   <%= this.name %>
+  </td>
+  <td class="right">
+   <%= this.description %>
+  </td>
+  <td class="right">
+   <%= this.type %>
+  </td>
+  <td>
+   <%= this.id %>
+  </td>
+  <td>
+   <%= this.link.href %>
+  </td>
+ </tr>
+                ]]>
+  </script> 
+  
+<script type="text/x-jqote-template" id="updates2_tmpl"> 
+          <![CDATA[
+          
+          <div class="updateBlock" style="width:95%" >
+              <div class="thingy title" style="width:95%"><%= this.type %>: <%= this.name %> </div>
+              <div class="thingy">
+                  <div class="thingy"  style="margin:10px 70px 10px 20px;"><img  width="320" height="200" alt=<%= this.img %> src=<%= this.img %> /> </div>
+              </div>
+              <div class="thingy" style="width:60%">
+                <table class="updates" > 
+                    <tr>
+                        <td class="title"> Description </td>
+                    </tr>
+                    <tr>
+                        <td ><%= this.description %></td>
+                    </tr>
+                    <tr>
+                        <td class="title"> Tags </td>
+                    </tr>
+                    <tr>
+                        <td ><%= this.tags %></td>
+                    </tr>
+                     <tr>
+                        <td class="title"> Download & install </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+                ]]>
+  </script> 
+
+
+
+<script type="text/x-jqote-template" id="header_tmpl"> 
+    <![CDATA[
+      <tr>
+        <th class="left">Name </th> 
+        <th class="left"> Descrition </th>
+      </tr>
+     
+    ]]>
+</script> 
+<button type="button" onclick="manager.test3();">Click Me!</button>
+
+
+  <div id="mainMenu" >
+    <div id="mainMenu_buttons">
+    Bla bla
+    </div>
+     <div id="mainMenu_notifications">
+    Events
+    Updates
+    </div>
+  </div>
+  <div id="mainContent" >
+    <div style="width:30%;display:inline-block;float:left;"> 
+      
+    </div>
+    <div style="width:80%;display:inline-block;float:right;overflow:auto;height:95%;"> 
+      <div id="updates2"></div>
+    </div>
+  </div>
+
+<!--
+  <table class="base"> 
+    <thead id="header"><tr><th colspan="2">...</th></th></tr></thead> 
+    <tbody id="nodes"></tbody> 
+</table> 
+
+
+<table class="base"> 
+    <thead id="environmentsheader"><tr><th colspan="2">...</th></th></tr></thead> 
+    <tbody id="environments"></tbody> 
+</table> 
+
+<table class="updates"> 
+    <thead id="updatesheader"><tr><th class="left">Name </th><th class="left">Description </th><th class="left">type </th><th class="left">tags </th><th class="left">downloaded </th><th class="left">installed </th></tr></thead> 
+    <tbody id="updates"></tbody> 
+</table> -->
+
+
+
 </body>
 </html>

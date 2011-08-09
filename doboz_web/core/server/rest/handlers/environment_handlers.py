@@ -32,7 +32,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         self.valid_contentTypes.append("application/pollapli.environmentList+json")   
         self.validGetParams.append('id')
         self.validGetParams.append('status')
-      
+
     def getChild(self, id, request):
         try:
             return EnvironmentHandler(self.rootUri+"/"+str(id),self.environmentManager,int(id))  
@@ -55,18 +55,19 @@ class EnvironmentsHandler(DefaultRestHandler):
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
     def render_GET(self, request):
         """
         Handler for GET requests of environments
         """
+
         r=ResponseGenerator(request,status=200,contentType="application/pollapli.environmentList+json",resource="environments",rootUri=self.rootUri)
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environments,errback=r._build_response)
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
     def render_DELETE(self,request):
@@ -78,7 +79,7 @@ class EnvironmentsHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d= self.environmentManager.clear_environments()
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET   
     
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""  
@@ -112,7 +113,7 @@ class EnvironmentHandler(DefaultRestHandler):
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
         d.addBoth(r._build_response)  
-        d.callback(None)   
+        request._call=reactor.callLater(0,d.callback,None)  
         return NOT_DONE_YET
   
     def render_PUT(self,request):

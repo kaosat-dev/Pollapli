@@ -32,6 +32,7 @@ class NodesHandler(DefaultRestHandler):
         self.valid_contentTypes.append("application/pollapli.nodeList+json")   
         self.validGetParams.append('id')
         self.validGetParams.append('type')
+
       
     def getChild(self, id, request):
         try:
@@ -55,7 +56,7 @@ class NodesHandler(DefaultRestHandler):
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
     def render_GET(self, request):
@@ -66,7 +67,7 @@ class NodesHandler(DefaultRestHandler):
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()      
         d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).get_nodes(params),errback=r._build_response)
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
    
              
@@ -79,7 +80,7 @@ class NodesHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d= self.environmentManager.get_environment(self.envId).clear_nodes()
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET 
     
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""  
@@ -106,7 +107,7 @@ class NodeHandler(DefaultRestHandler):
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(lambda params:self.environmentManager.get_environment(self.envId).get_node(self.nodeId),errback=r._build_response)
         d.addBoth(r._build_response)     
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
   
     def render_PUT(self,request):
@@ -125,7 +126,7 @@ class NodeHandler(DefaultRestHandler):
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
             
     def render_DELETE(self,request):
@@ -137,5 +138,5 @@ class NodeHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d=self.environmentManager.get_environment(self.envId).delete_node(self.nodeId)
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET     

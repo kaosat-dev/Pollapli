@@ -37,7 +37,7 @@ class ConfigHandler(DefaultRestHandler):
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
         d.addBoth(r._build_response)    
-        d.callback(None) 
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
   
     def render_PUT(self,request):
@@ -57,7 +57,7 @@ class ConfigHandler(DefaultRestHandler):
         d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
             
     def render_DELETE(self,request):
@@ -69,7 +69,7 @@ class ConfigHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d=self.environmentManager.remove_environment(self.envId)
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET   
 
 
@@ -77,8 +77,7 @@ class UpdatesHandler(DefaultRestHandler):
     isLeaf=False
     def __init__(self,rootUri="http://localhost"):
         DefaultRestHandler.__init__(self,rootUri)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.updatesHandler")
-        self.valid_contentTypes.append("application/pollapli.updatesList+json")  
+        self.valid_contentTypes.append("application/pollapli.updateList+json")  
         self.validGetParams.append('name')
         self.validGetParams.append('type')
         self.validGetParams.append('downloaded')
@@ -86,14 +85,14 @@ class UpdatesHandler(DefaultRestHandler):
 
     def render_GET(self, request):
         """
-        Handler for GET requests of addOns
+        Handler for GET requests of updates
         """
      
         r=ResponseGenerator(request,status=200,contentType="application/pollapli.updateList+json",resource="updates",rootUri=self.rootUri)
         d=RequestParser(request,"updates",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(UpdateManager.get_updates,errback=r._build_response)
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
   
             
@@ -106,7 +105,7 @@ class UpdatesHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200)
         d=UpdateManager.clear_addOns()
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET   
     
 class AddonsHandler(DefaultRestHandler):
@@ -129,7 +128,7 @@ class AddonsHandler(DefaultRestHandler):
         d=RequestParser(request,"addOns",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(UpdateManager.get_addOns,errback=r._build_response)
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
   
             
@@ -142,7 +141,7 @@ class AddonsHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d=UpdateManager.clear_addOns()
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET   
     
 class GlobalEventsHandler(DefaultRestHandler):
@@ -164,7 +163,7 @@ class GlobalEventsHandler(DefaultRestHandler):
         d=RequestParser(request,"addOns",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(UpdateManager.get_addOns,errback=r._build_response)
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
   
             
@@ -177,5 +176,5 @@ class GlobalEventsHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
         d=UpdateManager.clear_addOns()
         d.addBoth(r._build_response)
-        d.callback(None)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET   

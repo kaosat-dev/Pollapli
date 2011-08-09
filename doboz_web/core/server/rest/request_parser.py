@@ -29,6 +29,7 @@ class RequestParser(object):
         if not self.request.getHeader("Content-Type") in self.validContentTypes:
             raise UnhandledContentTypeException()
         if not set(self.request.args.keys()).issubset(set(self.validGetParams)):
+            print("TUUT",self.request.args.keys())
             raise ParameterParseException()
         
         return defer.succeed(True)
@@ -59,43 +60,17 @@ class RequestParser(object):
                      return elem
             for key in self.request.args.keys():  
                 params[key]=[convertElem(elem) for elem in self.request.args[key] ]
+            
+            try:  
+                clientCallback=params.get("callback")   
+                self.request.clientCallback=clientCallback[0]
+                del params["callback"]
+                del params["_"]
+                
+            except Exception as inst:
+                print("ERRRROOOR",inst)
         return defer.succeed( params) 
     
-    def _parse_params_old(self,*args,**kwargs):
-        """
-        method parses query params into a dictionary of lists for filter criteria
-        """
-        d=defer.Deferred()
-        def _parse(result):
-            print("i am beeing called too")
-            params={}
-            if self.request.method=="POST" or self.request.method=="PUT":
-                data=self.request.content.getvalue()
-                if data != None or data != '':
-                    """ In python pre 2.6.5, bug in unicode dict keys"""
-                    try:
-                        params=json.loads(data,encoding='utf8')
-                        params=self._stringify_data(params)
-                    except ValueError:
-                        raise ParameterParseException()
-            elif self.request.method=="GET":
-                def convertElem(elem):
-                    if elem.isdigit():
-                        return int(elem)
-                    elif elem.lower()=="false":
-                        return False
-                    elif elem.lower()=="true":
-                        return True
-                    else:
-                         return elem
-                for key in self.request.args.keys():  
-                    params[key]=[convertElem(elem) for elem in self.request.args[key] ]
-            return params 
-            #defer.succeed(params)  
-        #d.addCallback(_parse)
-        d.addCallbacks(callback=_parse,errback=self._failure_redirect)
-        #reactor.callLater(0.1,d.callback,None)
-        return d
     
     def _stringify_data(self,obj):
         """Convert any dict keys to str, because of a bug in pre 2.6.5 python"""

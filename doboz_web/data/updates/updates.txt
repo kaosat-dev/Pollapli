@@ -9,7 +9,7 @@
                 "core",
                 "general"
             ],
-            "img": "virtualDevice.png",
+            "img": "virtual_device.jpg",
             "file": "VirtualDeviceAddOn-0.0.1-py2.6.egg",
             "fileHash": "80e157c0f10baef206ee2de03fae7449"
         },

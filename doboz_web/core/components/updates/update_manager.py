@@ -21,6 +21,7 @@ from doboz_web.core.tools import checksum_tools
 
 
 class Update(DBObject):
+    EXPOSE=["name","description","type","version","img","tags","downloaded","enabled","installed"]
     
     """update class: for all type of updates (standard update or addon)
     Contains all needed info for handling of updates"""

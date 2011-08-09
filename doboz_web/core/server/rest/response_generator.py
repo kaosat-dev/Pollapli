@@ -24,7 +24,7 @@ class ResponseGenerator(object):
         build a simple response
         """    
         response=""
-        callback=None
+        callback=getattr(self.request,"clientCallback",None)
         formater=JsonFormater(resource=self.resource)
         
         if isinstance(payload, failure.Failure):
@@ -45,13 +45,17 @@ class ResponseGenerator(object):
         if callback:
             payload= callback+"("+payload+")" 
         response=payload or ""
-        log.msg("building response using payload:",payload,logLevel=logging.DEBUG)
-        if not self.request.finished:
-            self.request.write(str(response))
-            self.request.finish()
+        log.msg("building response using payload:",payload,logLevel=logging.CRITICAL)
         
+        self.request.notifyFinish().addErrback(self._responseFailed, self.request._call)
+        self._delayedRender(str(response))
+       
     def _handle_errors(self,failure):              
         return ExceptionConverter().get_exception(failure.check(*ExceptionConverter().get_exceptionList()))
 
-    def _format_data(self):
-        pass
+    def _delayedRender(self,response):
+        if not self.request.finished:
+            self.request.write(response)
+            self.request.finish()
+    def _responseFailed(self, err, call):
+        call.cancel()

@@ -130,3 +130,5 @@ class SerialPort(BaseSerialPort, abstract.FileDescriptor):
         
     def loseConnection(self):
         self.connectionLost("")
+    def writeSomeData(self,*args,**kwargs):
+        pass
