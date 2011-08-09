@@ -7,6 +7,7 @@ eggs/*
 Doboz_Web.egg-info/*
 .settings/*
 doboz_web/core/print_server/files/machine/*
+doboz_web/data/*
 dummy_run.py
 *.pyc
 *.pyo
