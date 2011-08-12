@@ -250,7 +250,7 @@ class Driver(DBObject):
         self.hardwareHandler.disconnect(*args,**kwargs)
     
     def pluggedIn(self,port):    
-        self.signalHandler.send_message("driver.plugged_In",self,port)
+        self.signalHandler.send_message("driver_"+str(self.id)+".plugged_In",self,port)
         self.isPluggedIn=True
         
     def pluggedOut(self,port):
@@ -259,7 +259,7 @@ class Driver(DBObject):
         self.isDeviceIdOk=False
         self.isConnected=False
         self.isPluggedIn=False
-        self.signalHandler.send_message("driver.plugged_Out",self,port)
+        self.signalHandler.send_message("driver_"+str(self.id)+".plugged_Out",self,port)
         #self.signalHandler.send_message("pluggedOut",{"data":port})
     
     def send_signal(self,signal="",data=None,out=False):

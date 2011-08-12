@@ -1,29 +1,69 @@
-<html>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en" >
 <head>
-<title>Pollapli experimental web ui</title>
-<meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
-<link type="text/css" href="/css/pollapli_default_theme/jquery-ui-1.8.14.custom.css" rel="Stylesheet" id="mainCss"/> 
-<link type="text/css" href="/css/pollapli-extra.css" rel="Stylesheet" />  
-<script  type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
-<script type="text/javascript" src="/js/jquery-ui-1.8.14.custom.min.js"></script>
-<script  type="text/javascript" src="/pollapli_ui_toolkit.js"></script>
-<script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
+  <meta charset="UTF-8">
+  <title>Pollapli experimental web ui</title>
+  <meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
+  <link type="text/css" href="/css/pollapli_alt_theme/jquery-ui-1.8.15.custom.css" rel="Stylesheet" id="mainCss"/> 
+  <link type="text/css" href="/css/pollapli-extra.css" rel="Stylesheet" />  
+  
+  
+  <script  type="text/javascript" src="/js/jquery-1.6.2.min.js"></script>
+  <script  type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
+  <script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
+  <script type="text/javascript" src="/js/jquery.mousewheel.js"></script>
+  <script  type="text/javascript" src="/pollapli_ui_toolkit.js"></script>
 
-<script type="text/javascript">
-var mainUrl="http://"+window.location.host+"/"
-var manager=new Manager(mainUrl); 
+  <script type="text/javascript">
+  var mainUrl="http://"+window.location.host+"/"
+  var clientId=guid()
+  var manager=new Manager(mainUrl,clientId); 
+  
 
-$(document).ready(
-  function() 
+  
+  
+
+  function S4() {
+   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+}
+function guid() {
+   return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+  
+  
+  function thingy()
   {
+    var pageHeight = jQuery(window).height();
+    var navHeight = pageHeight - 100;
+   
+    $("#bla").css({ "max-height": navHeight + 'px' });
+    $("#bla").css({ "height": navHeight + 'px' });
     
-    manager.init();
+   
   }
-);
-
-
-
-</script>
+  function dostuff()
+  {
+    //alert($(this).attr("alt"))
+    $("#button-description").text("|"+$(this).attr("alt").toUpperCase())
+    
+   //$(this).attr("alt")
+  }
+  
+  $(document).ready(
+    function() 
+    {
+      $("#clientId").text("CURRENT ID: "+clientId);
+      thingy();
+      manager.init();
+      $( "button").button();
+      $( "#helpButton" ).button({ icons: {primary:'truc'},text:false });
+      $("img").hover(function(){$("#button-description").text("|"+$(this).attr("alt").toUpperCase())},function(){$("#button-description").text("|")});
+    }
+  );
+  
+  </script>
+  
+  
 </head>
 <body>
   <script type="text/x-jqote-template" id="environments_tmpl">
@@ -68,7 +108,7 @@ $(document).ready(
 <script type="text/x-jqote-template" id="updates2_tmpl"> 
           <![CDATA[
           
-          <div class="updateBlock" style="width:95%" >
+          <div class="updateBlock ui-widget" style="width:98%;border-width:0px; " >
               <div class="thingy title" style="width:95%"><%= this.type %>: <%= this.name %> </div>
               <div class="thingy">
                   <div class="thingy"  style="margin:10px 70px 10px 20px;"><img  width="320" height="200" alt=<%= this.img %> src=<%= this.img %> /> </div>
@@ -107,29 +147,63 @@ $(document).ready(
      
     ]]>
 </script> 
-<button type="button" onclick="manager.test3();">Click Me!</button>
+
+<script type="text/x-jqote-template" id="events_tmpl"> 
+    <![CDATA[
+    <div>
+    <% 
+      var dt=new Date((Number(this.time))*1000);
+      this.time=(dt.getMonth()+1)+ '/'+dt.getDate()+ '/'+dt.getFullYear() +" "+ dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds() ;
+    %>
+    <Strong>Signal: </Strong> <%= this.signal %>  <Strong>Sender: </Strong><%= this.sender %> <Strong>Data: </Strong> <%= this.data %> <strong> SenderInfo:</strong><%= this.senderInfo %><strong>Time:</strong><%= this.time %>
+     
+     </div>
+    ]]>
+</script> 
 
 
+<div id="topSpacer" style="display:inline-block;float:left;height:20px"> <br> </div>
   <div id="mainMenu" >
-    <div id="mainMenu_buttons">
-    Bla bla
+    <div id="mainMenu_buttons" style="display:inline-block;float:left" class="mainMenu">
+      <div style="display:inline-block;float:left">
+      <img src="/img/pollapli-overview-icon.png" alt="overview"/>
+      <img src="/img/pollapli-devices-icon.png" alt="devices"/>
+      <img src="/img/pollapli-tasks-icon.png" alt="tasks"/>
+      <img src="/img/pollapli-data-icon.png" alt="data"/>
+      <img src="/img/pollapli-tools-icon.png" alt="tools"/>
+      <img src="/img/pollapli-settings-icon.png" alt="settings"/>
+      </div>
+      <div style="display:inline-block;float:right;width:20px"></div>
+      <div id="button-description" style="display:inline-block;float:right">|</div>
     </div>
-     <div id="mainMenu_notifications">
-    Events
-    Updates
-    </div>
+    <div id="mainMenu_additional" style="display:inline-block;float:right"  class="infos">
+       <div id="mainMenu_notifications" style="display:inline-block;float:left">
+          <img src="/img/pollapli-errors-icon.png" />
+          
+          <img src="/img/pollapli-updates-icon.png" />
+      </div>
+      <div id="mainMenu_help" style="display:inline-block;float:right">
+        <div style="display:inline-block;float:left;text-align:center;margin:8px 7px 1px 7px;">Pollapli 0.5.0</div>
+       <img src="/img/pollapli-help-icon.png" />
+      </div>
+     </div>
   </div>
   <div id="mainContent" >
-    <div style="width:30%;display:inline-block;float:left;"> 
+    <div id="events" style="width:10240px;display:inline-block;float:left;"></div>
+    <!--
+    <div style="width:20%;display:inline-block;float:left;"> 
+      <button class="ui-state-default ui-corner-all" type="button" onclick="manager.test3();">Click Me!</button>
+       <button class="ui-state-default ui-corner-all" type="button" onclick="thingy();">Click Me!</button>
       
-    </div>
-    <div style="width:80%;display:inline-block;float:right;overflow:auto;height:95%;"> 
-      <div id="updates2"></div>
-    </div>
-  </div>
-
-<!--
-  <table class="base"> 
+      <div id="truc" class="ui-widget" >sdfsfsdfds</div>
+      <div id="controlsBlock" class=" ui-corner-right ui-state-default" style="margin-left:2px;">sfsdfsdfsdfsd <a href="tutu">sdfsd</a></div>
+    </div>-->
+   <!-- <div id="bla" class="ui-widget"  style="width:79%;display:inline-block;float:right;overflow:auto;height:200px"> 
+      <div id="updates2" style="height:10%"></div>
+    </div> <div id="clientId">CURRENT ID: </div>-->
+    
+    
+    <!-- <table class="base"> 
     <thead id="header"><tr><th colspan="2">...</th></th></tr></thead> 
     <tbody id="nodes"></tbody> 
 </table> 
@@ -144,6 +218,12 @@ $(document).ready(
     <thead id="updatesheader"><tr><th class="left">Name </th><th class="left">Description </th><th class="left">type </th><th class="left">tags </th><th class="left">downloaded </th><th class="left">installed </th></tr></thead> 
     <tbody id="updates"></tbody> 
 </table> -->
+
+
+  </div>
+
+
+ 
 
 
 

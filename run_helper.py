@@ -47,5 +47,7 @@ def helper():
     except Exception as inst:
         print("failed to add task",str(inst))
 
+
+#http://127.0.0.1:8000/rest/config/events  Content-Type: application/pollapli.event+json
 helper()
 

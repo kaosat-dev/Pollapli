@@ -52,20 +52,22 @@ class TasksHandler(DefaultRestHandler):
             params=result.get("params")
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_task(name=name,description=description,type=type,params=params)))
              
-        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task+json",resource="task")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task+json",resource="task",rootUri=self.rootUri)
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
     def render_GET(self, request):
         """
         Handler for GET requests of tasks
         """
-        r=ResponseGenerator(request,status=200,contentType="application/pollapli.taskList+json",resource="tasks")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.taskList+json",resource="tasks",rootUri=self.rootUri)
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environment(self.envId).get_tasks,errback=r._build_response)
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
     def render_DELETE(self,request):
@@ -77,6 +79,7 @@ class TasksHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200)
         d= self.environmentManager.get_environment(self.envId).clear_nodes()
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""  
@@ -116,20 +119,22 @@ class TaskHandler(DefaultRestHandler):
             params=result.get("params")
             defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_task(name=name,description=description,type=type,params=params)))
              
-        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task+json",resource="task")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task+json",resource="task",rootUri=self.rootUri)
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
     def render_GET(self, request):
         """
         Handler for GET requests of tasks
         """
-        r=ResponseGenerator(request,status=200,contentType="application/pollapli.task+json",resource="task")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.task+json",resource="task",rootUri=self.rootUri)
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(self.environmentManager.get_environment(self.envId).get_tasks,errback=r._build_response)
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
     def render_DELETE(self,request):
@@ -141,6 +146,7 @@ class TaskHandler(DefaultRestHandler):
         r=ResponseGenerator(request,status=200)
         d= self.environmentManager.get_environment(self.envId).clear_nodes()
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET  
     
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""  
@@ -174,10 +180,11 @@ class TaskStatusHandler(DefaultRestHandler):
             elif stop:
                 defer.returnValue((yield self.environmentManager.get_environment(self.envId).get_task(self.taskId).stop()))
             
-        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task.status+json",resource="taskstatus")
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.task.status+json",resource="taskstatus",rootUri=self.rootUri)
         d=RequestParser(request,"task status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
         d.addCallbacks(extract_args,errback=r._build_response)    
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
        
     
@@ -187,9 +194,10 @@ class TaskStatusHandler(DefaultRestHandler):
         """
         def extract_args(result):
             return(self.environmentManager.get_environment(self.envId).get_task(self.taskId).status)            
-        r=ResponseGenerator(request,status=200,contentType="application/pollapli.task.status+json",resource="taskstatus")
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.task.status+json",resource="taskstatus",rootUri=self.rootUri)
         d=RequestParser(request,"task status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
         d.addCallbacks(extract_args,errback=r._build_response)
-        d.addBoth(r._build_response)     
+        d.addBoth(r._build_response)    
+        request._call=reactor.callLater(0,d.callback,None) 
         return NOT_DONE_YET
   

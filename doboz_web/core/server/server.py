@@ -81,6 +81,7 @@ class MainServer():
         self.signalHandler.add_handler(channel="node_manager")
         
         self.setup()
+        self.callbackTests()
         #self.formatter_tests()
     @defer.inlineCallbacks
     def do_stuff(self):
@@ -97,9 +98,6 @@ class MainServer():
     
     def formatter_tests(self):
         formater=JsonFormater(resource="Tutu",rootUri="http://localhost",ignoredAttrs=["blah","blob"],addedAttrs={"gateaux":75},list=False)
-        
-        
-        
         class subThing(object):
            EXPOSE=["strengh","width","height"]
            def __init__(self,strengh="Max",width=10,height=7):
@@ -143,6 +141,20 @@ class MainServer():
         print("multiple items: ",formater.format([subThing("min",0.5,3),subThing()],"kpouer","http://localhost/kpouer"))
         print("multiple items: ",formater.format([ThingWithId(),ThingWithId()],"wobbly","http://localhost/wobbly"))
        
+    
+    def callbackTests(self):
+        d=defer.Deferred() 
+        def funct1(result):
+            print("in funct1")  
+        def funct2(result):
+            print("in funct2")
+        def funct3(result):
+            print("in funct3")  
+        d.addCallback(funct1)
+        d.addCallback(funct2)
+        d.addCallback(funct3)
+        d.callback(None)
+    
     @defer.inlineCallbacks
     def setup(self):
         """configure all systems """

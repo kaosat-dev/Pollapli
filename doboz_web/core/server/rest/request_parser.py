@@ -61,14 +61,25 @@ class RequestParser(object):
             for key in self.request.args.keys():  
                 params[key]=[convertElem(elem) for elem in self.request.args[key] ]
             
+            
             try:  
                 clientCallback=params.get("callback")   
-                self.request.clientCallback=clientCallback[0]
-                del params["callback"]
-                del params["_"]
+                if clientCallback is not None:
+                    self.request.clientCallback=clientCallback[0]
+                    del params["callback"]
+                if params.get("_") is not None:
+                    del params["_"]
+                    
+                clientId=params.get("clientId")
+                if clientId is not None:
+                    self.request.clientId=clientId[0]
+                    del params["clientId"]
+                else:
+                    self.request.clientId=None
                 
             except Exception as inst:
                 print("ERRRROOOR",inst)
+                
         return defer.succeed( params) 
     
     

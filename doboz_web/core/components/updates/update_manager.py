@@ -51,12 +51,7 @@ class Update(DBObject):
         
     def __str__(self):
         return str(self.__dict__)
-    def _toDict(self):
-        tmpDict={}
-        tmpDict["update"]=self.__dict__
-        return tmpDict
-#        print("POUUUET",self.__dict__)
-#        return {"update":{"type":self.type,"name":self.name,"description":"","active":self.enabled,"path":self.installPath}}
+   
 
 class UpdateManager(object):
     """
@@ -70,7 +65,6 @@ class UpdateManager(object):
     maxDownloadAttempts=5
     signalChannel="update_manager"
     signalHandler=SignalHander(signalChannel)
-    
     
     @classmethod
     @defer.inlineCallbacks

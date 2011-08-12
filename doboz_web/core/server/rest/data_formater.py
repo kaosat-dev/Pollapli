@@ -57,37 +57,51 @@ class JsonFormater(DataFormater2):
         
     def __format(self,object,resource,rootUrl="http://localhost",recursionLevel=0,subObjectLinksOnly=False,isRoot=False):
         result={}
+        doIt=True
+        print("resource",resource,"recursionLevel",recursionLevel,"maxRecurion",self.maxRecurion)  
+        if recursionLevel > self.maxRecurion:  
+            doIt=False
+            return None
+        
         if not isinstance(object,list):
             tmpDict={}      
             tmpDict["link"]={"href":rootUrl,"rel":resource} 
-            doIt=True
-            if subObjectLinksOnly and recursionLevel>1:    
-                doIt=False
-                         
-            if doIt and not isinstance(object,dict)and hasattr(object,"EXPOSE"): 
+
+            if not isinstance(object,dict) and hasattr(object,"EXPOSE") and doIt:       
                 for attrName in object.EXPOSE:
+                    
                     attrValue=None
+                    #if we are at a recusion level >0  
+                            
                     if "." in attrName:
                         main,sub=attrName.split(".")
                         par=getattr(object,main)
                         attrName=sub
                         attrValue=self.__format(getattr(par,sub),attrName,tmpDict["link"]["href"]+"/"+attrName,recursionLevel+1,subObjectLinksOnly)
                     else:
-                        attrValue=getattr(object,attrName)
+                        tmpattrValue=getattr(object,attrName,None)
+                  
                         
-                        if attrValue is not None :
-                            try:
-                                if getattr(attrValue, "EXPOSE"):
-                                    attrValue=self.__format(attrValue,attrName,tmpDict["link"]["href"]+"/"+attrName,recursionLevel+1,subObjectLinksOnly)
-                            except Exception as inst:pass
-                                #print("Error",inst)
-                                #traceback.print_exc(file=sys.stdout)
+                        if tmpattrValue is not None :   
+                            if not hasattr(tmpattrValue,"EXPOSE") and not isinstance(tmpattrValue,list):
+                                try:
+                                    json.dumps(tmpattrValue)
+                                    attrValue=tmpattrValue
+                                except:
+                                    attrValue=tmpattrValue.__name__
+                            else:
+                                try:                   
+                                    attrValue=self.__format(tmpattrValue,attrName,tmpDict["link"]["href"]+"/"+attrName,recursionLevel+1,subObjectLinksOnly)
+                                    print("thingy",attrValue)
+                                except Exception as inst:pass
+                                    #print("Error",inst)
+                                    #traceback.print_exc(file=sys.stdout)
                     if attrValue is not None:
                         tmpDict[attrName]=attrValue
-                        #print("attr name",attrName,"value",attrValue)
-                    
-                    
+                        print("adding ",attrName," value",attrValue,"recursionLevel",recursionLevel)
+            print("Finished adding ",tmpDict)
         else:
+           
             singleName=resource
             pluralName=resource
             if resource.endswith('s'):
@@ -97,28 +111,40 @@ class JsonFormater(DataFormater2):
             if not rootUrl.endswith('s'):
                 rootUrl=rootUrl+'s'
            
+           
+            print("singleName",singleName)     
             tmpDict={}
             tmpDict["link"]={"href":rootUrl,"rel":pluralName}
             tmpDict["items"]=[]
             
-            for item in object:
-                link=tmpDict["link"]["href"]
-                try:
-                    subElementUrlPrefix=None
-                    if getattr(item,"id") is not None:
-                        subElementUrlPrefix=str(getattr(item,"id"))
-                    elif getattr(item,"name") is not None:
-                        subElementUrlPrefix=getattr(item,"name")
-                    if subElementUrlPrefix is not None:
-                        link=rootUrl+"/"+subElementUrlPrefix
-                except:pass
-                
-                tmpDict["items"].append(self.__format(item,singleName,link,recursionLevel+1,subObjectLinksOnly))
+            for item in object:             
+                if hasattr(item,"EXPOSE"):
+                    link=tmpDict["link"]["href"]
+                    try:
+                        subElementUrlPrefix=None
+                        if getattr(item,"id") is not None:
+                            subElementUrlPrefix=str(getattr(item,"id"))
+                        elif getattr(item,"name") is not None:
+                            subElementUrlPrefix=getattr(item,"name")
+                        if subElementUrlPrefix is not None:
+                            link=rootUrl+"/"+subElementUrlPrefix
+                    except:pass
+                    print("in a list, attempting to do stuff with itme",item)
+                    newItem=None
+                    newItem=self.__format(item,singleName,link,recursionLevel,subObjectLinksOnly)
+                    tmpDict["items"].append(newItem)   
+
+                    
                 
                 
         if isRoot:
             result[resource]=tmpDict  
-            return json.dumps(result)
+            finalRes=None
+            try:
+                finalRes= json.dumps(result)
+            except Exception as inst:
+                print("ERROR in data formatter",inst)
+            return finalRes
         else:
             return tmpDict
         

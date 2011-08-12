@@ -25,9 +25,11 @@ class ResponseGenerator(object):
         """    
         response=""
         callback=getattr(self.request,"clientCallback",None)
+        #print("callback",callback,"payload",payload)
         formater=JsonFormater(resource=self.resource)
         
         if isinstance(payload, failure.Failure):
+            print("Failure",payload.getErrorMessage())
             payload=self._handle_errors(payload)
             self.request.setResponseCode(payload.responseCode)
             self.request.setHeader("Content-Type", "application/pollapli.error+json")
@@ -42,20 +44,23 @@ class ResponseGenerator(object):
                 traceback.print_exc(file=sys.stdout)
                 payload=""  
             
-        if callback:
+        if callback is not None and payload is not None:
             payload= callback+"("+payload+")" 
         response=payload or ""
         log.msg("building response using payload:",payload,logLevel=logging.CRITICAL)
         
-        self.request.notifyFinish().addErrback(self._responseFailed, self.request._call)
+        requestCall=getattr(self.request,"_call",None)
+        self.request.notifyFinish().addErrback(self._responseFailed, requestCall)
         self._delayedRender(str(response))
        
     def _handle_errors(self,failure):              
         return ExceptionConverter().get_exception(failure.check(*ExceptionConverter().get_exceptionList()))
 
     def _delayedRender(self,response):
-        if not self.request.finished:
-            self.request.write(response)
-            self.request.finish()
+        try:
+            if not self.request.finished:
+                self.request.write(response)
+                self.request.finish()
+        except:pass
     def _responseFailed(self, err, call):
         call.cancel()

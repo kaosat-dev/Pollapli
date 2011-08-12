@@ -1,6 +1,7 @@
 from louie import dispatcher,error,Any,All,Anonymous,plugin
 from louie.plugin import TwistedDispatchPlugin 
 import louie
+import time
 from twisted.python import log,failure
 import logging
 
@@ -17,15 +18,9 @@ class SignalHander(object):
         self.channel=channel
         log.msg("setting up signal handler on channel",self.channel,logLevel=logging.DEBUG)
 
-        
-    def add_handler_old(self,handler=None,signal="",sender=Any):
-        louie.connect(handler or self,signal=self.channel+'.'+signal,sender=sender,weak=True)
-    def add_handler_old2(self,handler=None,signal="",sender=Any):
-        louie.connect(handler or self,signal=signal or All,sender=sender,weak=True)
     
     def add_handler(self,handler=None,signal=None,channel="global"):
         """sets up listing to a channel"""
-        
         louie.connect(handler or self,signal=signal or All,sender=channel,weak=True)
         
     def _get_handler(self,signal,sender):
@@ -37,7 +32,7 @@ class SignalHander(object):
     
             
     def send_message(self,message="",sender=None,params=None,*args,**kwargs):
-        realParams={"data":params,"realsender":sender}
+        realParams={"data":params,"realsender":sender,"time":time.time()}
         log.msg("sending message ",message," from ",sender, "to channel" ,self.channel,"with params",realParams,logLevel=logging.DEBUG)
         err=louie.send(message, self.channel,**realParams )
         

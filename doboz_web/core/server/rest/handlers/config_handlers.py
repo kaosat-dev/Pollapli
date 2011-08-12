@@ -2,7 +2,7 @@
 .. py:module:: config_handler
    :synopsis: rest handler for config interaction.
 """
-import logging
+import logging,time
 from twisted.internet import reactor, defer
 from twisted.web.resource import Resource,NoResource
 from twisted.web import resource, http
@@ -10,12 +10,13 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from twisted.web.server import NOT_DONE_YET
 from twisted.internet.task import deferLater
+from twisted.internet.error import ConnectionDone
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
 from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.updates.update_manager import UpdateManager
-
+from doboz_web.core.signal_system import SignalHander
 class ConfigHandler(DefaultRestHandler):
     isLeaf=False
     def __init__(self,rootUri="http://localhost"):
@@ -25,7 +26,8 @@ class ConfigHandler(DefaultRestHandler):
 
         subPath=self.rootUri+"/updates"
         self.putChild("updates",UpdatesHandler(subPath))
-        #self.putChild("addons",AddOnsHandler(self.rootUri+"/addons/"))
+        subPath=self.rootUri+"/events"
+        self.putChild("events",GlobalEventsHandler(subPath))
     def render_GET(self, request):
         """
         Handler for GET requests of config
@@ -143,38 +145,96 @@ class AddonsHandler(DefaultRestHandler):
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET   
-    
-class GlobalEventsHandler(DefaultRestHandler):
-    isLeaf=False
-    def __init__(self,rootUri="http://localhost"):
-        DefaultRestHandler.__init__(self,rootUri)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.pluginsHandler")
-        self.environmentManager=environmentManager
-        self.envId=envId   
-        self.valid_contentTypes.append("application/pollapli.addonList+json")   
-        self.putChild("addons",NodesHandler(self.rootUri+"/environments/"+str(self.envId),self.environmentManager,self.envId)  
-)
 
+
+class DispatchableEvent(object):
+    EXPOSE=["signal","sender","senderInfo","data","time"]
+    def __init__(self,signal=None,sender=None,data=None,realsender=None,time=None):
+        self.signal=signal
+        self.sender=sender
+        self.data=data
+        self.senderInfo=realsender
+        self.time=time
+
+
+class ClientHandler(object):
+    def __init__(self):
+        self.clients={}
+        self.lastNotificationTime=time.time()
+        self.notificationBuffer=[]
+        
+    def add_delegate(self,result,deffered,request):
+        request.notifyFinish().addBoth(self.connectionCheck,request)  
+        self.clients[request.clientId]=ClientDelegate(deffered,request)
+        #print("ADDING DELEGATE: id:",request.clientId," total clients:",len(self.clients.keys()))
+        print(" total clients:",len(self.clients.keys()))
+        
+
+    def connectionCheck(self,result,request):    
+        del self.clients[request.clientId] 
+        print(" total clients:",len(self.clients.keys()))
+        if isinstance(result,failure.Failure):
+            error = result.trap(ConnectionDone)
+            if error==ConnectionDone:
+                pass
+       
+        
+    def notify_all(self,notification=None):
+        self.notificationBuffer.append(notification)
+       # print("NOTIFICATION",len(self.clients.items()))
+        for k,v in self.clients.items():
+            if v:
+                v.notify(self.notificationBuffer)
+
+        self.notificationBuffer=[]
+       # print("NOTIFICATION Done",len(self.clients.items()))
+
+
+class ClientDelegate(object):
+    def __init__(self,deffered,r):
+        self.deferred=deffered
+        self.request = r
+
+    def end(self, data):
+
+        r=ResponseGenerator(self.request,status=200,contentType="application/pollapli.eventList+json",resource="events",rootUri="/rest/config/events")
+        r._build_response(data)
+        
+    def notify(self, data):
+        self.end( data)
+
+
+class GlobalEventsHandler(DefaultRestHandler):
+    
+    isLeaf=True
+    def __init__(self,rootUri="http://localhost"):
+        DefaultRestHandler.__init__(self,rootUri)  
+        self.valid_contentTypes.append("application/pollapli.eventList+json")   
+        self.signalChannel="global_event_listener"
+        self.signalHandler=SignalHander(self.signalChannel)
+        self.signalHandler.add_handler(channel="driver_manager",handler=self._signal_Handler)   
+        self.signalHandler.add_handler(channel="update_manager",handler=self._signal_Handler)
+        self.signalHandler.add_handler(channel="environment_manager",handler=self._signal_Handler)
+        self.signalHandler.add_handler(channel="node_manager",handler=self._signal_Handler)
+        self.lastSignal=DispatchableEvent()
+        
+        self.clientHandler=ClientHandler()
+        
+
+    def _signal_Handler(self,signal=None,sender=None,realsender=None,data=None,time=None,*args,**kwargs):      
+       # log.msg("In rest event handler ", " recieved ",signal," from ",sender, "with data" ,data," addtional ",args,kwargs,logLevel=logging.CRITICAL)
+        self.clientHandler.notify_all(DispatchableEvent(signal,sender,data,realsender,time))
+
+
+          
     def render_GET(self, request):
         """
-        Handler for GET requests of addOns
+        Handler for GET requests of events
         """
-        r=ResponseGenerator(request,status=200,contentType="application/pollapli.addonList+json",resource="addOns",rootUri=self.rootUri)
-        d=RequestParser(request,"addOns",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
-        d.addCallbacks(UpdateManager.get_addOns,errback=r._build_response)
-        d.addBoth(r._build_response)
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.eventList+json",resource="events",rootUri=self.rootUri)
+        d=RequestParser(request,"events",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
+        d.addCallbacks(self.clientHandler.add_delegate,callbackArgs=[d,request],errback=r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
+    
         return NOT_DONE_YET
   
-            
-    def render_DELETE(self,request):
-        """ 
-        Handler for DELETE requests of addOns
-        WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes
-        all addons completely
-        """
-        r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
-        d=UpdateManager.clear_addOns()
-        d.addBoth(r._build_response)
-        request._call=reactor.callLater(0,d.callback,None)
-        return NOT_DONE_YET   

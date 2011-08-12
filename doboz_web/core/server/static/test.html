@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <meta charset="utf-8" />
+  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame 
+       Remove this if you use the .htaccess -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="" />
+  <meta name="author" content="Ckaosatom" />
+  <!--<meta name="viewport" content="width=device-width; initial-scale=1.0" />-->
+  <title>Pollapli experimental web ui</title>
+  <meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
+  <link type="text/css" href="/css/pollapli_default_theme/jquery-ui-1.8.15.custom.css" rel="Stylesheet" id="mainCss"/> 
+  <link type="text/css" href="/css/test.css" rel="Stylesheet" />  
+  
+  
+  <script  type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
+  <script  type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
+ 
+ <script type="text/javascript">
+ $(document).ready(
+    function() 
+    {
+    
+      $( "button").button({ icons: {primary:'ui-icon-lightbulb'},text:true });
+
+    $( "#accordion" ).accordion();
+    }
+  );
+  
+  </script>
+</head>
+
+<body style="background-color:#151515;font-size:75%;">
+   <button type="button" style="height:20px,margin:0px">Click Me!</button>
+   <button type="button" style="height:20px,margin:0px">Click dfg!</button>
+   <div id="test" class="ui-widget ui-widget-content" style="width:200px;height:100px">bsgsdgsdgsd</div>
+   <div id="accordion">
+    <h3><a href="#">First header</a></h3>
+    <div>2011-08-11 12:51:36,776 - pollapli.core - CRITICAL - building response using payload: jQuery162037352145626209676_1313059895938({"updates": {"items": [{"name": "Virtual device add on", "img": "http://kaosat.net/pollapli/virtual_device.jpg", "tags": ["core", "general"], "enabled": false, "installed": false, "downloaded": false, "version": "0.0.2", "link": {"href": "/rest/config/updates/Virtual device add on", "rel": "update"}, "type": "addon", "description": "justatest fsdfsdfsdfsdfsfsdfsfsfs"}, {"name": "Doboz_Web", "img": "http://kaosat.net/pollapli/doboz_web.jpg", "tags": ["reprap", "repstap", "makerbot", "3d printer"], "enabled": false, "installed": false, "downloaded": false, "version": "1.7.0", "link": {"href": "/rest/config/updates/Doboz_Web", "rel": "update"}, "type": "addon", "description": "This is the doboz-web project, a system for remote monitoring and control of Reprap/Repstrap/Makerbots/3dprinters"}, {"name": "Arduino Example", "img": "http://kaosat.net/pollapli/doboz_web.jpg", "tags": ["arduino", "demo", "example"], "enabled": false, "installed": false, "downloaded": false, "version": "0.0.4", "link": {"href": "/rest/config/updates/Arduino Example", "rel": "update"}, "type": "addon", "description": "demo addon , for handling a basic arduio type device"}], "link": {"href": "/rest/config/updates", "rel": "updates"}}})
+2011-08-11 12:55:32,409 - pollapli.core - CRITICAL - checking for new updates : time 1313060132.41
+2011-08-11 12:59:32,409 - pollapli.core - CRITICAL - checking for new updates : time 1313060372.41
+2011-08-11 13:03:32,408 - pollapli.core - CRITICAL - checking for new updates : time 1313060612.41
+2011-08-11 13:07:32,409 - pollapli.core - CRITICAL - checking for new updates : time 1313060852.41
+('callback', 'jQuery162039676229655742645_1313060950605')
+2011-08-11 13:09:11,508 - pollapli.core - CRITICAL - building response using payload: jQuery162039676229655742645_1313060950605({"environments": {"items": [{"status": "frozen", "tasks": {"link": {"href": "/rest/environments/1/tasks", "rel": "tasks"}}, "name": "home", "link": {"href": "/rest/environments/1", "rel": "environment"}, "nodes": {"link": {"href": "/rest/environments/1/nodes", "rel": "nodes"}}, "id": 1, "description": "blabla"}], "link": {"href": "/rest/environments", "rel": "environments"}}})
+('callback', 'jQuery162039676229655742645_1313060950606')
+2011-08-11 13:09:11,520 - pollapli.core - CRITICAL - building response using payload: jQuery162039676229655742645_1313060950606({"nodes": {"items": [{"status": {"link": {"href": "/rest/environments/1/nodes/1/status", "rel": "status"}}, "name": "just a reprap node", "driver": {"link": {"href": "/rest/environments/1/nodes/1/driver", "rel": "driver"}}, "link": {"href": "/rest/environments/1/nodes/1", "rel": "node"}, "type": "reprap1", "id": 1, "description": "reprap"}, {"status": {"link": {"href": "/rest/environments/1/nodes/2/status", "rel": "status"}}, "name": "just a reprap node", "driver": {"link": {"href": "/rest/environments/1/nodes/2/driver", "rel": "driver"}}, "link": {"href": "/rest/environments/1/nodes/2", "rel": "node"}, "type": "reprap2", "id": 2, "description": "reprap"}, {"status": {"link": {"href": "/rest/environments/1/nodes/3/status", "rel": "status"}}, "name": "just a test node", "link": {"href": "/rest/environments/1/nodes/3", "rel": "node"}, "type": "testNode", "id": 3, "description": "reprap"}], "link": {"href": "/rest/environments/1/nodes", "rel": "nodes"}}})
+2011-08-11 13:09:11,521 - pollapli.core - CRITICAL - checking for new updates : time 1313060951.52
+('callback', 'jQuery162039676229655742645_1313060950607')
+2011-08-11 13:09:11,743 - pollapli.core - CRITICAL - building response using payload: jQuery162039676229655742645_1313060950607({"updates": {"items": [{"name": "Virtual device add on", "img": "http://kaosat.net/pollapli/virtual_device.jpg", "tags": ["core", "general"], "enabled": false, "installed": false, "downloaded": false, "version": "0.0.2", "link": {"href": "/rest/config/updates/Virtual device add on", "rel": "update"}, "type": "addon", "description": "justatest fsdfsdfsdfsdfsfsdfsfsfs"}, {"name": "Doboz_Web", "img": "http://kaosat.net/pollapli/doboz_web.jpg", "tags": ["reprap", "repstap", "makerbot", "3d printer"], "enabled": false, "installed": false, "downloaded": false, "version": "1.7.0", "link": {"href": "/rest/config/updates/Doboz_Web", "rel": "update"}, "type": "addon", "description": "This is the doboz-web project, a system for remote monitoring and control of Reprap/Repstrap/Makerbots/3dprinters"}, {"name": "Arduino Example", "img": "http://kaosat.net/pollapli/doboz_web.jpg", "tags": ["arduino", "demo", "example"], "enabled": false, "installed": false, "downloaded": false, "version": "0.0.4", "link": {"href": "/rest/config/updates/Arduino Example", "rel": "update"}, "type": "addon", "description": "demo addon , for handling a basic arduio type device"}], "link": {"href": "/rest/config/updates", "rel": "updates"}}})
+2011-08-11 13:11:32,408 - pollapli.core - CRITICAL - checking for new updates : time 1313061092.41
+2011-08-11 13:15:32,409 - pollapli.core - CRITICAL - checking for new updates : time 1313061332.41
+2011-08-11 13:19:32,409 - pollapli.core - CRITICAL - checking for new updates : time 1313061572.41
+</div>
+    <h3><a href="#">Second header</a></h3>
+    <div>Second content</div>
+</div>
+</body>
+</html>

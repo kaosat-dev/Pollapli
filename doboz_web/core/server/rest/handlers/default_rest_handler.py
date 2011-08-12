@@ -26,6 +26,7 @@ class DefaultRestHandler(Resource):
         """
         self.validGetParams=[]   
         #for jquery jsonp callbacks     
+        self.validGetParams.append('clientId')
         self.validGetParams.append('callback')
         self.validGetParams.append('_')
     

@@ -1,17 +1,20 @@
-function Manager(mainUrl)
+function Manager(mainUrl,clientId)
 {
   this.mainUrl=mainUrl;
+  this.clientId=clientId;
+  this.drivers;
+  this.environments;
+  this.truc="trruuuc"
 
 }
 Manager.prototype.fetchData=function(dataUrl,contentType,successCallback,errorCallback)
     {
 
             response=$.ajax({
-                    url: dataUrl,
+                    url: dataUrl+"?clientId="+this.clientId,
                     method: 'GET',
                     async: true,
                     dataType: 'jsonp',
-                    timeout:7000,
                     contentType: contentType,
                     success: successCallback,
                     error:errorCallback,
@@ -20,7 +23,7 @@ Manager.prototype.fetchData=function(dataUrl,contentType,successCallback,errorCa
     }
 Manager.prototype.genericSuccessHandler=function (response)
     {
-        alert("tuuut"+response.environments.items[0].name)
+        //alert("tuuut"+response.environments.items[0].name)
         console.log("Ajax sucess "+response)     
     }
 Manager.prototype.genericErrorHandler=function (response)
@@ -33,10 +36,63 @@ Manager.prototype.genericErrorHandler=function (response)
 //Initial retrieval of data
 Manager.prototype.init=function ()
 {
-  this.test2();
-  this.test3();
-  this.test4();
+  this.initRequesters()
+
 }
+
+Manager.prototype.initRequesters=function ()
+{
+  var self = this; 
+  setTimeout
+  (
+    function()
+    {
+      manager.fetchEnvironments(manager);
+      manager.longPoll(manager);
+    },
+/*    ("manager.fetchEnvironments(manager)",
+     "manager.longPoll(manager)"),*/
+   
+   // self.longPoll, /* Request next message */
+    1000 /* ..after 1 seconds */
+  );
+  
+}
+
+Manager.prototype.longPoll=function (self)
+{
+  self.fetchData(self.mainUrl+"rest/config/events",'application/pollapli.eventList+json',
+  function (response)
+  {
+    $('#events').jqoteapp('#events_tmpl', response.events.items);
+    self.longPoll(self);
+    },
+  function (response)
+  {
+     self.longPoll(self);
+  }
+); 
+}
+
+Manager.prototype.fetchEnvironments=function (self)
+{
+
+  self.fetchData(self.mainUrl+"rest/environments/",'application/pollapli.environmentList+json',
+  function (response)
+  {
+    self.environments=response;
+   },
+   
+  function (response){self.genericErrorHandler(response)}); 
+}
+
+
+
+
+
+
+
+
 
 Manager.prototype.test=function ()
 {
@@ -83,6 +139,9 @@ Manager.prototype.test4=function ()
   function (response)
   {
     $('#updates2').jqoteapp('#updates2_tmpl', response.updates.items);
+    thingy();
+   // $('#bla').jScrollPane({autoReinitialise: false, showArrows:true ,horizontalGutter: 10});
+  
    }
     ,function (response){self.genericErrorHandler(response)}); 
 }
