@@ -4,7 +4,7 @@ class ErrorMessage(object):
         self.errorCode=errorCode
         self.errorMessage=errorMessage
     def _toDict(self):
-        return {"error":{"errorCode":self.errorCode,"errorMessage":self.errorMessage}} 
+        return {"errorCode":self.errorCode,"errorMessage":self.errorMessage}
          
 class _ExceptionConverter(object):
     """Utility class that converts an exception to an errorCode/errorMessage tuple

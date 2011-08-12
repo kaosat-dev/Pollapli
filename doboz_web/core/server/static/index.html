@@ -58,6 +58,9 @@ function guid() {
       $( "button").button();
       $( "#helpButton" ).button({ icons: {primary:'truc'},text:false });
       $("img").hover(function(){$("#button-description").text("|"+$(this).attr("alt").toUpperCase())},function(){$("#button-description").text("|")});
+      
+      
+
     }
   );
   
@@ -161,6 +164,16 @@ function guid() {
     ]]>
 </script> 
 
+<script type="text/x-jqote-template" id="errors_tmpl"> 
+    <![CDATA[
+    <div>
+  
+    <Strong>Error: Code: </Strong> <%= this.errorCode %>  <Strong>Message: </Strong><%= this.errorMessage %> 
+     
+     </div>
+    ]]>
+</script> 
+
 
 <div id="topSpacer" style="display:inline-block;float:left;height:20px"> <br> </div>
   <div id="mainMenu" >
@@ -189,7 +202,9 @@ function guid() {
      </div>
   </div>
   <div id="mainContent" >
+     <div id="errors" style="width:10240px;display:inline-block;float:left;"></div>
     <div id="events" style="width:10240px;display:inline-block;float:left;"></div>
+   
     <!--
     <div style="width:20%;display:inline-block;float:left;"> 
       <button class="ui-state-default ui-corner-all" type="button" onclick="manager.test3();">Click Me!</button>

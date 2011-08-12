@@ -34,6 +34,7 @@ class ResponseGenerator(object):
             self.request.setResponseCode(payload.responseCode)
             self.request.setHeader("Content-Type", "application/pollapli.error+json")
             payload=payload._toDict() or ''
+            payload=json.dumps(payload)
         else:
             self.request.setResponseCode(self.status)
             self.request.setHeader("Content-Type", self.contentType)       

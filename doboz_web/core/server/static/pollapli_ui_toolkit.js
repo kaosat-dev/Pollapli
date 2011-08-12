@@ -4,33 +4,65 @@ function Manager(mainUrl,clientId)
   this.clientId=clientId;
   this.drivers;
   this.environments;
-  this.truc="trruuuc"
-
+  this.errors=new Array();
+  
+/*$(document).ajaxError(function(e, xhr, settings, exception) { 
+alert('error in: ' + settings.url + ' \n'+'error:\n' + xhr.responseText ); 
+});*/ 
 }
-Manager.prototype.fetchData=function(dataUrl,contentType,successCallback,errorCallback)
-    {
 
+Manager.prototype.fetchData=function(dataUrl,contentType,successCallback,errorCallback,timeout)
+    {
+        
+       /* if(!errorCallback)
+          errorCallback=this.genericErrorHandler;
+        
+        if (!successCallback)
+        successCallback=this.genericSuccessHandler;
+        
+        if (!contentType)
+          contentType="application/pollapli.eventList+json"*/
+        if(!timeout)
+          timeout=500000;
+          
             response=$.ajax({
-                    url: dataUrl+"?clientId="+this.clientId,
+                    url: dataUrl+"?clientId="+this.clientId+"&_"=+new Date(),
                     method: 'GET',
                     async: true,
+                    cache:false,
                     dataType: 'jsonp',
+                    timeout:timeout,
                     contentType: contentType,
                     success: successCallback,
                     error:errorCallback,
+                    complete: this.genericCompleteHandler,
                     cache:false
                 });
+
     }
+
+
+
+Manager.prototype.genericCompleteHandler=function (response)
+    {
+        console.log("Ajax complete "+response)    ; 
+    }
+
+    
 Manager.prototype.genericSuccessHandler=function (response)
     {
-        //alert("tuuut"+response.environments.items[0].name)
-        console.log("Ajax sucess "+response)     
+        console.log("Ajax sucess "+response)    ; 
     }
-Manager.prototype.genericErrorHandler=function (response)
-    {
-       alert("failure",response)
-        console.log("Ajax error "+response)
-    }  
+Manager.prototype.genericErrorHandler=function (response, strError)
+    { 
+      errorInfo=$.parseJSON(response.responseText);
+      console.log("Error: "+errorInfo.errorCode+" msg: "+errorInfo.errorMessage+" raw: "+strError)
+      $('#errors').jqoteapp('#errors_tmpl', errorInfo);
+        
+       // this.errors.push(response);
+       // alert("jqXHR"+request+" textStatus"+textStatus+" errorThrown"+errorThrown);
+        
+    } 
     
 ////////////////////////////////////////////////////////////////
 //Initial retrieval of data
@@ -52,9 +84,7 @@ Manager.prototype.initRequesters=function ()
     },
 /*    ("manager.fetchEnvironments(manager)",
      "manager.longPoll(manager)"),*/
-   
-   // self.longPoll, /* Request next message */
-    1000 /* ..after 1 seconds */
+    1000
   );
   
 }
@@ -63,13 +93,16 @@ Manager.prototype.longPoll=function (self)
 {
   self.fetchData(self.mainUrl+"rest/config/events",'application/pollapli.eventList+json',
   function (response)
-  {
+  {   
+   
     $('#events').jqoteapp('#events_tmpl', response.events.items);
     self.longPoll(self);
     },
   function (response)
   {
-     self.longPoll(self);
+    
+     // self.genericErrorHandler(response)
+      self.longPoll(self);
   }
 ); 
 }
@@ -77,13 +110,13 @@ Manager.prototype.longPoll=function (self)
 Manager.prototype.fetchEnvironments=function (self)
 {
 
-  self.fetchData(self.mainUrl+"rest/environments/",'application/pollapli.environmentList+json',
+  self.fetchData(self.mainUrl+"rest/environments/",'application/pollapli.envirodnmentList+json',
   function (response)
   {
     self.environments=response;
    },
    
-  function (response){self.genericErrorHandler(response)}); 
+  self.genericErrorHandler); 
 }
 
 

@@ -67,7 +67,10 @@ class RequestParser(object):
                 if clientCallback is not None:
                     self.request.clientCallback=clientCallback[0]
                     del params["callback"]
-                if params.get("_") is not None:
+                timestamp= params.get("_")
+                if timestamp is not None:
+                    self.request.timestamp=timestamp[0]
+                    
                     del params["_"]
                     
                 clientId=params.get("clientId")

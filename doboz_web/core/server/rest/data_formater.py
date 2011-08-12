@@ -49,16 +49,16 @@ class JsonFormater(DataFormater2):
     def __init__(self,resource="resource",rootUri="http://localhost"):
         DataFormater2.__init__(self, resource, rootUri, "json")
         self.list=list
-        self.maxRecurion=4
+        self.maxRecurion=3
         self.subObjectLinksOnly=False
         
-    def format(self,object,resource,rootUrl="http://localhost",maxRecursion=4,subObjectLinksOnly=True):
+    def format(self,object,resource,rootUrl="http://localhost",maxRecursion=3,subObjectLinksOnly=True):
         return self.__format(object,resource,rootUrl,0,subObjectLinksOnly,True)
         
     def __format(self,object,resource,rootUrl="http://localhost",recursionLevel=0,subObjectLinksOnly=False,isRoot=False):
         result={}
         doIt=True
-        print("resource",resource,"recursionLevel",recursionLevel,"maxRecurion",self.maxRecurion)  
+      #  print("resource",resource,"recursionLevel",recursionLevel,"maxRecurion",self.maxRecurion)  
         if recursionLevel > self.maxRecurion:  
             doIt=False
             return None
@@ -92,14 +92,14 @@ class JsonFormater(DataFormater2):
                             else:
                                 try:                   
                                     attrValue=self.__format(tmpattrValue,attrName,tmpDict["link"]["href"]+"/"+attrName,recursionLevel+1,subObjectLinksOnly)
-                                    print("thingy",attrValue)
+                                 
                                 except Exception as inst:pass
                                     #print("Error",inst)
                                     #traceback.print_exc(file=sys.stdout)
                     if attrValue is not None:
                         tmpDict[attrName]=attrValue
-                        print("adding ",attrName," value",attrValue,"recursionLevel",recursionLevel)
-            print("Finished adding ",tmpDict)
+                    #    print("adding ",attrName," value",attrValue,"recursionLevel",recursionLevel)
+            #print("Finished adding ",tmpDict)
         else:
            
             singleName=resource
@@ -112,7 +112,7 @@ class JsonFormater(DataFormater2):
                 rootUrl=rootUrl+'s'
            
            
-            print("singleName",singleName)     
+           # print("singleName",singleName)     
             tmpDict={}
             tmpDict["link"]={"href":rootUrl,"rel":pluralName}
             tmpDict["items"]=[]
@@ -129,7 +129,7 @@ class JsonFormater(DataFormater2):
                         if subElementUrlPrefix is not None:
                             link=rootUrl+"/"+subElementUrlPrefix
                     except:pass
-                    print("in a list, attempting to do stuff with itme",item)
+                  #  print("in a list, attempting to do stuff with itme",item)
                     newItem=None
                     newItem=self.__format(item,singleName,link,recursionLevel,subObjectLinksOnly)
                     tmpDict["items"].append(newItem)   

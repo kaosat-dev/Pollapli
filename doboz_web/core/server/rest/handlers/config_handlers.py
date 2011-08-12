@@ -163,11 +163,15 @@ class ClientHandler(object):
         self.lastNotificationTime=time.time()
         self.notificationBuffer=[]
         
-    def add_delegate(self,result,deffered,request):
+    def add_delegate(self,result,deffered,request):  
+        print("in adding delegates")
         request.notifyFinish().addBoth(self.connectionCheck,request)  
         self.clients[request.clientId]=ClientDelegate(deffered,request)
         #print("ADDING DELEGATE: id:",request.clientId," total clients:",len(self.clients.keys()))
         print(" total clients:",len(self.clients.keys()))
+
+        self.notify_all()
+            
         
 
     def connectionCheck(self,result,request):    
@@ -178,15 +182,35 @@ class ClientHandler(object):
             if error==ConnectionDone:
                 pass
        
+    def add_event(self,event):
+        print("in adding event")
+        self.notificationBuffer.append(event)
+        self.notify_all()
         
-    def notify_all(self,notification=None):
-        self.notificationBuffer.append(notification)
+    def _filterEvents(self,timestamp):
+        data=[]
+        for event in self.notificationBuffer:
+            #print("EventTime",event.time*1000,"timestamp",int(timestamp))
+            #print("is it bigger",long(event.time*1000)>timestamp)
+            if long(event.time*1000)>timestamp:
+                data.append(event)
+        return data
+            #[event for event in self.notificationBuffer if event.time>=timestamp ]
+            #1313161679 ### 1313161675
+            #1313161877.401
+            #1313161886.0526619,
+            #1313161959318.4709,
+            #1313161957235
+        
+    def notify_all(self):
        # print("NOTIFICATION",len(self.clients.items()))
         for k,v in self.clients.items():
             if v:
-                v.notify(self.notificationBuffer)
+                data=self._filterEvents(v.request.timestamp)
+                if len(data)>0:
+                    v.notify(self._filterEvents(v.request.timestamp))
 
-        self.notificationBuffer=[]
+     
        # print("NOTIFICATION Done",len(self.clients.items()))
 
 
@@ -223,7 +247,7 @@ class GlobalEventsHandler(DefaultRestHandler):
 
     def _signal_Handler(self,signal=None,sender=None,realsender=None,data=None,time=None,*args,**kwargs):      
        # log.msg("In rest event handler ", " recieved ",signal," from ",sender, "with data" ,data," addtional ",args,kwargs,logLevel=logging.CRITICAL)
-        self.clientHandler.notify_all(DispatchableEvent(signal,sender,data,realsender,time))
+        self.clientHandler.add_event(DispatchableEvent(signal,sender,data,realsender,time))
 
 
           
