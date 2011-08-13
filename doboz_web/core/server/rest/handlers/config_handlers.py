@@ -183,7 +183,7 @@ class ClientHandler(object):
                 pass
        
     def add_event(self,event):
-        print("in adding event")
+        print("in adding eventnode_handlers.py")
         self.notificationBuffer.append(event)
         self.notify_all()
         

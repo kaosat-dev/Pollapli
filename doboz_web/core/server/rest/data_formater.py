@@ -87,7 +87,8 @@ class JsonFormater(DataFormater2):
                                 try:
                                     json.dumps(tmpattrValue)
                                     attrValue=tmpattrValue
-                                except:
+                                except Exception as inst:
+                                    print("ERROR IN formatter",inst)
                                     attrValue=tmpattrValue.__name__
                             else:
                                 try:                   

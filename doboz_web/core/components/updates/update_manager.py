@@ -31,7 +31,7 @@ class Update(DBObject):
         """factory method: creates an Update instance from a dict"""
         update=Update()
         for key,value in updateDict.items():
-            setattr(update,key,value)   
+            setattr(update,key,value)  
         return update
     
     def __init__(self,type=None,name=None,description=None,version=None,downloadUrl=None,img=None,tags=None,installPath=None,enabled=False,*args,**kwargs):

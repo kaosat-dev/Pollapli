@@ -14,7 +14,6 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.server.rest.handlers.driver_handlers import DriverHandler
 
 class NodesHandler(DefaultRestHandler):
     """
@@ -45,8 +44,6 @@ class NodesHandler(DefaultRestHandler):
         Handler for POST requests of nodes
         extract the data from the request body to add a new node
         """ 
-        print("in node post")
-        
         @defer.inlineCallbacks
         def extract_args(result):
             name=result["name"] or ""
@@ -62,7 +59,6 @@ class NodesHandler(DefaultRestHandler):
         return NOT_DONE_YET
     
     def render_GET(self, request):
-        print("in node get")
         """
         Handler for GET requests of nodes
         """
