@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <meta charset="utf-8" />
+  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame 
+       Remove this if you use the .htaccess -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="" />
+  <meta name="author" content="Ckaosatom" />
+  <!--<meta name="viewport" content="width=device-width; initial-scale=1.0" />-->
+  <title>Pollapli experimental web ui</title>
+  <meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
+  <link type="text/css" href="/css/absolution/jquery-ui-1.8.10.custom.css" rel="Stylesheet" id="mainCss"/> 
+  <link type="text/css" href="/css/test.css" rel="Stylesheet" />  
+  
+  
+  <script  type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
+  <script  type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
+  <script  type="text/javascript" src="/js/jquery.datalink.js"></script>
+  <script  type="text/javascript" src="/pollapli_toolkit.js"></script>
+  <script  type="text/javascript" src="/pollapli_toolkit_ui.js"></script>
+  <script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
+  
+        
+ <script type="text/javascript">
+ var manager=new pollapli.Manager(); 
+ $(document).ready(
+    function() 
+    {
+     // manager.init();
+      $( "button").button({ icons: {primary:'ui-icon-lightbulb'},text:true });
+      
+     // $(manager.testEnvironment).link($("#environments_thingy"))
+       $("#node-dialog").dialog({ autoOpen: false })
+       $("#environments_thingy").link(manager.testEnvironment); 
+      
+      // <Strong>Name: </Strong>   <Strong>Description: </Strong><%= this.description %> 
+       //$(manager.testEnvironment).link($("#environments_thingy"));
+      /*  $("form").change(function() {
+        // <user typed value>
+        alert(manager.testEnvironment.name);
+    });*/
+   
+     
+    }
+  );
+  
+  </script>
+</head>
+
+<body style="background-color:#FFFFFF;font-size:75%;">
+  
+   
+
+<script type="text/x-jqote-template" id="envs_tmpl"> 
+    <![CDATA[
+    <% this.divId="tutu"+j+'' ;  
+   %>
+    <div id="<%=this.divId%>">
+    In template
+     <form  >   
+      <label for="name">Name:</label>
+      <input type="text" name="name" id="name"  />
+      <label for="description">Description:</label>
+      <input type="text" name="description" id="description" />
+      </form>
+      
+    </div>
+    <%   $("#testDiv").link(manager.testEnvironment);%>
+    ]]>
+</script> 
+
+<script type="text/x-jqote-template" id="nodes_tmpl"> 
+    <![CDATA[
+    <% var divId="nodediv_"+j+'' ;  
+   %>
+    <div id="<%=divId%>" class="ui-corner-all ui-state-default block">
+     <div name="id" id="id">Id: <%=this.id%></div>
+      <div name="name" id="name">Name: <%=this.name%></div>
+       <div name="description" id="description">description: <%=this.description%></div>
+         <button onCLick=manager.deleteNodeTest(<%=this.id%>)>Delete</button>
+         <button onClick= pollapli.openNodeDialog_test(<%=j%>,"modify") > Update</button>
+    </div>
+    ]]>
+</script> 
+
+<script type="text/x-jqote-template" id="nodes_dialog_tmpl"> 
+    <![CDATA[
+    
+      
+    
+    <% if (!this.node)
+    {
+      this.node={name:"...",description:"...",type:"...",id:-1};
+    }
+    
+    this.environmentId=1;
+  %>
+    <div>
+    
+      
+    <form>
+        <fieldset>
+          <label for="nodes_dialog_name" class="title">Name</label>
+          <input type="text" name="nodes_dialog_name" id="nodes_dialog_name" value="<%= this.node.name %>" class="text ui-state-default ui-corner-all" style="width:95%"/>
+          <label for="nodes_dialog_description" class="title">Description</label>
+          <textarea rows="4" cols="25" name="nodes_dialog_description" id="nodes_dialog_description" class="text ui-state-default ui-corner-all " style="width:95%"><% this.node.description=$.trim(this.node.description);%><%=this.node.description %></textarea>
+          <label for="nodes_dialog_recipe" class="title">Recipe</label>
+          <input type="text" name="nodes_dialog_recipe" id="nodes_dialog_recipe" value=" " class="text ui-state-default ui-corner-all" style="width:95%"/>
+        </fieldset>
+      </form>
+      <div>
+      <div class="title ">Infos</div>
+      <div class="leftBlock"> Environment id: <%= this.environmentId %></div>
+      <div class="rightblock"> Node id: <%= this.node.id%></div>
+    </div>
+      
+    
+    <button onCLick="pollapli.validateNodeOp('<%= this.mode%>',<%= this.node.id%>)"> <%= this.mode%> </button> 
+    </div>
+    ]]>
+  </script> 
+
+
+
+
+
+<div id="testDiv"></div>
+<div >
+Environments
+  <form id="environments_thingy" >
+      <label for="name">Name:</label>
+      <input type="text" name="name" id="name" />
+     <label for="description">Description:</label>
+      <input type="text" name="description" id="description" />
+  </form>
+
+  <button style="height:20px,margin:0px" onClick="manager.getEnv2()">Validate</button>
+</div>
+
+
+
+<div id="node-dialog" ></div>
+
+<!--<div id="ADDNODE">
+    <input type="text" name="nodes_dialog_name" id="nodes_dialog_name" value="" class="text ui-state-default ui-corner-all" style="width:95%"/>
+    <label for="nodes_dialog_description" class="title">Description</label>
+    <textarea rows="4" cols="25" name="nodes_dialog_description" id="nodes_dialog_description" class="text ui-state-default ui-corner-all " style="width:95%"></textarea>
+      
+</div>
+-->
+ <button  onClick="manager.getNodesTest()">Fetch nodes</button>
+ <button  onClick="manager.addNodeTest()">Add node</button>   
+ <button  onClick="manager.deleteNodes()">Delete ALL node</button>   
+ <div id="testDiv_nodes"></div>
+
+
+
+
+
+
+
+
+</body>
+</html>
+
+
+

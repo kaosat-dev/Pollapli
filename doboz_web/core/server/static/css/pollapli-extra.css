@@ -1,22 +1,20 @@
 body
 {
-  background-color:#151515;
+  background-color:#353535;/*#151515*/
   color:#ffffff;
-    font-size:75%;
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+  font-size:75%;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
 }
 
-#mainMenu
+body a
 {
+  
+  color:#ffffff;
 
-  background-color:#272727;/*#36342e;*/
-  display:inline-block;
-  float:left;
-  width:100%;
-
-  margin:0px;
-  padding:0px; 
+  font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
 }
+
+
 
 
 #mainMenu_notifications

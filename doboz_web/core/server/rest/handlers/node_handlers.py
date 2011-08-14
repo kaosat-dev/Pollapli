@@ -70,8 +70,10 @@ class NodesHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes ALL
         nodes
         """
-        r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
-        d= self.environmentManager.get_environment(self.envId).clear_nodes()
+        print("NODE CLEARING")
+        r=ResponseGenerator(request,contentType="application/pollapli.nodeList+json",status=200,rootUri=self.rootUri)
+        d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()     
+        d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).clear_nodes() ,errback=r._build_response) 
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET 

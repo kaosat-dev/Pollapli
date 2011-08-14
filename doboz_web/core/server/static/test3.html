@@ -11,50 +11,50 @@
   <!--<meta name="viewport" content="width=device-width; initial-scale=1.0" />-->
   <title>Pollapli experimental web ui</title>
   <meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
-  <link type="text/css" href="/css/pollapli_default_theme/jquery-ui-1.8.15.custom.css" rel="Stylesheet" id="mainCss"/> 
+  <link type="text/css" href="/css/absolution/jquery-ui-1.8.10.custom.css" rel="Stylesheet" id="mainCss"/> 
   <link type="text/css" href="/css/test.css" rel="Stylesheet" />  
   
   
   <script  type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
   <script  type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
-  <script  type="text/javascript" src="/js/jquery.datalink.js"></script>
+  <script  type="text/javascript" src="/js/jQXB.1.1.js"></script>
+  
   
         
  <script type="text/javascript">
+ var Customer = { 'Name': 'Anthony', 'Surname': 'Murray', 'Address': { 'Street': 'Carnaby Street', 'ZipCode': 'YTSCH'} };
  $(document).ready(
     function() 
     {
-    
       $( "button").button({ icons: {primary:'ui-icon-lightbulb'},text:true });
-
-    $( "#accordion" ).accordion();
-    $("#dialog").dialog();
-    
-    
-    
-    var person = {};
-    $("#person_truc").link(person);
-
-    $("[name=name]").val("NewValue"); // Set firstName to a value.
-    alert(person.name); // NewValue
-
-    $(person).setField("name", "NewValue");
-    alert($("[name=name]").val()); // NewValue
-
-    // ... user changes value ...
-    $("#person_truc").change(function() {
-        // <user typed value>
-        alert(person.name);
-    });
-    
-    
+      $( "#accordion" ).accordion();
+      $("#dialog").dialog();
+      
+      jQXB.initialize();
+      jQXB.setDataSource('mydata',Customer).doBind('mydata');
+      jQXB.addOnTemplateItemBoundhnd(
+        function (dataSourceName, templateName, occurrency, dataItem, jQrytemplateItem) 
+        {
+            switch (templateName) 
+            {
+                case "addressTemplate": // filter only event databound from a specifica template
+                    var jQryElem = jQrytemplateItem.find('.rowsummary');
+                    var jQryBtn = jQrytemplateItem.find('.onSelect');
+                    jQryElem.val(' the row  ' + occurrency + ' has been created in template \'' + templateName + '\', values : ' + dataItem.prefix + ' and ' + dataItem.number);
+                    // prevent events fires twice in case of re-binding
+                    jQryBtn.unbind();
+                    jQryBtn.bind('click', function () {alert('Row ' + occurrency + ' selected , calling ' + dataItem.prefix + '-' + dataItem.number); });
+                    break;
+            }
+        });
+     
     }
   );
   
   </script>
 </head>
 
-<body style="background-color:#151515;font-size:75%;">
+<body style="background-color:#FFFFFF;font-size:75%;">
    <button type="button" style="height:20px,margin:0px">Click Me!</button>
    <button type="button" style="height:20px,margin:0px">Click dfg!</button>
    <div id="test" class="ui-widget ui-widget-content" style="width:200px;height:100px">bsgsdgsdgsd</div>
@@ -67,16 +67,40 @@
     <div>Second content</div>
 </div>
 
-<div class="ui-widget-content">
+<div >
 
 
-  <div id="person_truc" style="background-color:#272727;">
+  <div id="person_truc" >
       <label for="name">Name:</label>
       <input type="text" name="name" id="name" />
   </div>
 
 </div>
-<div id="dialog" title="dialog"/>
+<div id="dialog" title="dialog"></div>
+
+<input type="text" jqxb-datasource="mydata" jqxb-datamember="Name" />
+<input type="text" jqxb-datasource="mydata" jqxb-datamember="Surname" />
+<input type="text" jqxb-datasource="mydata" jqxb-datamember="Address.Street" />
+<input type="text" jqxb-datasource="mydata" jqxb-datamember="Address.ZipCode" />
+<input type="button" onclick="alert(JSON.stringify(Customer.Address));" />
+
+
+<table>
+        <thead>
+            <tr>
+                <th>Prefix</th>
+                <th>Number</th>
+            </tr>
+        </thead>
+        <tbody jqxb-templatecontainer="addressTemplate" jqxb-datasource="mydataDetails">
+            <tr jqxb-template="addressTemplate" jqxb-templateitemidprfx="addressrow" style="display: none;">
+                <td><input type="text"  jqxb-itemdatamember="prefix" /></td>
+                <td><input type="text"  jqxb-itemdatamember="number" /></td>
+                <td><input type="text"  class="rowsummary" /></td>
+                <td><a href="#" class="onSelect">Click To See Data</a></td>
+             </tr>
+        </tbody>
+    </table>
 
 
 </body>

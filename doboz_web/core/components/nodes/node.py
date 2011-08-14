@@ -356,18 +356,24 @@ class NodeManager(object):
             raise NodeNotFound()
         return self.nodes[id]
     
-    @defer.inlineCallbacks
+    
     def update_node(self,id,name=None,description=None):
-        """Method for node update"""
-        print("updating node",id,"newname",name,"newdescrption",description)
+        """Method for node update"""   
         node=self.nodes[id]
-        node.name=name
-        node.description=description
-        yield node.save()
+        
+        @defer.inlineCallbacks
+        def _update():
+            node.name=name
+            node.description=description
+            yield node.save()
+            log.msg("updating node ",id,"newname",name,"newdescrption",description,logLevel=logging.CRITICAL)
+        _update()
+        
         
         defer.succeed(node)
 
         #self.nodes[id].update()
+    
     
     def delete_node(self,id):
         """
@@ -376,25 +382,30 @@ class NodeManager(object):
         Params:
         id: the id of the node
         """
-        #d=defer.Deferred()
-        def remove(id,nodes):
-            nodeName=nodes[id].name
-            nodes[id].delete()
-            del nodes[id]
+        @defer.inlineCallbacks
+        def _remove(id):
+            nodeName=self.nodes[id].name
+            yield self.nodes[id].delete()
+            del self.nodes[id]
             log.msg("Removed node ",nodeName,"with id ",id,logLevel=logging.CRITICAL)
-       # d.addCallback(remove,self.nodes)
-        
-        defer.succeed(remove(id,self.nodes))
+        _remove(id)
+        defer.succeed(True)
  
             
-    @defer.inlineCallbacks
+    
     def clear_nodes(self):
         """
         Removes & deletes ALL the nodes, should be used with care
         """
-        for node in self.nodes.values():
-            yield self.delete_node(node.id)        
-        defer.returnValue(None)
+        @defer.inlineCallbacks
+        def _clear():
+            for node in self.nodes.values():
+                yield self.delete_node(node.id)  
+
+        _clear();  
+             
+        defer.succeed(True)     
+
    
     """
     ####################################################################################

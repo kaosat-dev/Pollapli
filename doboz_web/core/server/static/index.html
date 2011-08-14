@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Pollapli experimental web ui</title>
   <meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
-  <link type="text/css" href="/css/pollapli_alt_theme2/jquery-ui-1.8.15.custom.css" rel="Stylesheet" id="mainCss"/> 
+  <link type="text/css" href="/css/absolution/jquery-ui-1.8.10.custom.css" rel="Stylesheet" id="mainCss"/> 
   <link type="text/css" href="/css/pollapli-extra.css" rel="Stylesheet" />  
   
   
@@ -13,6 +13,7 @@
   <script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
   <script type="text/javascript" src="/js/jquery.mousewheel.js"></script>
   <script type="text/javascript" src="/js/jquery.corner.js"></script>
+  <script  type="text/javascript" src="/js/jquery.datalink.js"></script>
   <script  type="text/javascript" src="/pollapli_toolkit.js"></script>
   <script  type="text/javascript" src="/pollapli_toolkit_ui.js"></script>
   <script type="text/javascript">
@@ -102,16 +103,25 @@
     this.environmentId=1;
   %>
     <div>
+    
+      
     <form>
         <fieldset>
           <label for="nodes_dialog_name" class="title">Name</label>
-          <input type="text" name="nodes_dialog_name" id="nodes_dialog_name" value="<%= this.node.name %>" class="text ui-state-default ui-corner-all" style="width:100%"/>
+          <input type="text" name="nodes_dialog_name" id="nodes_dialog_name" value="<%= this.node.name %>" class="text ui-state-default ui-corner-all" style="width:95%"/>
           <label for="nodes_dialog_description" class="title">Description</label>
-          <textarea rows="4" cols="25" name="nodes_dialog_description" id="nodes_dialog_description" class="text ui-state-default ui-corner-all " style="width:100%"><% this.node.description=$.trim(this.node.description);%><%=this.node.description %></textarea>
+          <textarea rows="4" cols="25" name="nodes_dialog_description" id="nodes_dialog_description" class="text ui-state-default ui-corner-all " style="width:95%"><% this.node.description=$.trim(this.node.description);%><%=this.node.description %></textarea>
+          <label for="nodes_dialog_recipe" class="title">Recipe</label>
+          <input type="text" name="nodes_dialog_recipe" id="nodes_dialog_recipe" value=" " class="text ui-state-default ui-corner-all" style="width:95%"/>
         </fieldset>
       </form>
-    <div class="title leftblock">Parent Environment: </div> <div class="leftblock"> <%= this.environmentId %> </div>   
-    <div class=" leftblock">ID: <%= this.node.id%></div>
+      <div>
+      <div class="title ">Infos</div>
+      <div class="leftBlock"> Environment id: <%= this.environmentId %></div>
+      <div class="rightblock"> Node id: <%= this.node.id%></div>
+    </div>
+      
+
     <button onCLick=pollapli.validateNodeOp('<%= this.mode%>',<%= this.node.id%>);> <%= this.mode%> </button> 
     </div>
     ]]>
@@ -175,7 +185,7 @@
           
          
           <div class="ui-corner-all ui-state-default block" style="margin:10px 0px 30px 0px; width:99%">
-            <div class="title ui-widget-header ui-corner-tr ui-corner-tl " ><%= this.type %>: <%= this.name %> </div>
+            <div class="title ui-widget-header ui-corner-tr ui-corner-tl " >&nbsp;&nbsp;&nbsp; <%=this.type %>: <%= this.name %> </div>
               <div >
                 <div class="leftBlock"  style="margin:10px 70px 10px 20px;"><img  width="320" height="200" alt=<%= this.img %> src=<%= this.img %> /> </div>
               </div>
@@ -204,9 +214,6 @@
                             <div id=<%=this.progressbarId%> class="progressbar " style="height:12px" ></div>
                             <div style="position:absolute ; top:-14px ;left:100px; ">45% </div>
                         </div>
-                          
-                          
-                         
                          </div>
                         <% if(!this.downloaded)
                           {
@@ -215,19 +222,11 @@
                           %>
                           </td> 
                       </tr>
-                        
-                    
+
                 </table>
             </div>            
           </div>
-          
-           
-             
-                        
-                        
-                        
-          
-
+         
                 ]]>
   </script> 
 
@@ -256,45 +255,63 @@
 </script> 
 
 
-<div id="topSpacer" style="display:inline-block;float:left;height:20px"> <br> </div>
-  <div id="mainMenu" class=" ui-corner-all" >
-    <div id="mainMenu_buttons" style="display:inline-block;float:left;" class="mainMenu">
-      
-      <div style="display:inline-block;float:left">
-        
-    
-      <img src="/img/pollapli-overview-icon.png" alt="overview" id="overview_icon" onClick="setMenu('overview')"/>
-      <img src="/img/pollapli-devices-icon.png" alt="devices" id="devices_icon" onClick="setMenu('devices')"/>
-      <img src="/img/pollapli-tasks-icon.png" alt="tasks" id="tasks_icon" onClick="setMenu('tasks')"/>
-      <img src="/img/pollapli-data-icon.png" alt="data" id="data_icon" onClick="setMenu('data')"/>
-      <img src="/img/pollapli-tools-icon.png" alt="tools" id="tools_icon" onClick="setMenu('tools')"/>
-      <img src="/img/pollapli-settings-icon.png" alt="settings" id="settings_icon" onClick="setMenu('settings')"/>
-      </div>
-      <div style="display:inline-block;float:right;width:20px"></div>
-      <div id="button-description" style="display:inline-block;float:right">|</div>
-    </div>
-    <div id="mainMenu_additional" style="display:inline-block;float:right"  class="infos">
-       <div id="mainMenu_notifications" style="display:inline-block;float:left">
-          <img src="/img/pollapli-errors-icon.png" alt="errors" id="errors_icon" onClick="setMenu('errors')"/>
-          
-          <img src="/img/pollapli-updates-icon.png" alt="updates" id="updates_icon" onClick="setMenu('updates')"/>
-      </div>
-      <div id="mainMenu_help" style="display:inline-block;float:right">
-        <div style="display:inline-block;float:left;text-align:center;margin:8px 7px 1px 7px;">Pollapli 0.5.0</div>
-       <img src="/img/pollapli-help-icon.png" />
-      </div>
+<script type="text/x-jqote-template" id="nodes_test_tmpl"> 
+    <![CDATA[
+    <% this.divId="nodes_test_"+this.id; alert(this.divId);%>
+    <div id=<%=this.divId%>>
+        <%this.truc=JSON.stringify(this);%>
+        <Strong>Name: </Strong> <%=this.name  %>  <Strong>Description: </Strong><%= this.description %> 
+        <% $(this.divId).link(this);%>
      </div>
-  </div>
-  
-  <div id="mainContent"  style="height:700px;display:inline-blockfloat:left;width:100%;background-color:#222529" class="ui-state-default ui-corner-all">
-    <div id="contextMenu" style="width:20%; height:600px;display:inline-block;float:left;background-color:#222529;" class=" ui-corner-all"></div>
-    <div id="contextContent" style="width:79%; height:600px;display:inline-block;float:left;background-color:#222529;" class=" ui-corner-all"></div>
-  </div>
-  <div id="events" style="width:100%; height:30px;display:inline-block;float:left;"/>
+    ]]>
+</script> 
 
-  <div id="node-dialog" title="Node ">
-  
-  </div>
 
+
+<div id="global">
+  <div id="topSpacer" class="lef" style="display:inline-block;float:left;height:10px;width:100%"> </div>
+  <div id="mainMenu" class="leftBlock"  style="width:100%">
+      <div id="mainMenu_buttons" style="display:inline-block;float:left;" class="mainMenu">    
+        <div style="display:inline-block;float:left">
+          <img src="/img/pollapli-overview-icon.png" alt="overview" id="overview_icon" onClick="setMenu('overview')"/>
+          <img src="/img/pollapli-devices-icon.png" alt="devices" id="devices_icon" onClick="setMenu('devices')"/>
+          <img src="/img/pollapli-tasks-icon.png" alt="tasks" id="tasks_icon" onClick="setMenu('tasks')"/>
+          <img src="/img/pollapli-data-icon.png" alt="data" id="data_icon" onClick="setMenu('data')"/>
+          <img src="/img/pollapli-tools-icon.png" alt="tools" id="tools_icon" onClick="setMenu('tools')"/>
+          <img src="/img/pollapli-settings-icon.png" alt="settings" id="settings_icon" onClick="setMenu('settings')"/>
+        </div>
+        <div style="display:inline-block;float:right;width:20px"></div>
+        <div id="button-description" style="display:inline-block;float:right">|</div>
+      </div>
+      <div id="mainMenu_additional" style="display:inline-block;float:right"  class="infos">
+         <div id="mainMenu_notifications" style="display:inline-block;float:left">
+            <img src="/img/pollapli-errors-icon.png" alt="errors" id="errors_icon" onClick="setMenu('errors')"/>
+            
+            <img src="/img/pollapli-updates-icon.png" alt="updates" id="updates_icon" onClick="setMenu('updates')"/>
+        </div>
+        <div id="mainMenu_help" style="display:inline-block;float:right">
+          <div style="display:inline-block;float:left;text-align:center;margin:8px 7px 1px 7px;">Pollapli 0.5.0</div>
+         <img src="/img/pollapli-help-icon.png" />
+        </div>
+       </div>
+  </div>
+ 
+  <div id="mainContent"  style="height:700px;width:100%;padding:0;margin:0" class=" ui-corner-all leftBlock">
+    <div id="contextMenu" style="width:20%; height:670px;display:inline-block;float:left;" class=" ui-corner-all"></div>
+    <div id="contextContent" style="width:79%; height:670px;display:inline-block;float:left;" class=" ui-corner-all"></div>
+  </div>
+  <div id="events" style="width:100%; height:30px;display:inline-block;float:left;"</div>
+    <div id="node-dialog" title="Node "></div>
+    <div id="bindingTest">
+    BindingTest
+    <input type="text" id="name" name="name" value="fromage"/> 
+    <input  type="text" id="toto" name="toto"/> 
+  </div>
+  <div id="nodes_test"></div>
+  <div ><button onClick="">Delete</button> </div>
+  <div id="testing"><button onClick="manager.fetchEnvironments(manager)">Update</button> </div>
+  <div id="testing2"><button onClick="manager.fetchNodes2(1)">Update</button> </div>
+  
+</div>
 </body>
 </html>
