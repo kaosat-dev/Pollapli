@@ -1,6 +1,6 @@
 body
 {
-  background-color:#272727;
+  background-color:#151515;
   color:#ffffff;
     font-size:75%;
     font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
@@ -121,6 +121,44 @@ display:inline-block;
     width: 32;
     height: 32; 
 }
+
+.mask {
+  background: url('/img/pollapli-icon-mask.png') repeat;
+  position: absolute;
+  left:0; top:0;
+  }
+  
+.mask2 {
+  background: url('/img/pollapli-icon-mask2.png') repeat;
+  position: absolute;
+  left:0; top:0;
+  }
+
+.losange
+{
+  width:32px;
+  height:28px;
+  margin:0px;
+  padding:0px;
+  background-color:#ffc500;
+  display:inline-block;
+  float:left;
+  opacity:0.4;
+}
+  
+.losange:hover
+{
+  opacity:1;
+}
+
+.input
+{
+  background-color: #EDF2F7;
+}
+
+
+
+
 
 
 

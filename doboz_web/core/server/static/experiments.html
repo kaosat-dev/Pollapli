@@ -1,0 +1,54 @@
+ <!--Basic masking -->
+ 
+  <div style="width:32px;height:32px;margin:0px;padding:0px;background-color:#ffc500 " id="overview_icon" onClick="setMenu('overview')">
+          <div id="mask_test" style="width:32px;height:32px;position: relative;margin:0px;padding:0px;">      
+              <img src="/img/pollapli-overview-icon.png" alt="tasks" onClick="setMenu('overview')" style="width:32px;height:32px;margin:0px;padding:0px;"/>
+             <div class=" mask" style="width:32px;height:32px;margin:0px;padding:0px;"> </div>
+          </div>
+        </div>
+        
+
+
+
+ <!--Complex masking -->
+
+ <div style="width:32px;height:32px;margin:0px;padding:0px; " >
+            <div id="mask_test" style="width:32px;height:32px;position: relative;margin:0px;padding:0px;">      
+              <div  style="width:32px;height:32px;position: relative;margin:0px;padding:0px;">               
+                   
+                   <div class=" mask" style="width:32px;height:32px;margin:0px;padding:0px;z-index:-1 ;background-color:#ffc500"> </div>
+              </div>
+            
+             <div class=" mask2" style="width:32px;height:32px;margin:0px;padding:0px;z-index:999 ;background-color:#ff0000"> </div>
+          </div>
+        </div>
+        
+       
+<!--jquery rounded corner plugin -->  
+        $('.losange').corner("steep 14px");
+        
+    <div class="losange" id="trucsdfsdf" >
+           <img src="/img/pollapli-overview-icon.png" alt="overview" id="overview_icon" onClick="setMenu('overview')" style="margin:0px;padding:0px;"/>
+      </div>
+      <div class="losange" >
+        <img src="/img/pollapli-devices-icon.png" alt="devices" id="devices_icon" onClick="setMenu('devices')" style="margin:0px;padding:0px;"/>
+      </div>
+      
+
+
+<ul>
+          <li>
+              <%if (this.driver == undefined)
+              {    
+                this.driver={"driverType":"not set","isPluggedIn":"not set","isConnected":"not set"};
+              };
+              
+                %>
+              <Strong>Driver:</Strong> <%= this.driver.driverType %> <Strong>Plugged In:</Strong>  <%= this.driver.isPluggedIn %> <Strong>Connected:</Strong> <%= this.driver.isConnected %>
+          </li>
+        </ul>
+        
+
+
+
+ <button onCLick=manager.<%= this.mode%>_node(<%pollapli.validateNodeOp();%>)> <%= this.mode%> </button> 

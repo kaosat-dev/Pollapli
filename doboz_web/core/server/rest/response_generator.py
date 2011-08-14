@@ -25,7 +25,7 @@ class ResponseGenerator(object):
         """    
         response=""
         callback=getattr(self.request,"clientCallback",None)
-        #print("callback",callback,"payload",payload)
+        print("callback",callback,"payload",payload)
         formater=JsonFormater(resource=self.resource)
         
         if isinstance(payload, failure.Failure):

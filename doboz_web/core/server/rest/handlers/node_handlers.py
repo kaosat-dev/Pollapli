@@ -45,24 +45,14 @@ class NodesHandler(DefaultRestHandler):
         Handler for POST requests of nodes
         extract the data from the request body to add a new node
         """ 
-        print("in node post")
-        
-        @defer.inlineCallbacks
-        def extract_args(result):
-            name=result["name"] or ""
-            description=result.get("description") or ""
-            type=result.get("type") 
-            defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_node(name=name,description=description,type=type)))
-             
         r=ResponseGenerator(request,status=201,contentType="application/pollapli.node+json",resource="node",rootUri=self.rootUri)
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
-        d.addCallbacks(extract_args,errback=r._build_response)    
+        d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).add_node(**params),errback=r._build_response)    
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
     
     def render_GET(self, request):
-        print("in node get")
         """
         Handler for GET requests of nodes
         """
@@ -117,29 +107,22 @@ class NodeHandler(DefaultRestHandler):
         """
         Handler for PUT requests of node
         """
-        @defer.inlineCallbacks
-        def extract_args(result):
-            print("in extract args",result)
-            name=result["name"] or ""
-            description=result.get("description") or ""
-            id=self.nodeId
-            defer.returnValue((yield self.environmentManager.get_environment(self.envId).update_node(id=id,name=name,description=description)))
-        
         r=ResponseGenerator(request,status=200,contentType="application/pollapli.node+json",resource="node",rootUri=self.rootUri)
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
-        d.addCallbacks(extract_args,errback=r._build_response)    
+        d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).update_node(id=self.nodeId,**params),errback=r._build_response)     
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
             
     def render_DELETE(self,request):
         """ 
-        Handler for DELETE requests of environment
+        Handler for DELETE requests for the current node
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes the
-        current environment completely
+        current node completely
         """
-        r=ResponseGenerator(request,status=200,rootUri=self.rootUri)
-        d=self.environmentManager.get_environment(self.envId).delete_node(self.nodeId)
+        r=ResponseGenerator(request,status=200,rootUri=self.rootUri) 
+        d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
+        d.addCallbacks(lambda params:self.environmentManager.get_environment(self.envId).delete_node(self.nodeId),errback=r._build_response)   
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET     

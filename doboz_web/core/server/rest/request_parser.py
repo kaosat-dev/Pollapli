@@ -49,39 +49,39 @@ class RequestParser(object):
                 except ValueError:
                     raise ParameterParseException()
         elif self.request.method=="GET":
-            def convertElem(elem):
-                if elem.isdigit():
-                   return int(elem)
-                elif elem.lower()=="false":
-                    return False
-                elif elem.lower()=="true":
-                    return True
-                else:
-                     return elem
-            for key in self.request.args.keys():  
-                params[key]=[convertElem(elem) for elem in self.request.args[key] ]
+            pass
+        def convertElem(elem):
+            if elem.isdigit():
+                return int(elem)
+            elif elem.lower()=="false":
+                return False
+            elif elem.lower()=="true":
+                return True
+            else:
+                return elem
+        for key in self.request.args.keys():  
+            params[key]=[convertElem(elem) for elem in self.request.args[key] ]
             
             
-            try:  
-                clientCallback=params.get("callback")   
-                if clientCallback is not None:
-                    self.request.clientCallback=clientCallback[0]
-                    del params["callback"]
-                timestamp= params.get("_")
-                if timestamp is not None:
-                    self.request.timestamp=timestamp[0]
+        try:  
+            clientCallback=params.get("callback")   
+            if clientCallback is not None:
+                self.request.clientCallback=clientCallback[0]
+                del params["callback"]
+            timestamp= params.get("_")
+            if timestamp is not None:
+                self.request.timestamp=timestamp[0]      
+                del params["_"]
                     
-                    del params["_"]
-                    
-                clientId=params.get("clientId")
-                if clientId is not None:
-                    self.request.clientId=clientId[0]
-                    del params["clientId"]
-                else:
-                    self.request.clientId=None
+            clientId=params.get("clientId")
+            if clientId is not None:
+                self.request.clientId=clientId[0]
+                del params["clientId"]
+            else:
+                self.request.clientId=None
                 
-            except Exception as inst:
-                print("ERRRROOOR",inst)
+        except Exception as inst:
+             print("ERRRROOOR",inst)
                 
         return defer.succeed( params) 
     

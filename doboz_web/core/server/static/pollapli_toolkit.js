@@ -28,9 +28,9 @@ pollapli.Manager=function Manager()
   this.errors=new Array();
   this.tutu="tutu";
   
-/*$(document).ajaxError(function(e, xhr, settings, exception) { 
-alert('error in: ' + settings.url + ' \n'+'error:\n' + xhr.responseText ); 
-});*/ 
+$(document).ajaxError(function(e, xhr, settings, exception) { 
+alert('error in: ' + settings.url + ' \n'+'error:\n' + xhr.responseText + "Exception"+exception); 
+});
 //alert(JSON.stringify(manager.environments[0]));
 }
 
@@ -73,37 +73,58 @@ pollapli.Manager.prototype.fetchData=function(dataUrl,contentType,successCallbac
 
 
 pollapli.Manager.prototype.postData=function(dataUrl,contentType,data)
-    {
-       
+    {  
          if(!data)
           data='';
-          
-        
-      
 
         $.ajax({
         type: 'POST',
+        async:true,
+        cache:false,
+        dataType: 'jsonp',
         url: dataUrl+"?clientId="+this.clientId,
         data: data,
         contentType: contentType,
         success: this.genericSuccessHandler,
+        error:this.genericErrorHandler
+      });
+    }
+    
+pollapli.Manager.prototype.putData=function(dataUrl,contentType,data)
+    {  
+         if(!data)
+          data='';
+
+        $.ajax({
+        type: 'PUT',
+        async:true,
+        cache:false,
         dataType: 'jsonp',
+        url: dataUrl+"?clientId="+this.clientId,
+        data: data,
+        contentType: contentType,
+        success: this.genericSuccessHandler,
+        error:this.genericErrorHandler
       });
 
+    }
+    
+pollapli.Manager.prototype.deleteData=function(dataUrl,contentType,data)
+    {  
+         if(!data)
+          data='';
 
-          /*  $.ajax({
-                    url: dataUrl+"?clientId="+this.clientId,
-                    method: 'POST',
-                    async: true,
-                    cache:false,
-                    dataType: 'jsonp',
-                    data:data,
-                    contentType: contentType,
-                    success: this.genericSuccessHandler,
-                    error:this.genericErrorHandler,
-                    complete: this.genericCompleteHandler,
-                    cache:false
-                });*/
+        $.ajax({
+        type: 'DELETE',
+        async:true,
+        cache:false,
+        url: dataUrl+"?clientId="+this.clientId,
+        data: data,
+        contentType: contentType,
+        success: this.genericSuccessHandler,
+        error:this.genericErrorHandler
+        
+      });
 
     }
 
@@ -111,19 +132,21 @@ pollapli.Manager.prototype.postData=function(dataUrl,contentType,data)
 
 pollapli.Manager.prototype.genericCompleteHandler=function (response)
     {
-        //console.log("Ajax complete "+response)    ; 
+        console.log("Ajax complete "+response)    ; 
     }
 
     
 pollapli.Manager.prototype.genericSuccessHandler=function (response)
     {
+    
         console.log("Ajax sucess "+response)    ; 
     }
 pollapli.Manager.prototype.genericErrorHandler=function (response, strError)
-    { 
-      errorInfo=$.parseJSON(response.responseText);
-      console.log("Error: "+errorInfo.errorCode+" msg: "+errorInfo.errorMessage+" raw: "+strError)
-      $('#errors').jqoteapp('#errors_tmpl', errorInfo);
+    { console.log("Error "+strError);
+      
+      //errorInfo=$.parseJSON(response.responseText);
+      //console.log("Error: "+errorInfo.errorCode+" msg: "+errorInfo.errorMessage+" raw: "+strError)
+      //$('#errors').jqoteapp('#errors_tmpl', errorInfo);
         
        // this.errors.push(response);
        // alert("jqXHR"+request+" textStatus"+textStatus+" errorThrown"+errorThrown);
@@ -148,7 +171,7 @@ pollapli.Manager.prototype.initRequesters=function ()
       manager.fetchEnvironments(manager);
       manager.fetchNodes(manager,1);
       manager.fetchUpdates()
-      manager.longPoll(manager);
+     // manager.longPoll(manager);
       
     },
     1000
@@ -186,16 +209,12 @@ pollapli.Manager.prototype.longPoll=function (self)
 
 pollapli.Manager.prototype.fetchEnvironments=function (self)
 {
-
   self.fetchData(self.mainUrl+"rest/environments/",'application/pollapli.environmentList+json',
   function (response)
   {
-    
-    
+
      //self.environments=response.environments.items;
-     self.environments= self.environments.concat(response.environments.items);
-      
-    
+     self.environments= self.environments.concat(response.environments.items);  
    }); 
 }
 
@@ -208,6 +227,7 @@ pollapli.Manager.prototype.fetchNodes=function (self,environmentId)
 
      self.environments[environmentId-1].nodes=response.nodes.items;
      self.dostuff();
+      //alert(JSON.stringify(manager.environments[0]));
    }); 
 }
 
@@ -219,7 +239,12 @@ pollapli.Manager.prototype.fetchNodes2=function (environmentId)
   function (response)
   {
     //$('#nodes').jqoteapp('#nodes_tmpl', response.nodes.items);
-    manager.environments[environmentId-1].nodes=response.nodes.items;
+    manager.environments[environmentId-1].nodes=response.nodes.items
+    //alert(JSON.stringify(manager.environments[0]));
+    //manager.environments[environmentId-1].nodes=new Array();
+    //manager.environments[environmentId-1].nodes= manager.environments[environmentId-1].concat(response.environments.items);
+    // =response.nodes.items;
+    //manager.environments[environmentId-1].nodes.environmentId=environmentId;
    }); 
 }
 
@@ -250,6 +275,7 @@ pollapli.Manager.prototype.dostuff=function()
 {
    $('#environments').jqotesub('#environments_tmpl', this.environments[0]);
    $('#nodes').jqotesub('#nodes_tmpl', this.environments[0].nodes);
+   $("button").button();
 }
 
 pollapli.Manager.prototype.dostuff2=function()
@@ -270,6 +296,27 @@ pollapli.Manager.prototype.dostuff2=function()
     $(".progressbar > div").css({ 'border-radius': 0+'px'});
     
 }
+
+pollapli.Manager.prototype.deleteNode=function(nodeId)
+{
+  alert("attempting deletion"+nodeId);
+  this.deleteData(manager.mainUrl+"rest/environments/1/nodes/"+nodeId,'application/pollapli.node+json');
+}
+
+pollapli.Manager.prototype.create_node=function(data)
+{
+  url=manager.mainUrl+"rest/environments/1/nodes";
+  this.postData(url,'application/pollapli.nodeList+json',JSON.stringify(data));
+}
+
+pollapli.Manager.prototype.update_node=function(data,nodeId)
+{
+  //data='{"name":"reprap1","type":"reprap","description":"just a reprap node"}';
+  url=manager.mainUrl+"rest/environments/1/nodes/"+nodeId;
+  this.putData(url,'application/pollapli.node+json',JSON.stringify(data));
+}
+
+
 
 pollapli.Manager.prototype.postUpdateDownload=function()
 {

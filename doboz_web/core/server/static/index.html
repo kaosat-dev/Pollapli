@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en" >
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Pollapli experimental web ui</title>
@@ -12,8 +12,9 @@
   <script  type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
   <script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
   <script type="text/javascript" src="/js/jquery.mousewheel.js"></script>
+  <script type="text/javascript" src="/js/jquery.corner.js"></script>
   <script  type="text/javascript" src="/pollapli_toolkit.js"></script>
-
+  <script  type="text/javascript" src="/pollapli_toolkit_ui.js"></script>
   <script type="text/javascript">
  
   var manager=new pollapli.Manager(); 
@@ -35,12 +36,7 @@
     {
      // currentSelection=$(this).attr("alt");
       $("#button-description").text("|"+$(this).attr("alt").toUpperCase());
-      
-    
-  
     }
-
-   
   }
   
   function setMenu(element)
@@ -65,7 +61,6 @@
            manager.dostuff2();
         }
         });
-
      }
   }
   
@@ -74,10 +69,10 @@
     {
        manager.init();
        $("img").hover(menuLinker);
-       
-       
-      $("button").button();
+       $("button").button();
+      // $('#cornerTest').corner( "bottom steep 12px").corner("top steep 12px");
       setMenu("devices");
+      $("#node-dialog").dialog({ autoOpen: false })
      
     }
   );
@@ -88,23 +83,45 @@
 </head>
 <body>
   
+  
+  
+  
+  
+  
+
+  <script type="text/x-jqote-template" id="nodes_dialog_tmpl"> 
+    <![CDATA[
+    
+      
+    
+    <% if (!this.node)
+    {
+      this.node={name:"...",description:"...",type:"...",id:-1};
+    }
+    
+    this.environmentId=1;
+  %>
+    <div>
+    <form>
+        <fieldset>
+          <label for="nodes_dialog_name" class="title">Name</label>
+          <input type="text" name="nodes_dialog_name" id="nodes_dialog_name" value="<%= this.node.name %>" class="text ui-state-default ui-corner-all" style="width:100%"/>
+          <label for="nodes_dialog_description" class="title">Description</label>
+          <textarea rows="4" cols="25" name="nodes_dialog_description" id="nodes_dialog_description" class="text ui-state-default ui-corner-all " style="width:100%"><% this.node.description=$.trim(this.node.description);%><%=this.node.description %></textarea>
+        </fieldset>
+      </form>
+    <div class="title leftblock">Parent Environment: </div> <div class="leftblock"> <%= this.environmentId %> </div>   
+    <div class=" leftblock">ID: <%= this.node.id%></div>
+    <button onCLick=pollapli.validateNodeOp('<%= this.mode%>',<%= this.node.id%>);> <%= this.mode%> </button> 
+    </div>
+    ]]>
+  </script> 
+  
    <script type="text/x-jqote-template" id="nodes_tmpl"> 
     <![CDATA[
     <li>
-        <Strong>Device Id:</Strong> <%= this.id %>  <Strong>Name: </Strong><%= this.name %> <Strong>description: </Strong> <%= this.description %><Strong>type: </Strong> <%= this.type %>  <Strong>link: </Strong> <a href=<%= this.link.href %>> <%= this.link.href %></a> 
-        <ul>
-          <li>
-              <%if (this.driver == undefined)
-              {    
-                this.driver={"driverType":"not set","isPluggedIn":"not set","isConnected":"not set"};
-              };
-              
-                %>
-                
-                
-              <Strong>Driver:</Strong> <%= this.driver.driverType %> <Strong>Plugged In:</Strong>  <%= this.driver.isPluggedIn %> <Strong>Connected:</Strong> <%= this.driver.isConnected %>
-          </li>
-        </ul>
+        <Strong>Device Id:</Strong> <%= this.id %>  <Strong>Name: </Strong><%= this.name %> <Strong>description: </Strong> <%= this.description %><Strong>type: </Strong> <%= this.type %>  <Strong>link: </Strong> <a href=<%= this.link.href %>> <%= this.link.href %></a>      
+        <div><button onClick= pollapli.openNodeDialog(<%=j%>,"modify") > Modify</button> <button onClick= manager.deleteNode(<%=this.id%>) > Delete</button> </div>   
      </li>
     ]]>
   </script> 
@@ -115,12 +132,14 @@
     <li>
       <Strong>Name </Strong><%= this.name %> <Strong>Description </Strong> <%= this.description %> <Strong>Status </Strong> <%= this.status %> <Strong>link: </Strong> <a href=<%= this.link.href %>> <%= this.link.href %></a> 
       <ul >
-        <li>Nodes:</li>
+        <li class="title">Nodes:</li>
+        <div><button onClick=pollapli.openNodeDialog(-1,"create")> Add</button> </div>
           <ol id="nodes">
+           
           </ol>
       </ul>
       <ul >
-        <li>Tasks:</li>
+        <li class="title">Tasks:</li>
           <ol id="tasks">
           </ol>
       </ul>
@@ -238,9 +257,12 @@
 
 
 <div id="topSpacer" style="display:inline-block;float:left;height:20px"> <br> </div>
-  <div id="mainMenu" class="ui-state-default ui-corner-all">
-    <div id="mainMenu_buttons" style="display:inline-block;float:left" class="mainMenu">
+  <div id="mainMenu" class=" ui-corner-all" >
+    <div id="mainMenu_buttons" style="display:inline-block;float:left;" class="mainMenu">
+      
       <div style="display:inline-block;float:left">
+        
+    
       <img src="/img/pollapli-overview-icon.png" alt="overview" id="overview_icon" onClick="setMenu('overview')"/>
       <img src="/img/pollapli-devices-icon.png" alt="devices" id="devices_icon" onClick="setMenu('devices')"/>
       <img src="/img/pollapli-tasks-icon.png" alt="tasks" id="tasks_icon" onClick="setMenu('tasks')"/>
@@ -264,24 +286,15 @@
      </div>
   </div>
   
-  <div id="mainContent"  style="height:700px;display:inline-blockfloat:left;width:100%;" class="ui-widget-content ui-corner-all">
-    <div id="contextMenu" style="width:20%; height:600px;display:inline-block;float:left;" class="ui-widget-content ui-corner-all"></div>
-    <div id="contextContent" style="width:79%; height:600px;display:inline-block;float:left;" class="ui-widget-content ui-corner-all"></div>
+  <div id="mainContent"  style="height:700px;display:inline-blockfloat:left;width:100%;background-color:#222529" class="ui-state-default ui-corner-all">
+    <div id="contextMenu" style="width:20%; height:600px;display:inline-block;float:left;background-color:#222529;" class=" ui-corner-all"></div>
+    <div id="contextContent" style="width:79%; height:600px;display:inline-block;float:left;background-color:#222529;" class=" ui-corner-all"></div>
   </div>
   <div id="events" style="width:100%; height:30px;display:inline-block;float:left;"/>
-    <!--
-    <div style="width:20%;display:inline-block;float:left;"> 
-      <button class="ui-state-default ui-corner-all" type="button" onclick="manager.test3();">Click Me!</button>
-       <button class="ui-state-default ui-corner-all" type="button" onclick="thingy();">Click Me!</button>
-      
-      <div id="truc" class="ui-widget" >sdfsfsdfds</div>
-      <div id="controlsBlock" class=" ui-corner-right ui-state-default" style="margin-left:2px;">sfsdfsdfsdfsd <a href="tutu">sdfsd</a></div>
-    </div>-->
-   <!-- <div id="bla" class="ui-widget"  style="width:79%;display:inline-block;float:right;overflow:auto;height:200px"> 
-      <div id="updates2" style="height:10%"></div>
-    </div> <div id="clientId">CURRENT ID: </div>-->
 
-
+  <div id="node-dialog" title="Node ">
+  
+  </div>
 
 </body>
 </html>

@@ -306,7 +306,7 @@ class NodeManager(object):
     The following are the "CRUD" (Create, read, update,delete) methods for the general handling of nodes
     """
     @defer.inlineCallbacks
-    def add_node(self,name="node",description="",type=None,connector=None,driver=None,*args,**kwargs):
+    def add_node(self,name="node",description="",type=None,*args,**kwargs):
         """
         Add a new node to the list of nodes of the current environment
         Params:
@@ -319,15 +319,13 @@ class NodeManager(object):
         """
             
         
-        node= yield Node(name,description,type).save()
+        node= yield Node(name=name,description=description,type=type).save()
         node.environment.set(self.parentEnv)
         self.nodes[node.id]=node
-
         log.msg("Added  node ",name," with id set to ",str(node.id), logLevel=logging.CRITICAL)
         self.signalHandler.send_message("node.created",self,node)
         defer.returnValue(node)
         
-        defer.returnValue(None)
     
     def get_nodes(self,filter=None):
         """
@@ -358,10 +356,17 @@ class NodeManager(object):
             raise NodeNotFound()
         return self.nodes[id]
     
-    def update_node(self,id,name,description):
+    @defer.inlineCallbacks
+    def update_node(self,id,name=None,description=None):
         """Method for node update"""
-        print("updating node")
-        return self.nodes[id]
+        print("updating node",id,"newname",name,"newdescrption",description)
+        node=self.nodes[id]
+        node.name=name
+        node.description=description
+        yield node.save()
+        
+        defer.succeed(node)
+
         #self.nodes[id].update()
     
     def delete_node(self,id):
@@ -371,15 +376,16 @@ class NodeManager(object):
         Params:
         id: the id of the node
         """
-        d=defer.Deferred()
+        #d=defer.Deferred()
         def remove(id,nodes):
             nodeName=nodes[id].name
             nodes[id].delete()
             del nodes[id]
             log.msg("Removed node ",nodeName,"with id ",id,logLevel=logging.CRITICAL)
-        d.addCallback(remove,self.nodes)
-        reactor.callLater(0,d.callback,id)
-        return d
+       # d.addCallback(remove,self.nodes)
+        
+        defer.succeed(remove(id,self.nodes))
+ 
             
     @defer.inlineCallbacks
     def clear_nodes(self):

@@ -35,11 +35,15 @@ class DataFormater2(object):
     this comes into play when looping through the provide class instance's dict
     """
     def __init__(self,resource="resource",rootUri="http://localhost",outputType=None,ignoredAttrs=None,addedAttrs=None):
-        self.resource=resource.lower()
+        try:
+            self.resource=resource.lower()
+        except:
+            self.resource="resource"
         self.rootUri=rootUri
         self.outputType=outputType
         self.ignoredAttrs=ignoredAttrs
         self.addedAttrs=addedAttrs
+        
         
     def format(self,element):
         pass
