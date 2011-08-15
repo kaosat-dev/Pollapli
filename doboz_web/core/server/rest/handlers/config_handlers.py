@@ -148,7 +148,7 @@ class AddonsHandler(DefaultRestHandler):
 
 
 class DispatchableEvent(object):
-    EXPOSE=["signal","sender","senderInfo","data","time"]
+    EXPOSE=["signal","sender","data","time"]
     def __init__(self,signal=None,sender=None,data=None,realsender=None,time=None):
         self.signal=signal
         self.sender=sender

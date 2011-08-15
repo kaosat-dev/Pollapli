@@ -49,7 +49,7 @@ pollapli.validateNodeOp=function(op,id)
  
         if (op=="create")
         {
-          manager.create_node(tmpnode);
+          manager.addNodeTest(tmpnode);
         }
         else if (op=="modify")
         {

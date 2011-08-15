@@ -197,9 +197,10 @@ pollapli.Manager.prototype.initRequesters=function ()
   (
     function()
     {
-      manager.fetchEnvironments(manager);
+     // manager.fetchEnvironments(manager);
       
-      manager.fetchUpdates()
+      //manager.fetchUpdates()
+      self.getNodesTest();
       manager.longPoll(manager);
       
     },
@@ -215,7 +216,12 @@ pollapli.Manager.prototype.longPoll=function (self)
   {   
    
     $('#events').jqoteapp('#events_tmpl', response.events.items);
+    self.handleNodeEvent(response.events.items);
     self.longPoll(self);
+    
+    
+    
+    
     },
   function (response)
   {
@@ -442,6 +448,8 @@ pollapli.Manager.prototype.getNodesTest=function()
       //alert("tmpNodelist"+JSON.stringify(tmpNodeList));
       $(manager).setField("nodes",tmpNodeList); 
       manager.renderNodes();
+  
+      $("#dialog-message").dialog('close');
    }); 
 }
 
@@ -470,8 +478,9 @@ pollapli.Manager.prototype.addNodeTest=function(data)
   if (!data)
   {
     data={"name":"test","type":"test","description":"just a test"};
-    data=JSON.stringify(data);
+   
   }
+   data=JSON.stringify(data);
   //alert("data"+data);
   this.postData(manager.mainUrl+"rest/environments/1/nodes/",'application/pollapli.nodeList+json',data,
   function(response)
@@ -538,15 +547,86 @@ pollapli.Manager.prototype.findNode=function(id)
      return null;
 }
 
-pollapli.Manager.prototype.updateANode=function(id,newData)
+pollapli.Manager.prototype.addANode=function(node)
+{
+  manager.nodes.push(node);
+}
+
+pollapli.Manager.prototype.removeANode=function(nodeId)
+{
+  for(var i = manager.nodes.length-1; i >= 0; i--)
+      { 
+         if (nodeId==manager.nodes[i].id)
+       {
+         manager.nodes.splice(i,1);
+         break;
+       } 
+      }
+}
+
+pollapli.Manager.prototype.updateANode=function(newNode)
+{
+  for(var i = manager.nodes.length-1; i >= 0; i--)
+      { 
+         if (newNode.id==manager.nodes[i].id)
+       {
+         manager.nodes.splice(i,1,newNode);
+         break;
+       } 
+      }
+}
+
+pollapli.Manager.prototype.handleNodeEvent=function(nodeEvents)
 {
   
+  var analyse=function(key,element)
+  {
+    //alert("element sig"+element.signal+JSON.stringify(element))
+    if(element.signal=="node.created")
+    {
+      //alert("id of node "+element.data.id);
+      if( manager.findNode (element.data.id)==null)
+      {
+        manager.addANode(element.data);
+         manager.renderNodes();
+        //alert("not found, done by other client");
+      }
+    }
+    else if(element.signal=="node.updated")
+    {
+
+        manager.updateANode(element.data);
+         manager.renderNodes();
+        //alert("not found, done by other client");
+      
+      manager.renderNodes();
+    }
+    else if(element.signal=="node.deleted")
+    {
+      manager.removeANode(element.data.id);
+      manager.renderNodes();
+    }
+    else if(element.signal=="nodes.cleared")
+    {
+      manager.nodes=[]
+      manager.renderNodes();
+    }
+  }
+  
+  $.each(nodeEvents,analyse ); 
+   
 }
+
+
 
 pollapli.Manager.prototype.renderNodes=function()
 {
    $('#testDiv_nodes').jqotesub('#nodes_tmpl',manager.nodes);   
 }
+
+
+
+
 
 
 pollapli.Manager.prototype.postUpdateDownload=function()

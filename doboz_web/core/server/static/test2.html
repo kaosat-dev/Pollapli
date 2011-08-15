@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
   
   <meta charset="utf-8" />
@@ -15,20 +15,22 @@
   <link type="text/css" href="/css/test.css" rel="Stylesheet" />  
   
   
-  <script  type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
+  <script  type="text/javascript" src="/js/jquery-1.6.2.min.js"></script>
   <script  type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
   <script  type="text/javascript" src="/js/jquery.datalink.js"></script>
   <script  type="text/javascript" src="/pollapli_toolkit.js"></script>
   <script  type="text/javascript" src="/pollapli_toolkit_ui.js"></script>
   <script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
   
-        
+     
  <script type="text/javascript">
  var manager=new pollapli.Manager(); 
  $(document).ready(
     function() 
     {
-     // manager.init();
+      
+      
+      manager.init();
       $( "button").button({ icons: {primary:'ui-icon-lightbulb'},text:true });
       
      // $(manager.testEnvironment).link($("#environments_thingy"))
@@ -41,7 +43,15 @@
         // <user typed value>
         alert(manager.testEnvironment.name);
     });*/
-   
+    
+    
+   $("#dialog-message").dialog({
+      modal: true,
+      draggable: false,
+      resizable: false
+    }
+    
+    );
      
     }
   );
@@ -150,16 +160,36 @@ Environments
       
 </div>
 -->
+<div id="events" style="width:100%; height:100px;overflow:auto " class="leftBlock"></div>
+
  <button  onClick="manager.getNodesTest()">Fetch nodes</button>
- <button  onClick="manager.addNodeTest()">Add node</button>   
+ <button  onClick="pollapli.openNodeDialog(-1,'create')"> Add Node</button> 
  <button  onClick="manager.deleteNodes()">Delete ALL node</button>   
  <div id="testDiv_nodes"></div>
 
+ 
+<div id="dialog-message" title="Loading data">
+  <p>
+    <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
+    Please wait, files are being fetched from the server.
+    
+  </p>
+     <div align="center"><img src="/img/ajax-loader.gif"/></div> 
+</div>
 
-
-
-
-
+<script type="text/x-jqote-template" id="events_tmpl"> 
+    <![CDATA[
+    <div>
+    <% 
+      var dt=new Date((Number(this.time))*1000);
+      this.time=(dt.getMonth()+1)+ '/'+dt.getDate()+ '/'+dt.getFullYear() +" "+ dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds() ;
+      var data=JSON.stringify(this.data);
+    %>
+    <Strong>Signal: </Strong> <%= this.signal %>  <Strong>Sender: </Strong><%= this.sender %> <Strong>Data: </Strong> <%= data %> <strong> SenderInfo:</strong><%= this.senderInfo %><strong>Time:</strong><%= this.time %>
+     
+     </div>
+    ]]>
+</script> 
 
 
 </body>

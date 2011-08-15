@@ -366,6 +366,7 @@ class NodeManager(object):
             node.name=name
             node.description=description
             yield node.save()
+            self.signalHandler.send_message("node.updated",self,node)
             log.msg("updating node ",id,"newname",name,"newdescrption",description,logLevel=logging.CRITICAL)
         _update()
         
@@ -384,9 +385,14 @@ class NodeManager(object):
         """
         @defer.inlineCallbacks
         def _remove(id):
-            nodeName=self.nodes[id].name
-            yield self.nodes[id].delete()
+            nodeName=self.nodes[id].name    
+            tmpNode=self.nodes[id]
+            tmpId=tmpNode.id
+            yield self.nodes[id].delete() 
             del self.nodes[id]
+            tmpNode.id=tmpId
+            self.signalHandler.send_message("node.deleted",self,tmpNode)
+            
             log.msg("Removed node ",nodeName,"with id ",id,logLevel=logging.CRITICAL)
         _remove(id)
         defer.succeed(True)
@@ -401,7 +407,7 @@ class NodeManager(object):
         def _clear():
             for node in self.nodes.values():
                 yield self.delete_node(node.id)  
-
+            self.signalHandler.send_message("nodes.cleared",self,node) 
         _clear();  
              
         defer.succeed(True)     
