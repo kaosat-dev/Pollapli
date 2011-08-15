@@ -53,10 +53,10 @@ class JsonFormater(DataFormater2):
     def __init__(self,resource="resource",rootUri="http://localhost"):
         DataFormater2.__init__(self, resource, rootUri, "json")
         self.list=list
-        self.maxRecurion=3
+        self.maxRecurion=5
         self.subObjectLinksOnly=False
         
-    def format(self,object,resource,rootUrl="http://localhost",maxRecursion=3,subObjectLinksOnly=True):
+    def format(self,object,resource,rootUrl="http://localhost",maxRecursion=5,subObjectLinksOnly=True):
         return self.__format(object,resource,rootUrl,0,subObjectLinksOnly,True)
         
     def __format(self,object,resource,rootUrl="http://localhost",recursionLevel=0,subObjectLinksOnly=False,isRoot=False):

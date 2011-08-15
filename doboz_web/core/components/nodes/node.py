@@ -385,6 +385,11 @@ class NodeManager(object):
         """
         @defer.inlineCallbacks
         def _remove(id):
+            """
+             little "trick" for node deletion : to keep the objects id alive (as it gets removed normally before the event 
+             has a chance to be dispatched), the id + data of a node to be deleted gets saved, then the event is dispatched using
+              this "fake node"'s data 
+            """
             nodeName=self.nodes[id].name    
             tmpNode=self.nodes[id]
             tmpId=tmpNode.id

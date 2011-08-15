@@ -12,6 +12,8 @@ pollapli.openNodeDialog=function (nodeId,mode)
     }
    
     //alert("node:"+ node+" node name:"+node.name);
+    $("#node-dialog" ).dialog( "option", "title", mode+" node "  );
+   // $('#node-dialog').dialog({show: 'slide' , title:" node"});
     $('#node-dialog').jqotesub('#nodes_dialog_tmpl', {'node':node,'mode':mode});  
     $("#node-dialog button").button();
     $('#node-dialog').dialog('open');
@@ -29,8 +31,10 @@ pollapli.openNodeDialog_test=function (nodeId,mode)
     }
    
     //alert("node:"+ node+" node name:"+node.name);
+     $("#node-dialog" ).dialog( "option", "title", mode+" node "  );
     $('#node-dialog').jqotesub('#nodes_dialog_tmpl', {'node':node,'mode':mode});  
     $("#node-dialog button").button();
+    
     $('#node-dialog').dialog('open');
 } 
 

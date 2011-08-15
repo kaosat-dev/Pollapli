@@ -34,7 +34,7 @@
       $( "button").button({ icons: {primary:'ui-icon-lightbulb'},text:true });
       
      // $(manager.testEnvironment).link($("#environments_thingy"))
-       $("#node-dialog").dialog({ autoOpen: false })
+       $("#node-dialog").dialog({ autoOpen: false ,show:'slide'})
        $("#environments_thingy").link(manager.testEnvironment); 
       
       // <Strong>Name: </Strong>   <Strong>Description: </Strong><%= this.description %> 
@@ -86,11 +86,21 @@
     <% var divId="nodediv_"+j+'' ;  
    %>
     <div id="<%=divId%>" class="ui-corner-all ui-state-default block">
-     <div name="id" id="id">Id: <%=this.id%></div>
+      <div name="id" id="id">Id: <%=this.id%></div>
       <div name="name" id="name">Name: <%=this.name%></div>
-       <div name="description" id="description">description: <%=this.description%></div>
-         <button onCLick=manager.deleteNodeTest(<%=this.id%>)>Delete</button>
-         <button onClick= pollapli.openNodeDialog_test(<%=j%>,"modify") > Update</button>
+      <div name="description" id="description">description: <%=this.description%></div>
+      
+      <% if(this.driver) { %>
+            <div >isPluggedIn: <%=this.driver.isPluggedIn%></div>
+            <div >isConnected: <%=this.driver.isConnected%></div>
+            <button >Driver Info</button>
+        
+      <% }else { %>
+        <button >Add driver</button>
+       <% }%>
+      <br>
+      <button onCLick=manager.deleteNodeTest(<%=this.id%>)>Delete</button>
+      <button onClick= pollapli.openNodeDialog_test(<%=j%>,"modify") > Update</button>
     </div>
     ]]>
 </script> 
