@@ -614,6 +614,14 @@ class DriverManager(object):
     The following are the plug&play and registration methods for drivers
     """
     @classmethod
+    @defer.inlineCallbacks
+    def get_driverTypes(cls,*args,**kwargs): 
+        
+        driverTypesTmp= yield UpdateManager.get_plugins(idoboz_web.IDriver)   
+        driverTypes=[driverTypeInst() for driverTypeInst in driverTypesTmp]
+        defer.returnValue(driverTypes)
+    
+    @classmethod
     def register_driver(cls,driver,creation=False):
         log.msg("Registering driver",driver,logLevel=logging.DEBUG,system="Driver")
         if not driver.connectionType in cls.connectionsInfos:
@@ -728,11 +736,7 @@ class DriverManager(object):
         
         
         portListing={}#old, new as tupples of lists
-#        oldPorts={}
-#        for hardwareKlass in cls.bindings2.iterkeys():
-#            oldPorts[hardwareKlass]=hardwareKlass.get_ports()
-#            
-#        newPorts={}
+
         for connectionType,connectionInfo in cls.connectionsInfos.items() :
             oldPorts=connectionInfo.get_ports()
             newPorts=(yield connectionInfo.list_ports())
@@ -758,27 +762,7 @@ class DriverManager(object):
               
                 
      
-#        addedPorts,removedPorts=checkForPortChanges(oldPorts,newPorts)
-#        
-#        if addedPorts:  
-#            log.msg("Ports added:",addedPorts,logLevel=logging.DEBUG)          
-#            cls.bindings.add_ports(list(addedPorts)) 
-#               
-#        if addedPorts or (len(cls.bindings.get_unboundDrivers())>0 and len(cls.bindings.get_unboundPorts())>0):
-#            #log.msg("New ports/drivers detected: These ports were added",addedPorts,logLevel=logging.DEBUG)   
-#            cls.driverLock.run(cls.setup_drivers)
-#            
-#        if removedPorts:    
-#            log.msg("Ports removed:",removedPorts,logLevel=logging.DEBUG)             
-#            oldBoundDrivers=cls.bindings.get_boundDrivers()
-#            cls.bindings.remove_ports(list(removedPorts)) 
-#            newBoundDrivers=cls.bindings.get_boundDrivers()
-#        
-#            for driver in set(oldBoundDrivers)-set(newBoundDrivers):
-#                port=driver.hardwareHandler.port
-#                log.msg("Node",(yield driver.node.get()).name,"plugged out of port",port,system="Driver") 
-#                driver.pluggedOut(port)
-#            reactor.callLater(1,DriverManager.update_deviceList)
+
         
         #if addedPorts is None and removedPorts is None:
         reactor.callLater(1,DriverManager.update_deviceList)

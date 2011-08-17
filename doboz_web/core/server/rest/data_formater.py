@@ -1,4 +1,4 @@
-import json,traceback,sys
+import json,traceback,sys,inspect
 
 class DataFormater(object):
     def __init__(self,resource="resource",rootUri="http://localhost"):
@@ -67,11 +67,19 @@ class JsonFormater(DataFormater2):
             doIt=False
             return None
         
-        if not isinstance(object,list):
+        isList=False
+        if inspect.isclass(object):
+            if issubclass(object, list):
+                isList=True
+        else:
+            if isinstance(object,list):
+                isList=True
+        
+        if not isList:
             tmpDict={}      
             tmpDict["link"]={"href":rootUrl,"rel":resource} 
 
-            if not isinstance(object,dict) and hasattr(object,"EXPOSE") and doIt:       
+            if not isinstance(object,dict) and hasattr(object,"EXPOSE") and doIt:     
                 for attrName in object.EXPOSE:
                     
                     attrValue=None
@@ -106,7 +114,7 @@ class JsonFormater(DataFormater2):
                     #    print("adding ",attrName," value",attrValue,"recursionLevel",recursionLevel)
             #print("Finished adding ",tmpDict)
         else:
-           
+            
             singleName=resource
             pluralName=resource
             if resource.endswith('s'):
@@ -123,7 +131,7 @@ class JsonFormater(DataFormater2):
             tmpDict["items"]=[]
             
             for item in object:             
-                if hasattr(item,"EXPOSE"):
+                if hasattr(item,"EXPOSE"):                    
                     link=tmpDict["link"]["href"]
                     try:
                         subElementUrlPrefix=None

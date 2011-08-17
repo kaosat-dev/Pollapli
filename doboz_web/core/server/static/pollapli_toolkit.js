@@ -475,6 +475,8 @@ pollapli.Manager.prototype.deleteNodeTest=function(nodeId)
 
 pollapli.Manager.prototype.addNodeTest=function(data)
 {
+  
+  self=this;
   if (!data)
   {
     data={"name":"test","type":"test","description":"just a test"};
@@ -485,7 +487,8 @@ pollapli.Manager.prototype.addNodeTest=function(data)
   this.postData(manager.mainUrl+"rest/environments/1/nodes/",'application/pollapli.nodeList+json',data,
   function(response)
   {
-      manager.nodes.push(response.node);
+    
+      self.addANode(response.node);
       $(manager).setField("nodes",manager.nodes); 
       manager.renderNodes();
   });
@@ -549,7 +552,13 @@ pollapli.Manager.prototype.findNode=function(id)
 
 pollapli.Manager.prototype.addANode=function(node)
 {
-  manager.nodes.push(node);
+  if( manager.findNode (node.id)==null)
+      {
+       manager.nodes.push(node);
+     
+      }
+  
+  
 }
 
 pollapli.Manager.prototype.removeANode=function(nodeId)
@@ -585,21 +594,23 @@ pollapli.Manager.prototype.handleNodeEvent=function(nodeEvents)
     if(element.signal=="node.created")
     {
       //alert("id of node "+element.data.id);
-      if( manager.findNode (element.data.id)==null)
+      manager.addANode(element.data);
+      manager.renderNodes();
+      /*if( manager.findNode (element.data.id)==null)
       {
         manager.addANode(element.data);
          manager.renderNodes();
         //alert("not found, done by other client");
-      }
+      }*/
     }
     else if(element.signal=="node.updated")
     {
 
         manager.updateANode(element.data);
-         manager.renderNodes();
+        manager.renderNodes();
         //alert("not found, done by other client");
       
-      manager.renderNodes();
+     
     }
     else if(element.signal=="node.deleted")
     {
@@ -623,6 +634,12 @@ pollapli.Manager.prototype.renderNodes=function()
 {
    $('#testDiv_nodes').jqotesub('#nodes_tmpl',manager.nodes);   
 }
+
+pollapli.Manager.prototype.dumpNodes=function()
+{
+  alert("Nodes"+JSON.stringify(this.nodes));
+}
+
 
 
 

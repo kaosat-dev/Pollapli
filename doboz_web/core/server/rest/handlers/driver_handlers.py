@@ -9,7 +9,33 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
+from doboz_web.core.components.drivers.driver import DriverManager
 
+
+class DriverTypesHandler(DefaultRestHandler):
+    """
+    Resource in charge of handling the drivers (plural)  : WARNING !! this is a special case, as this allows acces to driver types , 
+    not individual driver instances:
+    Listing all driver types
+    etc
+    """
+    isLeaf=True
+    def __init__(self,rootUri=""):
+        DefaultRestHandler.__init__(self,rootUri)
+        self.valid_contentTypes.append("application/pollapli.driverTypeList+json")   
+        self.validGetParams.append('type')
+
+    
+    def render_GET(self, request):
+        """
+        Handler for GET requests of driver types
+        """
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.driverTypeList+json",resource="driverTypes",rootUri=self.rootUri)
+        d=RequestParser(request,"driverTypes",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()      
+        d.addCallbacks(callback=lambda params:DriverManager.get_driverTypes(params),errback=r._build_response)
+        d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
+        return NOT_DONE_YET
 
 
 class DriverHandler(DefaultRestHandler):

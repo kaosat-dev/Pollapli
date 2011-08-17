@@ -14,6 +14,7 @@ from twisted.internet import reactor, defer
 
 from doboz_web.core.components.environments.environment import EnvironmentManager,Environment
 from doboz_web.core.server.rest.handlers.environment_handlers import EnvironmentsHandler
+from doboz_web.core.server.rest.handlers.driver_handlers import DriverTypesHandler
 from doboz_web.core.server.rest.handlers.config_handlers import ConfigHandler
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
 from doboz_web.exceptions import *
@@ -184,8 +185,9 @@ class MainServer():
         restRoot=Resource()
         root.putChild("rest",restRoot)
         try:
-            restRoot.putChild("environments", EnvironmentsHandler("/rest/environments",self.environmentManager))
             restRoot.putChild("config", ConfigHandler("/rest/config"))
+            restRoot.putChild("drivertypes", DriverTypesHandler("/rest/drivertypes")) 
+            restRoot.putChild("environments", EnvironmentsHandler("/rest/environments",self.environmentManager))
 
         except Exception as inst:
             log.msg("Error in base rest resources creation",str(inst), system="server", logLevel=logging.CRITICAL)
