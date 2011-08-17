@@ -10,8 +10,9 @@
   <!--<meta name="viewport" content="width=device-width; initial-scale=1.0" />-->
   <title>Pollapli experimental web ui</title>
   <meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
-  <link type="text/css" href="/css/absolution/jquery-ui-1.8.10.custom.css" rel="Stylesheet" id="mainCss"/> 
+  <link type="text/css" href="/css/absolution_alt/jquery-ui-1.8.10.custom.css" rel="Stylesheet" id="mainCss"/> 
   <link type="text/css" href="/css/test.css" rel="Stylesheet" />  
+  <link type="text/css" href="/css/pollapli-extra.css" rel="Stylesheet" />  
 
   <script  type="text/javascript" src="/js/jquery-1.6.2.min.js"></script>
   <script  type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
@@ -26,11 +27,10 @@
     function() 
     {
       manager.init();
-      pollapli.ui.loadTemplates();
+      pollapli.ui.init();
       $( "button").button({ icons: {primary:'ui-icon-lightbulb'},text:true }); 
       $("#node-dialog").dialog({ autoOpen: false ,show:'slide',width:400})
       $("#driver-dialog").dialog({ autoOpen: false ,show:'slide',width:400})
-      $("#dialog-message").dialog({modal: true,draggable: false,resizable: false});
       //$("#environments_thingy").link(manager.testEnvironment); 
     }
   );
@@ -46,7 +46,7 @@
   <button  onClick="pollapli.ui.openNodeDialog(-1,'create')"> Add Node</button> 
   <button  onClick="manager.deleteNodes()">Delete ALL node</button>   
   <div id="testDiv_nodes"></div>
-  <div id="dialog-message" title="Loading data">
+  <div id="loader_dialog" title="Loading data">
     <p>
       <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
       Please wait, files are being fetched from the server.   

@@ -1,7 +1,8 @@
 body
 {
-  background-color:#353535;/*#151515*/
-  color:#ffffff;
+  background-color:#fefefe;/*#757575;#151515*/
+background-image: url("/img/stripe.png");
+  /*color:#ffffff;*/
   font-size:75%;
   font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
 }
@@ -69,11 +70,21 @@ border-style:solid;
  {display:inline-block;
   float:left;
  }
+ 
  .title
  {
-  color:#ffc500;
+  color:#0090ff;!important;
   font-weight: bold;
  }
+ 
+ 
+ .title_old
+ {
+  color:#ffc500;!important;
+  font-weight: bold;
+ }
+ 
+ 
  .updateBlock
  {
   display:inline-block;
@@ -99,6 +110,21 @@ display:inline-block;
   display:inline-block;
   float:left;
 }
+.fullWidth
+{
+  width:100%;
+}
+
+.tableTest
+{
+}
+
+.tableTest td
+{
+ padding-bottom: 0.4em;
+ margin:3px;
+}
+
 .bordered
 {
   border-width: 2px;
@@ -132,22 +158,7 @@ display:inline-block;
   left:0; top:0;
   }
 
-.losange
-{
-  width:32px;
-  height:28px;
-  margin:0px;
-  padding:0px;
-  background-color:#ffc500;
-  display:inline-block;
-  float:left;
-  opacity:0.4;
-}
-  
-.losange:hover
-{
-  opacity:1;
-}
+
 
 .input
 {
@@ -155,8 +166,36 @@ display:inline-block;
 }
 
 
+.pblabel { position: absolute; width: 100%; text-align: center; line-height: 1.1em; color:#252525; }
 
 
+.modifyButton
+{
+   outline: 0; 
+   margin:0 4px 0 0; 
+   padding: .4em 1em; 
+   text-decoration:none !important; 
+   cursor:pointer; 
+   position: relative; 
+   text-align: center; 
+   zoom: 1; 
+}
+.deleteButton
+{
+  outline: 0; 
+   margin:0 4px 0 0; 
+   padding: .4em 1em; 
+   text-decoration:none !important; 
+   cursor:pointer; 
+   position: relative; 
+   text-align: center; 
+   zoom: 1; 
+}
 
+/* hide the close x on the loading screen */
+.loadingScreen .ui-dialog-titlebar-close 
+{
+  display: none;
+}
 
 

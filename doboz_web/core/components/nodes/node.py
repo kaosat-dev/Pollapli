@@ -277,15 +277,20 @@ class Node(DBObject):
 class NodeManager(object):
     """
     Class for managing nodes: works as a container, a handler
-    and a central managment point for the list of avalailable nodes
+    and a central management point for the list of available nodes
     (for future plugin based system)
+    
+    
+     the signal signature for node manager events is as follows: 
+     -for example environment_id.node_created : this is for coherence, signal names use underscores, while hierarchy is represented by dots)
+    
     """
     nodeTypes={}
     #nodeTypes["reprap"]=ReprapCapability
     
-    def __init__(self,parentEnv):
+    def __init__(self,parentEnvironment):
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.nodes.nodeManager")
-        self.parentEnv=parentEnv
+        self.parentEnvironment=parentEnvironment
         self.nodes={}
         self.lastNodeId=0
         self.signalChannel="node_manager"
@@ -293,12 +298,12 @@ class NodeManager(object):
      
     @defer.inlineCallbacks    
     def setup(self):
-        self.signalChannelPrefix="environment_"+str(self.parentEnv.id)
+        self.signalChannelPrefix="environment_"+str(self.parentEnvironment.id)
         
         @defer.inlineCallbacks
         def addNode(nodes):
             for node in nodes:
-                node.environment.set(self.parentEnv)
+                node.environment.set(self.parentEnvironment)
                 self.nodes[node.id]=node
                 yield node.setup()
                
@@ -328,7 +333,7 @@ class NodeManager(object):
             
         
         node= yield Node(name=name,description=description,type=type).save()
-        node.environment.set(self.parentEnv)
+        node.environment.set(self.parentEnvironment)
         self.nodes[node.id]=node
         log.msg("Added  node ",name," with id set to ",str(node.id), logLevel=logging.CRITICAL)
         self.send_signal("node_created", node)

@@ -48,6 +48,9 @@ class ResponseGenerator(object):
         if callback is not None and payload is not None:
             payload= callback+"("+payload+")" 
         response=payload or ""
+        
+        response=response.encode("utf-8")
+        self.request.setHeader('Content-Encoding', 'charset=utf-8')
         log.msg("building response using payload:",payload,logLevel=logging.CRITICAL)
         
         requestCall=getattr(self.request,"_call",None)

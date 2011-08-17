@@ -127,13 +127,18 @@ class TaskManager(object):
     def __init__(self,parentEnvironment):
         self.tasks={}
         self.parentEnvironment=parentEnvironment
-    
+        self.signalChannel="task_manager"
+        self.signalHandler=SignalHander(self.signalChannel)
     
     @defer.inlineCallbacks
     def setup(self):         
         yield self.load(self.parentEnvironment)
-        defer.returnValue(None)
-        
+        self.signalChannelPrefix="environment_"+str(self.parentEnvironment.id)    
+        defer.returnValue(self)
+    
+    def send_signal(self,signal="",data=None):
+        prefix=self.signalChannelPrefix+"."
+        self.signalHandler.send_message(prefix+signal,self,data)
     
     """
     ####################################################################################
@@ -156,6 +161,9 @@ class TaskManager(object):
             task=yield Task(taskType=taskType,options=taskParams).save()
         if not task:
             raise UnknownTask()
+        else:
+            log.msg("Added  task ",name, logLevel=logging.CRITICAL)
+            self.send_signal("task_created", task)
         defer.returnValue(task)
         
     @defer.inlineCallbacks

@@ -200,7 +200,7 @@ pollapli.Manager.prototype.initRequesters=function ()
     {
      // manager.fetchEnvironments(manager);
       
-      //manager.fetchUpdates()
+      manager.fetchUpdates()
       self.getNodesTest();
       self.getDriverTypes();
       manager.longPoll(manager);
@@ -330,20 +330,13 @@ pollapli.Manager.prototype.dostuff=function()
 pollapli.Manager.prototype.dostuff2=function()
 {
 
-   $('#updates').jqotesub('#updates_tmpl', this.updates);
+   $('#updates').jqotesub(pollapli.ui.templates.updates_tmpl, this.updates);
    
    $("button").button();
-     $( ".progressbar" ).progressbar({
-      value: 37
-    });   
    
-  $(".progresswraper").show("fast");
-    
-    
-    $(".progressbar > div").css({ 'background': 'Orange' });
-    $(".progressbar ").css({ 'border-radius': 0+'px' });
-    $(".progressbar > div").css({ 'border-radius': 0+'px'});
-    
+   pollapli.ui.init_progressbar(".progressbar",15);
+
+
 }
 
 
@@ -451,7 +444,7 @@ pollapli.Manager.prototype.getNodesTest=function()
       $(manager).setField("nodes",tmpNodeList); 
       manager.renderNodes();
   
-      $("#dialog-message").dialog('close');
+      $("#loader_dialog").dialog('close');
    }); 
 }
 
@@ -648,7 +641,8 @@ pollapli.Manager.prototype.renderNodes=function()
   
   try
   {
- $('#testDiv_nodes').jqotesub(pollapli.ui.templates.nodes_tmpl,manager.nodes);   
+    $('#testDiv_nodes').jqotesub(pollapli.ui.templates.nodes_tmpl,manager.nodes); 
+    //$('#testDiv_nodes button').button();  
   }
 catch(err)
   {
@@ -678,8 +672,10 @@ pollapli.Manager.prototype.getDriverTypes=function()
 
 pollapli.Manager.prototype.postUpdateDownload=function()
 {
+  
+   $(".progressbar" ).progressbar( "option", "value", 100 );
   //this.fetchData({"dataUrl":manager.mainUrl+"rest/config/updates","contentType":'application/pollapli.updateList+json',"method":'POST'} );
-  data='{"name":"reprap1","type":"reprap","description":"just a reprap node"}';
+  /*data='{"name":"reprap1","type":"reprap","description":"just a reprap node"}';
   resp=function (response)
   {
     alert("response ok"); 
@@ -690,7 +686,7 @@ pollapli.Manager.prototype.postUpdateDownload=function()
   
   
   this.postData(url,'application/pollapli.nodeList+json',data);
-  //dataUrl,contentType,successCallback,errorCallback,timeout,method)
+  //dataUrl,contentType,successCallback,errorCallback,timeout,method)*/
 }
 
       

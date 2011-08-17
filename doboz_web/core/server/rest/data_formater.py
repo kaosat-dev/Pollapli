@@ -80,8 +80,7 @@ class JsonFormater(DataFormater2):
             tmpDict["link"]={"href":rootUrl,"rel":resource} 
 
             if not isinstance(object,dict) and hasattr(object,"EXPOSE") and doIt:     
-                for attrName in object.EXPOSE:
-                    
+                for attrName in object.EXPOSE: 
                     attrValue=None
                     #if we are at a recusion level >0  
                             
@@ -92,8 +91,6 @@ class JsonFormater(DataFormater2):
                         attrValue=self.__format(getattr(par,sub),attrName,tmpDict["link"]["href"]+"/"+attrName,recursionLevel+1,subObjectLinksOnly)
                     else:
                         tmpattrValue=getattr(object,attrName,None)
-                  
-                        
                         if tmpattrValue is not None :   
                             if not hasattr(tmpattrValue,"EXPOSE") and not isinstance(tmpattrValue,list):
                                 try:
@@ -111,6 +108,8 @@ class JsonFormater(DataFormater2):
                                     #traceback.print_exc(file=sys.stdout)
                     if attrValue is not None:
                         tmpDict[attrName]=attrValue
+            elif not isinstance(object,dict) and doIt:
+                pass
                     #    print("adding ",attrName," value",attrValue,"recursionLevel",recursionLevel)
             #print("Finished adding ",tmpDict)
         else:
@@ -130,23 +129,26 @@ class JsonFormater(DataFormater2):
             tmpDict["link"]={"href":rootUrl,"rel":pluralName}
             tmpDict["items"]=[]
             
-            for item in object:             
+            for item in object:      
+                link=tmpDict["link"]["href"]
+                try:
+                    subElementUrlPrefix=None
+                    if getattr(item,"id") is not None:
+                        subElementUrlPrefix=str(getattr(item,"id"))
+                    elif getattr(item,"name") is not None:
+                        subElementUrlPrefix=getattr(item,"name")
+                    if subElementUrlPrefix is not None:
+                        link=rootUrl+"/"+subElementUrlPrefix
+                except:pass
+                       
                 if hasattr(item,"EXPOSE"):                    
-                    link=tmpDict["link"]["href"]
-                    try:
-                        subElementUrlPrefix=None
-                        if getattr(item,"id") is not None:
-                            subElementUrlPrefix=str(getattr(item,"id"))
-                        elif getattr(item,"name") is not None:
-                            subElementUrlPrefix=getattr(item,"name")
-                        if subElementUrlPrefix is not None:
-                            link=rootUrl+"/"+subElementUrlPrefix
-                    except:pass
+                    
                   #  print("in a list, attempting to do stuff with itme",item)
                     newItem=None
                     newItem=self.__format(item,singleName,link,recursionLevel,subObjectLinksOnly)
                     tmpDict["items"].append(newItem)   
-
+                else:
+                    tmpDict["items"].append(item)   
                     
                 
                 

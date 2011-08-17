@@ -2,7 +2,7 @@
 .. py:module:: addon_manager
    :synopsis: manager of addons : add ons are packages of plugins + extras, and this manager handles the references to all of them
 """
-import logging, uuid, pkgutil,zipfile ,os,sys,json,shutil,time,traceback
+import logging, uuid, pkgutil,zipfile ,os,sys,json,shutil,time,traceback,ast
 from zipfile import ZipFile
 from twisted.internet import reactor, defer,task
 from twisted.python import log,failure
@@ -34,20 +34,35 @@ class Update(DBObject):
             setattr(update,key,value)  
         return update
     
-    def __init__(self,type=None,name=None,description=None,version=None,downloadUrl=None,img=None,tags=None,installPath=None,enabled=False,*args,**kwargs):
+    def __init__(self,type=None,name=None,description=None,version=None,downloadUrl=None,img=None,tags=None,installPath=None,enabled=False,file=None,fileHash=None,*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.type=type
         self.name=name
-        self.description=description
+
+        self.description=description 
         self.version=version
         self.downloadUrl=downloadUrl
         self.img=img
         self.tags=tags
-        
+        self.file=file
+        self.fileHash=fileHash
         self.downloaded=False
         self.enabled=enabled
         self.installed=False
         self.installPath=installPath
+    
+    def afterInit(self):  
+        self.tags=ast.literal_eval(self.tags)
+        self.installPath=str(self.installPath)
+        self.downloadUrl=str(self.downloadUrl)
+        self.file=str(self.file)
+        print("IN UPDATE AFTER INIT",str(self.__dict__))    
+        
+    def beforeSave(self):  
+#        if self.description is not None:
+#            self.description= self.description.encode('latin-1').decode('utf-8') 
+       
+        pass
         
     def __str__(self):
         return str(self.__dict__)
@@ -75,12 +90,18 @@ class UpdateManager(object):
         * if any new (newer version number or never seen before) update is available, it adds it to the dictionary
         of available updates, but it does NOT download or install those updates
         """      
+        def _loadAllUpdates(result):
+            for update in result:
+                cls.updates[update.name]=update
+            print("LOADED ALL UPDATES",cls.updates)
+            
+        Update.all().addCallback(_loadAllUpdates)
         yield cls.update_addOns()
         yield cls.refresh_updateList()
         
         """just for testing"""
-#        yield cls.download_update("Virtual device add on")
-#        yield cls.install_update("Virtual device add on")
+        yield cls.download_update("Virtual device add on")
+        yield cls.install_update("Virtual device add on")
 #        yield cls.download_update("Arduino Example")
 #        yield cls.install_update("Arduino Example")
         
@@ -198,6 +219,11 @@ class UpdateManager(object):
     Helper Methods    
     """
     @classmethod
+    @defer.inlineCallbacks
+    def _update_updateList(self,cls):
+        pass
+    
+    @classmethod 
     def refresh_updateList(cls,category=None):
         """Fetches the remote update list, downloads it, and if there were any changes, updates
         the in memory update list accordingly
@@ -214,7 +240,8 @@ class UpdateManager(object):
         
         def info_download_complete(result):
             updateFile=file(updateInfoPath,"r")
-            updateInfos=json.loads(updateFile.read())
+            updateInfos=json.loads(updateFile.read(),"iso-8859-1")
+            
             updateFile.close()
             addOnCount=0
             
@@ -248,7 +275,9 @@ class UpdateManager(object):
                     if mycmp(oldUpdate.version,newUpdate.version)>=0:                        
                         addUpdate=False
                 if addUpdate:
+                    newUpdate.save()
                     cls.updates[updateName]=newUpdate
+                    
                     newUpdates.append(newUpdate)
                 
 
@@ -269,6 +298,7 @@ class UpdateManager(object):
         """
         def update_download_succeeded(result,update):
             update.downloaded=True
+            update.save()
             cls.signalHandler.send_message("update.download_succeeded",cls,update)
             log.msg("Successfully downloaded update ",update.name,system="Update Manager",logLevel=logging.DEBUG)
             

@@ -387,7 +387,16 @@ class EnvironmentManager(object):
              type TEXT NOT NULL,
              name TEXT NOT NULL,
              description TEXT,
-             version TEXT NOT NULL
+             version TEXT NOT NULL,
+             downloadUrl TEXT NOT NULL,
+             tags TEXT NOT NULL,
+             img TEXT NOT NULL,
+             file TEXT NOT NULL,
+             fileHash TEXT NOT NULL,
+             downloaded TEXT NOT NULL,
+             installed TEXT NOT NULL,
+             enabled TEXT NOT NULL
+             
              )''')
         
         defer.returnValue(None)

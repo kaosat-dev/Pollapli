@@ -1,10 +1,38 @@
 pollapli.test="truc";
 
 pollapli.ui={}
-
 pollapli.ui.templates={};
+
+pollapli.ui.init=function()
+{
+  $("#loader_dialog").dialog({
+    modal: true,
+    draggable: false,
+    resizable: false,
+    autoOpen: true, 
+    closeOnEscape: false,
+    buttons: {},
+    dialogClass: "loadingScreen",
+    width:400,
+    height:90
+    
+    
+     });
+  
+  
+  
+  //load and compile all templates
+  this.loadTemplates();
+  
+  //initialize visual elements
+  //progressbars
+  this.init_progressbars();
+}
+
+
 pollapli.ui.loadTemplates=function()
 {
+  
     // Using jQuery's GET method
     $.get('templates/node_templates.tpl', 
     function(doc) 
@@ -15,9 +43,40 @@ pollapli.ui.loadTemplates=function()
         {
             pollapli.ui.templates[this.id] = $.jqotec(this);
         });
-      
     });
-    
+    $.get('templates/update_templates.tpl', 
+    function(doc) 
+    {
+        // Store a reference to the remote file's templates
+        var tmpls = $(doc).filter('script');
+        tmpls.each(function() 
+        {
+            pollapli.ui.templates[this.id] = $.jqotec(this);
+           
+        });
+    });
+    $.get('templates/event_templates.tpl', 
+    function(doc) 
+    {
+        // Store a reference to the remote file's templates
+        var tmpls = $(doc).filter('script');
+        tmpls.each(function() 
+        {
+            pollapli.ui.templates[this.id] = $.jqotec(this);
+           
+        });
+    });
+    $.get('templates/environment_templates.tpl', 
+    function(doc) 
+    {
+        // Store a reference to the remote file's templates
+        var tmpls = $(doc).filter('script');
+        tmpls.each(function() 
+        {
+            pollapli.ui.templates[this.id] = $.jqotec(this);
+           
+        });
+    });
 }
 
 
@@ -113,4 +172,35 @@ pollapli.update=function(op,id)
         {
           manager.update_node(tmpnode,id);
         }
+}
+
+
+pollapli.ui.init_progressbars=function()
+{
+   $('.progressbar').progressbar({value:0});
+}
+
+
+pollapli.ui.init_progressbar=function(divName,percent)
+{
+      $(divName).progressbar(
+      {
+         value: percent,
+         change: function(event, ui) 
+         {
+            var newVal = $(this).progressbar('option', 'value');
+            $('div >.pblabel', this).text(newVal + '%');
+            $("#progbardiv_0 > .pblabel").text(newVal+ '%');
+          }
+        });
+       $(divName > "span").text(percent+ '%');
+       $("#progbardiv_0 > .pblabel").text(percent+ '%');
+       
+       /* $(".progresswraper").show("fast");
+    
+    
+    $(".progressbar > div").css({ 'background': 'Orange' });
+    $(".progressbar ").css({ 'border-radius': 0+'px' });
+    $(".progressbar > div").css({ 'border-radius': 0+'px'});*/
+       
 }
