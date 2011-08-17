@@ -32,6 +32,7 @@ pollapli.Manager=function Manager()
   
   this.nodes=new Array();
   this.testEnvironment={ };
+  this.driverTypes=Array();
   
 $(document).ajaxError(function(e, xhr, settings, exception) 
 { 
@@ -201,6 +202,7 @@ pollapli.Manager.prototype.initRequesters=function ()
       
       //manager.fetchUpdates()
       self.getNodesTest();
+      self.getDriverTypes();
       manager.longPoll(manager);
       
     },
@@ -215,7 +217,7 @@ pollapli.Manager.prototype.longPoll=function (self)
   function (response)
   {   
    
-    $('#events').jqoteapp('#events_tmpl', response.events.items);
+    $('#events').jqoteapp(pollapli.ui.templates.events_tmpl, response.events.items);
     self.handleNodeEvent(response.events.items);
     self.longPoll(self);
     
@@ -587,37 +589,48 @@ pollapli.Manager.prototype.updateANode=function(newNode)
 
 pollapli.Manager.prototype.handleNodeEvent=function(nodeEvents)
 {
-  
+
   var analyse=function(key,element)
   {
-    //alert("element sig"+element.signal+JSON.stringify(element))
-    if(element.signal=="node.created")
+    
+    eventArgs=element.signal.split('.');
+    _event=eventArgs[eventArgs.length-1];
+   
+    
+    if (_event =="node_created")
     {
-      //alert("id of node "+element.data.id);
+      targetElement=eventArgs[eventArgs.length-2]
+      //alert("event: "+_event+" element created: "+targetElement);
+    }
+    else if (_event=="node_deleted")
+    {
+      targetElement=eventArgs[eventArgs.length-2]
+      //alert("event: "+_event+" element deleted: "+targetElement);
+    }
+    else if (_event=="plugged_Out")
+    {
+      targetElement=eventArgs[eventArgs.length-3]
+      id=targetElement.split("_").pop()
+      alert("event: "+_event+" element plugged Out: "+targetElement+ " with id: "+id);
+    }
+    
+    
+    if(_event=="node_created")
+    {
       manager.addANode(element.data);
-      manager.renderNodes();
-      /*if( manager.findNode (element.data.id)==null)
-      {
-        manager.addANode(element.data);
-         manager.renderNodes();
-        //alert("not found, done by other client");
-      }*/
+      manager.renderNodes();    
     }
-    else if(element.signal=="node.updated")
+    else if(_event=="node_updated")
     {
-
         manager.updateANode(element.data);
-        manager.renderNodes();
-        //alert("not found, done by other client");
-      
-     
+        manager.renderNodes(); 
     }
-    else if(element.signal=="node.deleted")
+    else if(_event=="node_deleted")
     {
       manager.removeANode(element.data.id);
       manager.renderNodes();
     }
-    else if(element.signal=="nodes.cleared")
+    else if(_event=="nodes_cleared")
     {
       manager.nodes=[]
       manager.renderNodes();
@@ -632,7 +645,16 @@ pollapli.Manager.prototype.handleNodeEvent=function(nodeEvents)
 
 pollapli.Manager.prototype.renderNodes=function()
 {
-   $('#testDiv_nodes').jqotesub('#nodes_tmpl',manager.nodes);   
+  
+  try
+  {
+ $('#testDiv_nodes').jqotesub(pollapli.ui.templates.nodes_tmpl,manager.nodes);   
+  }
+catch(err)
+  {
+  alert("erroooor"+err)
+  }
+   
 }
 
 pollapli.Manager.prototype.dumpNodes=function()
@@ -641,7 +663,15 @@ pollapli.Manager.prototype.dumpNodes=function()
 }
 
 
-
+pollapli.Manager.prototype.getDriverTypes=function()
+{
+  var self=this;
+  manager.fetchData(this.mainUrl+"rest/drivertypes/",'application/pollapli.driverTypeList+json',
+  function (response)
+  { 
+    self.driverTypes=response.driverTypes.items;
+   }); 
+}
 
 
 

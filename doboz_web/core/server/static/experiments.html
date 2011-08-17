@@ -51,4 +51,65 @@
 
 
 
- <button onCLick=manager.<%= this.mode%>_node(<%pollapli.validateNodeOp();%>)> <%= this.mode%> </button> 
+
+<script type="text/x-jqote-template" id="envs_tmpl"> 
+    <![CDATA[
+    <% this.divId="tutu"+j+'' ;  
+   %>
+    <div id="<%=this.divId%>">
+    In template
+     <form  >   
+      <label for="name">Name:</label>
+      <input type="text" name="name" id="name"  />
+      <label for="description">Description:</label>
+      <input type="text" name="description" id="description" />
+      </form>
+      
+    </div>
+    <%   $("#testDiv").link(manager.testEnvironment);%>
+    ]]>
+</script> 
+
+
+
+
+
+
+ <button style="height:20px,margin:0px" onClick="manager.dumpNodes()">Show Nodes</button>
+
+
+<div id="testDiv"></div>
+<div >
+Environments
+  <form id="environments_thingy" >
+      <label for="name">Name:</label>
+      <input type="text" name="name" id="name" />
+     <label for="description">Description:</label>
+      <input type="text" name="description" id="description" />
+  </form>
+
+  <button style="height:20px,margin:0px" onClick="manager.getEnv2()">Validate</button>
+</div>
+
+
+
+<div id="node-dialog" ></div>
+<div id="driver-dialog" ></div>
+<!--<div id="ADDNODE">
+    <input type="text" name="nodes_dialog_name" id="nodes_dialog_name" value="" class="text ui-state-default ui-corner-all" style="width:95%"/>
+    <label for="nodes_dialog_description" class="title">Description</label>
+    <textarea rows="4" cols="25" name="nodes_dialog_description" id="nodes_dialog_description" class="text ui-state-default ui-corner-all " style="width:95%"></textarea>
+      
+</div>
+-->
+<div id="events" style="width:100%; height:100px;overflow:auto " class="leftBlock"></div>
+
+ <button  onClick="manager.getNodesTest()">Fetch nodes</button>
+ <button  onClick="pollapli.openNodeDialog(-1,'create')"> Add Node</button> 
+ <button  onClick="manager.deleteNodes()">Delete ALL node</button>   
+ <div id="testDiv_nodes"></div>
+
+ 
+
+
+

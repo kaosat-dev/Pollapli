@@ -210,8 +210,12 @@ class Driver(DBObject):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
     
     @defer.inlineCallbacks    
-    def setup(self,*args,**kwargs):     
-        self.signalChannelPrefix=str((yield self.node.get()).id)
+    def setup(self,*args,**kwargs):    
+        
+        node= (yield self.node.get())
+        env= (yield node.environment.get())
+        self.signalChannelPrefix="environment_"+str(env.id)+".node_"+str(node.id)
+        
 #        self.signalChannel="node"+self.signalChannelPrefix+".driver"
 #        self.signalHandler=SignalHander(self.signalChannel)
 
@@ -250,7 +254,7 @@ class Driver(DBObject):
         self.hardwareHandler.disconnect(*args,**kwargs)
     
     def pluggedIn(self,port):    
-        self.signalHandler.send_message("driver_"+str(self.id)+".plugged_In",self,port)
+        self.send_signal("plugged_In",port)
         self.isPluggedIn=True
         
     def pluggedOut(self,port):
@@ -259,11 +263,12 @@ class Driver(DBObject):
         self.isDeviceIdOk=False
         self.isConnected=False
         self.isPluggedIn=False
-        self.signalHandler.send_message("driver_"+str(self.id)+".plugged_Out",self,port)
+        self.send_signal("plugged_Out",port)
         #self.signalHandler.send_message("pluggedOut",{"data":port})
     
-    def send_signal(self,signal="",data=None,out=False):
-        self.signalHandler.send_message(signal,self,data)
+    def send_signal(self,signal="",data=None):
+        prefix=self.signalChannelPrefix+".driver."
+        self.signalHandler.send_message(prefix+signal,self,data)
     
     def send_command(self,data,sender=None,*args,**kwargs):
         if self.logicHandler:

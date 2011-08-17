@@ -81,6 +81,9 @@ class Node(DBObject):
     def setup(self):
         self.driver=yield DriverManager.load(parentNode=self)
         
+        env= (yield self.environment.get())
+        self.signalChannelPrefix="environment_"+str(env.id)+".node_"+str(self.id)
+        
         log.msg("Node with id",self.id, "setup successfully", logLevel=logging.CRITICAL,system="Node")
         self.elementsandVarsTest()
         defer.returnValue(None)
@@ -290,6 +293,7 @@ class NodeManager(object):
      
     @defer.inlineCallbacks    
     def setup(self):
+        self.signalChannelPrefix="environment_"+str(self.parentEnv.id)
         
         @defer.inlineCallbacks
         def addNode(nodes):
@@ -300,7 +304,11 @@ class NodeManager(object):
                
         yield Node.all().addCallback(addNode)
         defer.returnValue(None)
-        
+    
+    
+    def send_signal(self,signal="",data=None):
+        prefix=self.signalChannelPrefix+"."
+        self.signalHandler.send_message(prefix+signal,self,data)    
     """
     ####################################################################################
     The following are the "CRUD" (Create, read, update,delete) methods for the general handling of nodes
@@ -323,7 +331,8 @@ class NodeManager(object):
         node.environment.set(self.parentEnv)
         self.nodes[node.id]=node
         log.msg("Added  node ",name," with id set to ",str(node.id), logLevel=logging.CRITICAL)
-        self.signalHandler.send_message("node.created",self,node)
+        self.send_signal("node_created", node)
+       
         defer.returnValue(node)
         
     
@@ -366,7 +375,7 @@ class NodeManager(object):
             node.name=name
             node.description=description
             yield node.save()
-            self.signalHandler.send_message("node.updated",self,node)
+            self.send_signal("node_updated", node)
             log.msg("updating node ",id,"newname",name,"newdescrption",description,logLevel=logging.CRITICAL)
         _update()
         
@@ -396,8 +405,7 @@ class NodeManager(object):
             yield self.nodes[id].delete() 
             del self.nodes[id]
             tmpNode.id=tmpId
-            self.signalHandler.send_message("node.deleted",self,tmpNode)
-            
+            self.send_signal("node_deleted", tmpNode)
             log.msg("Removed node ",nodeName,"with id ",id,logLevel=logging.CRITICAL)
         _remove(id)
         defer.succeed(True)
@@ -412,7 +420,7 @@ class NodeManager(object):
         def _clear():
             for node in self.nodes.values():
                 yield self.delete_node(node.id)  
-            self.signalHandler.send_message("nodes.cleared",self,node) 
+            self.send_signal("nodes_cleared", self.nodes)   
         _clear();  
              
         defer.succeed(True)     
