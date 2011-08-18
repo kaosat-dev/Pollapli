@@ -292,6 +292,9 @@ class Driver(DBObject):
     def set_debugLevel(self,level):
         pass
     
+    def teststuff(self,params,*args,**kwargs):
+        pass
+    
     def variable_set(self,variable,params,sender=None,*args,**kwargs):
         pass
     def variable_get(self,variable,params,sender=None,*args,**kwargs):

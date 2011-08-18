@@ -3,14 +3,14 @@
  {
             "type": "addon",
             "name": "Hydroduino",
-            "version": "0.0.2",
-            "description": "",
+            "version": "0.0.1",
+            "description": "Hydroduino is an add to manager your hydroponics garden(s), aquariums and more",
             "tags": [
                 "gardening",
                 "hydroduino"
             ],
             "img": "hydroduino.png",
-            "file": "VirtualDeviceAddOn-0.0.1-py2.6.egg",
+            "file": "Hydroduino-0.0.1-py2.6.egg",
             "fileHash": "80e157c0f10baef206ee2de03fae7449"
         },
         {

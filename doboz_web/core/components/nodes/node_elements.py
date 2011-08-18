@@ -11,6 +11,8 @@ from twisted.internet.defer import DeferredQueue
 class NodeElement(object):
     """A sub element of a node : such as actor, sensor etc """
     def __init__(self,type="dummy",name="",tool="",boundVariable=None,variableChannel=None):
+        self.name=name
+        self.type=type
         self.boundVariable=boundVariable #what variable is it bound to
         self.channel=variableChannel
 
@@ -101,9 +103,12 @@ class Tool(NodeComponent):
 #        DBObject.__init__(self,**kwargs)
     
 class Command(object):
-    def __init__(self,type=None):
+    def __init__(self,type=None,sender=None,params=None):
         self.type=type#numerical value representing the command type
+        self.sender=sender
         self.answered=False
+        self.completed=False
+        self.params=params
         
 class Variable(object):
     def __init__(self,node,name,value,type,unit,defaultValue=None,historyStore=None,historyLength=None,implicitSet=False,channels=[]):
@@ -150,6 +155,7 @@ class Variable(object):
             """if no channel was defined , the sensor needs to be attached to the reserved channel "root",
             which means, the variable itself"""
             realChannel="root"    
+            
         self.attachedSensors[realChannel]=sensor
         if sensor.channel is None:
             sensor.channel=realChannel
@@ -180,7 +186,17 @@ class Variable(object):
         self.attach_sensors(sensors)
         
     def get(self,saveToHistory=False,sender=None):
-        self.node.driver.variable_get(self)
+        command=Command(type="get",sender=sender,params={"save":saveToHistory})
+        print("Variable",self.name,"asked for get, by ", sender)
+        print("variable",self.name, "has current sensors attached")
+        for sens in self.attachedSensors.itervalues():
+            print(sens.name," ",sens.type) 
+        
+        self.commanqueue.put(command)
+        
+        #self.node.driver.teststuff()
+        
+ #       self.node.driver.variable_get(self)
 #        try:
 #            getattr(self.node.driver,"get_"+self.name)(value)
 #        except Exception as inst:

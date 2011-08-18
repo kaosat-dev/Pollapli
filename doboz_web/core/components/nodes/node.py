@@ -68,7 +68,10 @@ class Node(DBObject):
         
         """this is to ensure no 'asynch clash' occurs when replacing the current driver"""
         self.driverLock=defer.DeferredSemaphore(1)
-        self.rootElement=NodeComponent("root")
+        #self.rootElement=NodeComponent("root")
+        
+        self.testElement=None
+        self.variable_test()
         
         """this is for internal comms handling"""
         self.signalChannelPrefix=str(self.id)
@@ -93,7 +96,11 @@ class Node(DBObject):
     def variable_get(self,sender,varName,*args,**kwargs):
         self.variables[varName].set(*args,**kwargs)
     
-    #def variable_test(self):
+    def variable_test(self):
+        temp=Variable(self,"temperature",0,"float","celcius",0,"db")   
+        tempSensor=Sensor(type="Sensor",name="temperature sensor",tool="testTool")
+        temp.attach_sensor(tempSensor)
+        self.testElement=temp
     
     def elementsandVarsTest(self):
         """test method, for experimental composition of nodes: this creates all the elements for a basic 

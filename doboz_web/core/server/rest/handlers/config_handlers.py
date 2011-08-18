@@ -234,9 +234,7 @@ class ClientHandler(object):
         self.notificationBuffer=[]
         
     def add_delegate(self,result,deffered,request):  
-        print("in adding delegates: real time stamp",result["altTimeStamp"],"normal timestamp",request.timestamp)
-        
-        
+
         request.altTimeStamp=result["altTimeStamp"][0]
         if isinstance(request.altTimeStamp,str):
             request.altTimeStamp=float(request.altTimeStamp)
@@ -244,7 +242,8 @@ class ClientHandler(object):
         request.notifyFinish().addBoth(self.connectionCheck,request)  
         self.clients[request.clientId]=ClientDelegate(deffered,request)
         #print("ADDING DELEGATE: id:",request.clientId," total clients:",len(self.clients.keys()))
-        print(" total clients:",len(self.clients.keys()))
+        log.msg(" adding client delegate : total clients",len(self.clients.keys()),system="rest handlers",logLevel=logging.DEBUG)
+        
         self.notify_all()
             
         
@@ -258,12 +257,11 @@ class ClientHandler(object):
                 pass
        
     def add_event(self,event):
-        print("in adding event",event.signal)
+        log.msg(" adding event ",event.signal, system="rest handlers",logLevel=logging.DEBUG)
         self.notificationBuffer.append(event)
         if len(self.notificationBuffer)>50:
             removed=self.notificationBuffer.pop(0)
-            print("removed event",removed.signal)
-        print("Total events",len(self.notificationBuffer))
+            log.msg(" removed event ",removed.signal," total events:",len(self.notificationBuffer), system="rest handlers",logLevel=logging.DEBUG)
        
         self.notify_all()
         
@@ -310,7 +308,7 @@ class ClientDelegate(object):
         self.request = r
 
     def end(self, data):
-        print("Sending out to client",self.request.clientId ,"data",str(data))
+        log.msg("Sending data to client ",self.request.clientId ,"data",str(data), system="rest handlers",logLevel=logging.DEBUG)
         r=ResponseGenerator(self.request,status=200,contentType="application/pollapli.eventList+json",resource="events",rootUri="/rest/config/events")
         r._build_response(data)
         
