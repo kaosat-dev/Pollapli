@@ -132,7 +132,7 @@
     <![CDATA[
     <li>
         <Strong>Device Id:</Strong> <%= this.id %>  <Strong>Name: </Strong><%= this.name %> <Strong>description: </Strong> <%= this.description %><Strong>type: </Strong> <%= this.type %>  <Strong>link: </Strong> <a href=<%= this.link.href %>> <%= this.link.href %></a>      
-        <div><button onClick= pollapli.openNodeDialog(<%=j%>,"modify") > Modify</button> <button onClick= manager.deleteNode(<%=this.id%>) > Delete</button> </div>   
+        <div><button onClick= pollapli.ui.openNodeDialog_test(<%=j%>,"modify") > Modify</button> <button onClick= manager.deleteNode(<%=this.id%>) > Delete</button> </div>   
      </li>
     ]]>
   </script> 

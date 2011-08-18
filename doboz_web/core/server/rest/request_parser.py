@@ -26,8 +26,14 @@ class RequestParser(object):
         method to validate the orginial request/query: checks both for contentype AND for GET requests,
         whether the keys are valid
         """
-        if not self.request.getHeader("Content-Type") in self.validContentTypes:
-            raise UnhandledContentTypeException()
+        contentType=self.request.getHeader("Content-Type")
+        #cheap hack
+        try:
+            contentType=contentType.split(";")[0]
+        except:pass
+        
+        if not contentType in self.validContentTypes:
+            raise UnhandledContentTypeException("expected"+str(self.validContentTypes)+" got "+ contentType )
         if not set(self.request.args.keys()).issubset(set(self.validGetParams)):
             print("TUUT",self.request.args.keys())
             raise ParameterParseException()

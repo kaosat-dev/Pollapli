@@ -28,8 +28,8 @@ pollapli.Manager=function Manager()
   this.errors=new Array();
   
   
-  this.tutu={};
-  
+  this.lastEvent=null;
+  this.lastLongPollTimeStamp=(new Date()).getTime();
   this.nodes=new Array();
   this.testEnvironment={ };
   this.driverTypes=Array();
@@ -42,7 +42,7 @@ $(document).ajaxError(function(e, xhr, settings, exception)
 //alert(JSON.stringify(manager.environments[0]));
 }
 
-pollapli.Manager.prototype.fetchData=function(dataUrl,contentType,successCallback,errorCallback,timeout,method,data)
+pollapli.Manager.prototype.fetchData=function(dataUrl,contentType,successCallback,errorCallback,timeout,method,data,params)
     {
         if(!method)
           method='GET';
@@ -64,7 +64,7 @@ pollapli.Manager.prototype.fetchData=function(dataUrl,contentType,successCallbac
           timeout=500000;
           
             $.ajax({
-                    url: dataUrl+"?clientId="+this.clientId,
+                    url: dataUrl+"?clientId="+this.clientId+"&"+params,
                     method: method,
                     async: true,
                     cache:false,
@@ -161,10 +161,11 @@ pollapli.Manager.prototype.genericCompleteHandler=function (response)
 
     
 pollapli.Manager.prototype.genericSuccessHandler=function (response)
-    {
+{
     
         console.log("Ajax sucess "+response)    ; 
-    }
+}
+    
 pollapli.Manager.prototype.genericErrorHandler=function (response, strError)
     { console.log("Error "+strError);
       
@@ -182,13 +183,6 @@ pollapli.Manager.prototype.genericErrorHandler=function (response, strError)
 pollapli.Manager.prototype.init=function ()
 {
   this.initRequesters()
-
-  //this.tutu[1]={};
- //  $("#bindingTest").link(this.environments[1],{name:"name",description:"toto"});
- //  $("#bindingTest").link(self.environments,{name:"name",description:"toto"});
- // $("#bindingTest input:text[id=toto]").val("NewValue");
- // alert($("#bindingTest input:text[id=name]").val());
-
 }
 
 pollapli.Manager.prototype.initRequesters=function ()
@@ -198,7 +192,7 @@ pollapli.Manager.prototype.initRequesters=function ()
   (
     function()
     {
-     // manager.fetchEnvironments(manager);
+      manager.fetchEnvironments(manager);
       
       manager.fetchUpdates()
       self.getNodesTest();
@@ -206,20 +200,33 @@ pollapli.Manager.prototype.initRequesters=function ()
       manager.longPoll(manager);
       
     },
-    1000
+    500
   );
   
 }
 
 pollapli.Manager.prototype.longPoll=function (self)
 {
+  //curTimeStamp=(new Date()).getTime();
+  
+   
   self.fetchData(self.mainUrl+"rest/config/events",'application/pollapli.eventList+json',
   function (response)
   {   
-   
-    $('#events').jqoteapp(pollapli.ui.templates.events_tmpl, response.events.items);
     self.handleNodeEvent(response.events.items);
+    $('#events').jqoteapp(pollapli.ui.templates.events_tmpl, response.events.items);
+    var nEvent=response.events.items.pop();
+ 
+    if(nEvent)
+    {
+      self.lastEvent=nEvent;
+      self.lastLongPollTimeStamp=self.lastEvent.time;
+    }
+    
+    
     self.longPoll(self);
+    
+     
     
     
     
@@ -238,9 +245,8 @@ pollapli.Manager.prototype.longPoll=function (self)
       },
       20000
     );
-     
-      
-  }
+
+  },null,null,"altTimeStamp="+self.lastLongPollTimeStamp
 ); 
 }
 
@@ -304,7 +310,7 @@ pollapli.Manager.prototype.fetchDriver=function (environmentId,nodeId)
   function (response)
   {
 
-    $('#nodes').jqoteapp('#nodes_tmpl', response.nodes.items);
+    $('#nodes').jqoteapp(pollapli.ui.templates.nodes_old_tmpl, response.nodes.items);
     
    }); 
 }
@@ -322,8 +328,8 @@ pollapli.Manager.prototype.fetchUpdates=function ()
 
 pollapli.Manager.prototype.dostuff=function()
 {
-   $('#environments').jqotesub('#environments_tmpl', this.environments[1]);
-   $('#nodes').jqotesub('#nodes_tmpl', this.environments[1].nodes);
+   $('#environments').jqotesub(pollapli.ui.templates.environments_tmpl, this.environments[1]);
+   $('#nodes').jqotesub(pollapli.ui.templates.nodes_old_tmpl, this.environments[1].nodes);
    $("button").button();
 }
 
@@ -380,7 +386,7 @@ pollapli.Manager.prototype.fetchNodes2=function (environmentId)
       
      }
      $.each(response.nodes.items,add_node ); 
-     $.each(manager.nodes,function(key,value){$('#nodes_test').jqoteapp('#nodes_test_tmpl',value)} ) ;  
+     $.each(manager.nodes,function(key,value){$('#nodes_test').jqoteapp(pollapli.ui.templates.nodes_test_tmpl,value)} ) ;  
     
    }); 
 }
@@ -402,7 +408,7 @@ pollapli.Manager.prototype.getEnv2=function()
    // $(manager.testEnvironment).trigger("change");
    // $("#environments_thingy").trigger("changeField");
     
-   $('#testDiv').jqotesub('#envs_tmpl',manager.testEnvironment);  
+   $('#testDiv').jqotesub(pollapli.ui.templates.envs_tmpl,manager.testEnvironment);  
    //$("#tutu0").link(manager.testEnvironment); 
     $(manager.testEnvironment).setField("name",response.environment.name);
     $(manager.testEnvironment).setField("description",response.environment.description);
@@ -585,10 +591,14 @@ pollapli.Manager.prototype.handleNodeEvent=function(nodeEvents)
 
   var analyse=function(key,element)
   {
-    
     eventArgs=element.signal.split('.');
     _event=eventArgs[eventArgs.length-1];
-   
+    
+    eventData=element.data;
+  
+     $("#mainmenu_lastNotification").text(_event);
+    
+    console.log("event recieved"+_event);
     
     if (_event =="node_created")
     {
@@ -604,7 +614,24 @@ pollapli.Manager.prototype.handleNodeEvent=function(nodeEvents)
     {
       targetElement=eventArgs[eventArgs.length-3]
       id=targetElement.split("_").pop()
-      alert("event: "+_event+" element plugged Out: "+targetElement+ " with id: "+id);
+      $("#mainmenu_lastNotification").text(targetElement+" "+_event);
+      //alert("event: "+_event+" element plugged Out: "+targetElement+ " with id: "+id);
+    }
+      else if (_event=="plugged_In")
+    {
+      targetElement=eventArgs[eventArgs.length-3]
+      id=targetElement.split("_").pop()
+      $("#mainmenu_lastNotification").text(targetElement+" "+_event);
+      //alert("event: "+_event+" element plugged Out: "+targetElement+ " with id: "+id);
+    }
+    if (_event=="download_updated")
+    {
+      targetElement=eventArgs[eventArgs.length-2]
+      id=targetElement.split("_").pop()
+      $("#mainmenu_lastNotification").text(targetElement+" "+_event);
+      console.log("update_id of download "+id+ " data "+ JSON.stringify(eventData)+ " progress "+eventData.progress);
+      
+      pollapli.ui.set_progressbar("#progbardiv_"+id,eventData.progress*100);
     }
     
     
@@ -668,26 +695,22 @@ pollapli.Manager.prototype.getDriverTypes=function()
 }
 
 
-
-
-pollapli.Manager.prototype.postUpdateDownload=function()
+pollapli.Manager.prototype.start_UpdateDownloadInstall=function(updateId)
 {
-  
-   $(".progressbar" ).progressbar( "option", "value", 100 );
-  //this.fetchData({"dataUrl":manager.mainUrl+"rest/config/updates","contentType":'application/pollapli.updateList+json',"method":'POST'} );
-  /*data='{"name":"reprap1","type":"reprap","description":"just a reprap node"}';
-  resp=function (response)
+  var data={"start":true}
+  data=JSON.stringify(data);
+  this.postData(manager.mainUrl+"rest/config/updates/"+updateId+"/status",'application/pollapli.update.status+json',data,
+  function(response)
   {
-    alert("response ok"); 
-  };
+   
+
+     // manager.renderNodes();
+  });
   
-  url=manager.mainUrl+"rest/environments/1/nodes";
- // this.fetchData({"dataUrl":url,"contentType":'application/pollapli.nodeList+json',"method":'POST',"data":data} );
-  
-  
-  this.postData(url,'application/pollapli.nodeList+json',data);
-  //dataUrl,contentType,successCallback,errorCallback,timeout,method)*/
 }
+
+
+
 
       
 

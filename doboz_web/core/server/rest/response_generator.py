@@ -25,7 +25,7 @@ class ResponseGenerator(object):
         """    
         response=""
         callback=getattr(self.request,"clientCallback",None)
-        print("callback",callback,"payload",payload)
+        #print("callback",callback,"payload",payload)
         formater=JsonFormater(resource=self.resource)
         
         if isinstance(payload, failure.Failure):
@@ -51,7 +51,7 @@ class ResponseGenerator(object):
         
         response=response.encode("utf-8")
         self.request.setHeader('Content-Encoding', 'charset=utf-8')
-        log.msg("building response using payload:",payload,logLevel=logging.CRITICAL)
+        log.msg("building response using payload:",payload,logLevel=logging.DEBUG)
         
         requestCall=getattr(self.request,"_call",None)
         self.request.notifyFinish().addErrback(self._responseFailed, requestCall)

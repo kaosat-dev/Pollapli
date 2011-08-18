@@ -21,7 +21,7 @@ from doboz_web.core.tools import checksum_tools
 
 
 class Update(DBObject):
-    EXPOSE=["name","description","type","version","img","tags","downloaded","enabled","installed"]
+    EXPOSE=["id","name","description","type","version","img","tags","downloaded","enabled","installed"]
     
     """update class: for all type of updates (standard update or addon)
     Contains all needed info for handling of updates"""
@@ -50,13 +50,22 @@ class Update(DBObject):
         self.enabled=enabled
         self.installed=False
         self.installPath=installPath
+        
+        self.parentManager=None
+        
+    def setup(self):
+        pass
+       # self.signalChannelPrefix=str(self.id)
     
+    def send_signal(self,signal="",data=None):
+        self.parentManager.send_signal("update_"+str(self.id)+"."+signal,data)
+       
+        
     def afterInit(self):  
         self.tags=ast.literal_eval(self.tags)
-        self.installPath=str(self.installPath)
         self.downloadUrl=str(self.downloadUrl)
-        self.file=str(self.file)
-        print("IN UPDATE AFTER INIT",str(self.__dict__))    
+        
+      
         
     def beforeSave(self):  
 #        if self.description is not None:
@@ -78,6 +87,9 @@ class UpdateManager(object):
     addOnPath=None
     updatesPath=None
     maxDownloadAttempts=5
+    currentDownloads={}
+    currentInstalls={}
+    
     signalChannel="update_manager"
     signalHandler=SignalHander(signalChannel)
     
@@ -90,18 +102,21 @@ class UpdateManager(object):
         * if any new (newer version number or never seen before) update is available, it adds it to the dictionary
         of available updates, but it does NOT download or install those updates
         """      
+        cls.signalChannelPrefix="update_manager"
+        
         def _loadAllUpdates(result):
             for update in result:
+                update.parentManager=cls
                 cls.updates[update.name]=update
-            print("LOADED ALL UPDATES",cls.updates)
+                
             
         Update.all().addCallback(_loadAllUpdates)
         yield cls.update_addOns()
         yield cls.refresh_updateList()
         
         """just for testing"""
-        yield cls.download_update("Virtual device add on")
-        yield cls.install_update("Virtual device add on")
+#        yield cls.download_update("Virtual device add on")
+#        yield cls.install_update("Virtual device add on")
 #        yield cls.download_update("Arduino Example")
 #        yield cls.install_update("Arduino Example")
         
@@ -109,7 +124,10 @@ class UpdateManager(object):
         cls.updateCheck.start(interval=240,now=False)
         log.msg("Update Manager setup succesfully ",system="Update Manager")
         defer.returnValue(None)
-        
+    @classmethod     
+    def send_signal(cls,signal="",data=None):
+        prefix=cls.signalChannelPrefix+"."
+        cls.signalHandler.send_message(prefix+signal,cls,data) 
     """
     ####################################################################################
     The following are the "CRUD" (Create, read, update,delete) methods for the general handling of updates/addons
@@ -152,6 +170,20 @@ class UpdateManager(object):
         d.addCallback(get,self.addOns.values())
         reactor.callLater(0.5,d.callback,filter)
         return d
+    
+    @classmethod
+    def get_update(cls,id=None,name=None):
+        update=None
+        if name is not None:
+            update= cls.updates.get(name)
+            
+        elif id is not None:
+            update =[updt for updt in cls.updates.itervalues() if updt.id==id  ][0]
+
+        if update is not None:
+            return update
+        else:
+            raise UnknownUpdate()   
     
     @classmethod
     def get_updates(cls,filter=None):
@@ -219,9 +251,24 @@ class UpdateManager(object):
     Helper Methods    
     """
     @classmethod
-    @defer.inlineCallbacks
-    def _update_updateList(self,cls):
-        pass
+    def _download_file(cls,url, file, contextFactory=None,element=None, *args, **kwargs):    
+        scheme, host, port, path = client._parse(url)
+        factory = Downloader(url=url, outfile=file,signalSender=cls.send_signal,element=element)
+        if scheme == 'https':
+            from twisted.internet import ssl
+            if contextFactory is None:
+                contextFactory = ssl.ClientContextFactory( )
+                reactor.connectSSL(host, port, factory, contextFactory)
+        else:
+            reactor.connectTCP(host, port, factory)
+            
+        cls.currentDownloads[element.id]=factory
+        return factory.deferred
+   
+        
+    
+    
+   
     
     @classmethod 
     def refresh_updateList(cls,category=None):
@@ -276,13 +323,14 @@ class UpdateManager(object):
                         addUpdate=False
                 if addUpdate:
                     newUpdate.save()
+                    newUpdate.parentManager=cls
                     cls.updates[updateName]=newUpdate
                     
                     newUpdates.append(newUpdate)
                 
 
             if len(newUpdates)>0:
-                cls.signalHandler.send_message("new_updates_available",cls,newUpdates)
+                cls.send_signal("new_updates_available", newUpdates)
         
         def download_failed(failure):
             log.msg("Failed to download update master list: error:",failure.getErrorMessage( ),system="Update Manager",logLevel=logging.CRITICAL)
@@ -297,23 +345,30 @@ class UpdateManager(object):
         versus the one stored in the update info for integretiy, and if succefull, dispatches a success message
         """
         def update_download_succeeded(result,update):
+            if update.id in cls.currentDownloads:
+                del cls.currentDownloads[update.id]
+            #remove the current update's downloader from the dict of current downloads
             update.downloaded=True
             update.save()
-            cls.signalHandler.send_message("update.download_succeeded",cls,update)
+            cls.send_signal("update_download_succeeded", update)
             log.msg("Successfully downloaded update ",update.name,system="Update Manager",logLevel=logging.DEBUG)
             
         def update_download_failed(failure,update,downloadAttempts):
+            del cls.currentDownloads[update.id]#remove the current update's downloader from the dict of current downloads
             downloadAttempts+=1
             log.msg("Failed to download update or checksum error",update.name," error:",failure.getErrorMessage(),"attempt",downloadAttempts,system="Update Manager",logLevel=logging.CRITICAL)
             
             if downloadAttempts>=cls.maxDownloadAttempts:
-                cls.signalHandler.send_message("update.download_failed",cls,update)
+                cls.send_signal("update_download_failed", update)
                 log.msg("Failed to download update or checksum error after all attemps",update.name," error:",failure.getErrorMessage(),system="Update Manager",logLevel=logging.CRITICAL)
             
             else:
-               return downloadWithProgress(update.downloadUrl,downloadPath)\
-    .addCallback(checksum_tools.compare_hash,update.fileHash,downloadPath).addCallbacks(callback=update_download_succeeded,callbackArgs=[update],errback=update_download_failed,errbackArgs=[update,downloadAttempts])
-        
+                return cls._download_file(url=update.downloadUrl, file=downloadPath,element=update)\
+            .addCallback(checksum_tools.compare_hash,update.fileHash,downloadPath).addCallbacks(callback=update_download_succeeded,callbackArgs=[update],errback=update_download_failed,errbackArgs=[update,downloadAttempts])#.addErrback(update_download_failed,update)
+   
+#               return downloadWithProgress(update.downloadUrl,downloadPath)\
+#    .addCallback(checksum_tools.compare_hash,update.fileHash,downloadPath).addCallbacks(callback=update_download_succeeded,callbackArgs=[update],errback=update_download_failed,errbackArgs=[update,downloadAttempts])
+#        
         update=cls.updates.get(name)
         if update==None:
             raise UnknownUpdate()
@@ -325,8 +380,7 @@ class UpdateManager(object):
             update.installPath=cls.addOnPath
         elif update.type=="update":
             pass
-        
-        return downloadWithProgress(update.downloadUrl,downloadPath)\
+        return cls._download_file(url=update.downloadUrl, file=downloadPath,element=update)\
     .addCallback(checksum_tools.compare_hash,update.fileHash,downloadPath).addCallbacks(callback=update_download_succeeded,callbackArgs=[update],errback=update_download_failed,errbackArgs=[update,downloadAttempts])#.addErrback(update_download_failed,update)
      
     @classmethod
@@ -334,30 +388,37 @@ class UpdateManager(object):
     def install_update(cls,name):
         """installs the specified update"""
         def install_succeeded(result,update):
+            del cls.currentDownloads[update.id]
             update.installed=True
             if os.path.exists(originalFilePath):
                 os.remove(originalFilePath)
-            cls.signalHandler.send_message("update.install_succeeded",cls,update)
+            cls.send_signal("update_install_succeeded", update)
             log.msg("Successfully installed update ",update.name,system="Update Manager",logLevel=logging.DEBUG)
             return True
         
         def install_failed(failure,update,*args,**kwargs):
-            cls.signalHandler.send_message("update.install_failed",cls,update)
+            del cls.currentDownloads[update.id]
+            cls.send_signal("update_install_failed", update)
             log.msg("Failed to install update",update.name," error:",failure.getErrorMessage(),system="Update Manager",logLevel=logging.CRITICAL)      
             return False
             
         update=cls.updates[name]
+        
         if update.downloaded:
             originalFilePath=os.path.join(cls.updatesPath,update.file)
+            cls.currentDownloads[update.id]=update
             if update.type=="addon":
                 shutil.copy2(originalFilePath, os.path.join(cls.addOnPath,update.file))
                 update.installPath=cls.addOnPath
+                
                 yield cls.update_addOns().addCallbacks(callback=install_succeeded,callbackArgs=[update],errback=install_failed,errbackArgs=[update])
             elif update.type=="update":
                 pass
        
     
-
+    @classmethod
+    def downloadAndInstall_update(cls,name):
+        cls.download_update(name).addCallback(cls.install_update,name)
 
     @classmethod
     def extract_addons(cls):
@@ -464,31 +525,34 @@ class UpdateManager(object):
     
              
 class Downloader(client.HTTPDownloader):
-    def gotHeader(self,headers):
-        print("GOT HEADERS")
-        self.currentLength=0.0
+    
+    def __init__(self,url, outfile, headers=None, signalSender=None,element=None,*args,**kwargs):
+        client.HTTPDownloader.__init__(self, url, outfile, headers=headers ,*args,**kwargs)
+        self.signalSender=signalSender
+        self.currentLength=0.0  
+        self.totalLength=0
+        self.element=element
+        
+    def gotHeaders(self,headers):
         if self.status=='200':
-            if header.has_key('content-length'):
+            if headers.has_key('content-length'):
                 self.totalLength=int(headers['content-length'][0])
             else:
-                self.totalLength=0
-            self.currentLength=0.0
-        return client.HTTPDownloader.gotHeader(self,headers)
+                self.totalLength=0   
+        return client.HTTPDownloader.gotHeaders(self,headers)
             
-    def pagePart(self, data):
-        if not hasattr(self,"currentLength"):
-            self.currentLength=0.0
-        if not hasattr(self,"totalLength"):
-            self.totalLength=0
-        
-        if self.status == '200':
-            
+    def pagePart(self, data):    
+        if self.status == '200':      
             self.currentLength += len(data)
             if self.totalLength:
                 percent = "%i%%" % ((self.currentLength/self.totalLength)*100)
             else:
                 percent = '%d K' % (self.currentLength/1000)
-            #print "Progress: " + percent
+            if self.signalSender is not None:
+                #hack
+                self.element.send_signal("download_updated",{"progress" : self.currentLength/self.totalLength})
+                #self.signalSender("update."+str(self.element.id)+".download_updated",{"progress: " : self.currentLength/self.totalLength})
+           # print "Progress: " + percent
         return client.HTTPDownloader.pagePart(self, data)
     
 def downloadWithProgress(url, file, contextFactory=None, *args, **kwargs):
@@ -502,3 +566,5 @@ def downloadWithProgress(url, file, contextFactory=None, *args, **kwargs):
         else:
             reactor.connectTCP(host, port, factory)
         return factory.deferred
+    
+    

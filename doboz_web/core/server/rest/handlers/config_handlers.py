@@ -17,6 +17,7 @@ from doboz_web.core.server.rest.response_generator import ResponseGenerator
 from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.signal_system import SignalHander
+
 class ConfigHandler(DefaultRestHandler):
     isLeaf=False
     def __init__(self,rootUri="http://localhost"):
@@ -80,35 +81,104 @@ class UpdatesHandler(DefaultRestHandler):
     def __init__(self,rootUri="http://localhost"):
         DefaultRestHandler.__init__(self,rootUri)
         self.valid_contentTypes.append("application/pollapli.updateList+json")  
+        self.validGetParams.append('id')
         self.validGetParams.append('name')
         self.validGetParams.append('type')
         self.validGetParams.append('downloaded')
         self.validGetParams.append('installed') 
-
+        
+    def getChild(self, id, request):
+        try:
+            return UpdateHandler(self.rootUri+"/"+str(id),int(id))  
+        except ValueError :
+             return self#no id , so return self
+         
     def render_GET(self, request):
         """
-        Handler for GET requests of updates
+        Handler for GET requests of updates' list
         """
-     
         r=ResponseGenerator(request,status=200,contentType="application/pollapli.updateList+json",resource="updates",rootUri=self.rootUri)
         d=RequestParser(request,"updates",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
-        d.addCallbacks(UpdateManager.get_updates,errback=r._build_response)
+        d.addCallbacks(lambda params: UpdateManager.get_updates(params),errback=r._build_response)
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
   
-            
-    def render_DELETE(self,request):
-        """ 
-        Handler for DELETE requests of addOns
-        WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes
-        all addons completely
+
+
+class UpdateHandler(DefaultRestHandler):
+    isLeaf=False
+    def __init__(self,rootUri="http://localhost",updateId=None):
+        DefaultRestHandler.__init__(self,rootUri)
+        self.updateId=updateId
+        self.valid_contentTypes.append("application/pollapli.update+json")  
+        self.validGetParams.append('id')
+        self.validGetParams.append('name')
+        self.validGetParams.append('type')
+        self.validGetParams.append('downloaded')
+        self.validGetParams.append('installed') 
+        subPath=self.rootUri+"/status"
+        self.putChild("status",UpdateStatusHandler(subPath,self.updateId)  
+)
+        
+         
+    def render_GET(self, request):
         """
-        r=ResponseGenerator(request,status=200)
-        d=UpdateManager.clear_addOns()
+        Handler for GET requests for a single update
+        """
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.update+json",resource="update",rootUri=self.rootUri)
+        d=RequestParser(request,"update",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
+        d.addCallbacks(lambda params: UpdateManager.get_update(id=self.updateId),errback=r._build_response)
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
-        return NOT_DONE_YET   
+        return NOT_DONE_YET
+    
+class UpdateStatusHandler(DefaultRestHandler):
+    isLeaf=True
+    
+    def __init__(self,rootUri="http://localhost",updateId=None):
+        DefaultRestHandler.__init__(self,rootUri)
+        self.updateId=updateId
+        self.valid_contentTypes.append("application/pollapli.update.status+json")  
+        self.validGetParams.append('id')
+        self.validGetParams.append('name')
+        self.validGetParams.append('type')
+        self.validGetParams.append('downloaded')
+        self.validGetParams.append('installed') 
+      
+    def render_POST(self,request):  
+        """
+        Handler for POST request for a specific update's status: this allows to start the download/setup process
+        """ 
+        
+        def dostuff(result):
+            if result["start"]:
+                name=UpdateManager.get_update(id=self.updateId).name
+                print("update to download",name)
+                UpdateManager.downloadAndInstall_update(name)            
+            else:
+                print("uh oh")
+        
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.update.status+json",resource="update status",rootUri=self.rootUri)
+        d=RequestParser(request,"update status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
+        d.addCallbacks(callback=dostuff,errback=r._build_response)    
+        d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
+        return NOT_DONE_YET
+
+         
+    def render_GET(self, request):
+        """
+        Handler for GET requests for a single update
+        """
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.update.Status+json",resource="update status",rootUri=self.rootUri)
+        d=RequestParser(request,"update status",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
+        d.addCallbacks(lambda params: UpdateManager.get_update(id=self.updateId),errback=r._build_response)
+        d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
+        return NOT_DONE_YET
+
+
     
 class AddonsHandler(DefaultRestHandler):
     isLeaf=False
@@ -164,54 +234,74 @@ class ClientHandler(object):
         self.notificationBuffer=[]
         
     def add_delegate(self,result,deffered,request):  
-        print("in adding delegates")
+        print("in adding delegates: real time stamp",result["altTimeStamp"],"normal timestamp",request.timestamp)
+        
+        
+        request.altTimeStamp=result["altTimeStamp"][0]
+        if isinstance(request.altTimeStamp,str):
+            request.altTimeStamp=float(request.altTimeStamp)
+        
         request.notifyFinish().addBoth(self.connectionCheck,request)  
         self.clients[request.clientId]=ClientDelegate(deffered,request)
         #print("ADDING DELEGATE: id:",request.clientId," total clients:",len(self.clients.keys()))
         print(" total clients:",len(self.clients.keys()))
-
         self.notify_all()
             
         
 
     def connectionCheck(self,result,request):    
         del self.clients[request.clientId] 
-        print(" total clients:",len(self.clients.keys()))
+        #print(" total clients:",len(self.clients.keys()))
         if isinstance(result,failure.Failure):
             error = result.trap(ConnectionDone)
             if error==ConnectionDone:
                 pass
        
     def add_event(self,event):
-        print("in adding eventnode_handlers.py")
+        print("in adding event",event.signal)
         self.notificationBuffer.append(event)
+        if len(self.notificationBuffer)>50:
+            removed=self.notificationBuffer.pop(0)
+            print("removed event",removed.signal)
+        print("Total events",len(self.notificationBuffer))
+       
         self.notify_all()
         
+        
+ 
+   
+ 
     def _filterEvents(self,timestamp):
+        #print("filtering events with timestamp:",timestamp)
+       
         data=[]
         for event in self.notificationBuffer:
-            #print("EventTime",event.time*1000,"timestamp",int(timestamp))
-            #print("is it bigger",long(event.time*1000)>timestamp)
-            if long(event.time*1000)>timestamp:
-                data.append(event)
+            
+            if isinstance(timestamp,long):
+               
+                eventTime=long(event.time*1000)
+                #print("event",event.signal, "EventTime",eventTime,"timestamp",timestamp, "bigger?",eventTime>timestamp)
+                if eventTime>timestamp:
+                    data.append(event)
+            else:
+                
+                eventTime=event.time
+                
+               # print("event",event.signal, "EventTime",eventTime,"timestamp",timestamp, "bigger?",eventTime>timestamp)
+                if eventTime>timestamp:
+                    data.append(event)
+       
         return data
             #[event for event in self.notificationBuffer if event.time>=timestamp ]
-            #1313161679 ### 1313161675
-            #1313161877.401
-            #1313161886.0526619,
-            #1313161959318.4709,
-            #1313161957235
+           
         
     def notify_all(self):
-       # print("NOTIFICATION",len(self.clients.items()))
         for k,v in self.clients.items():
             if v:
-                data=self._filterEvents(v.request.timestamp)
+                data=self._filterEvents(v.request.altTimeStamp)
                 if len(data)>0:
-                    v.notify(self._filterEvents(v.request.timestamp))
+                    v.notify(data)
 
-     
-       # print("NOTIFICATION Done",len(self.clients.items()))
 
 
 class ClientDelegate(object):
@@ -220,7 +310,7 @@ class ClientDelegate(object):
         self.request = r
 
     def end(self, data):
-
+        print("Sending out to client",self.request.clientId ,"data",str(data))
         r=ResponseGenerator(self.request,status=200,contentType="application/pollapli.eventList+json",resource="events",rootUri="/rest/config/events")
         r._build_response(data)
         
@@ -234,6 +324,9 @@ class GlobalEventsHandler(DefaultRestHandler):
     def __init__(self,rootUri="http://localhost"):
         DefaultRestHandler.__init__(self,rootUri)  
         self.valid_contentTypes.append("application/pollapli.eventList+json")   
+        self.validGetParams.append('altTimeStamp')
+        
+        
         self.signalChannel="global_event_listener"
         self.signalHandler=SignalHander(self.signalChannel)
         self.signalHandler.add_handler(channel="driver_manager",handler=self._signal_Handler)   

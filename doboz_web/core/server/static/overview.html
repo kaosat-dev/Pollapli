@@ -1,0 +1,17 @@
+<div id="controls" style="width:100px;display:inline-block;float:left;">
+  <button>A button element</button>
+</div>
+<div id="content" style="height:100%">
+  <div class="ui-widget-header" style="width:100%">
+  Overview:
+  </div>
+ <div id="node-dialog" ></div>
+  <div id="driver-dialog" ></div>
+  <div id="events" style="width:100%; height:100px;overflow:auto " class="leftBlock"></div>
+  
+  <button  onClick="manager.getNodesTest()">Fetch nodes</button>
+  <button  onClick="pollapli.ui.openNodeDialog(-1,'create')"> Add Node</button> 
+  <button  onClick="manager.deleteNodes()">Delete ALL node</button>   
+  <div id="testDiv_nodes"></div>
+  
+</div>

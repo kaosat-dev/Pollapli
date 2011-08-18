@@ -1,0 +1,89 @@
+<script id="shader-fs" type="x-shader/x-fragment">
+        #ifdef GL_ES
+        precision highp float;
+        #endif
+        uniform float time;
+
+        
+        varying vec4 verpos;
+        varying vec4 vColor;
+        void main(void) 
+        {
+          
+          float r = verpos.y-0.2;
+          float g=max(0.5-r,0.2);
+          float b=max(1.0-r,0.4);
+          gl_FragColor = vec4( r,g,b,1.0);
+        }
+    </script>
+    
+    <script id="shader-test" type="x-shader/x-fragment">
+        #ifdef GL_ES
+        precision highp float;
+        #endif
+        uniform float time;
+        uniform vec2 resolution;
+        varying vec4 vColor;
+        void main(void) 
+        {
+           float x = gl_FragCoord.x/512.0;
+           float y = gl_FragCoord.y/512.0;
+            float z = gl_FragCoord.z;
+           gl_FragColor = vec4( x,z,y,1.0);
+        }
+    </script>
+    
+    <script id="shader-fs-line" type="x-shader/x-fragment">
+        #ifdef GL_ES
+        precision highp float;
+        #endif
+        uniform float time;
+        varying vec4 vColor;
+        void main(void) 
+        {
+          float test=time;
+          float truc=sin(test);
+          
+          gl_FragColor = vec4(truc, 0.5, 1.0, 1.0);
+        }
+    </script>
+    <script id="shader-vs" type="x-shader/x-vertex">
+  attribute vec3 aVertexPosition;
+  attribute vec4 aVertexColor;
+  
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  
+  varying vec4 verpos;
+  varying vec4 vColor;
+  uniform float pointSize;
+
+  
+  void main(void) 
+  {
+    gl_PointSize = pointSize;
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    verpos=vec4(aVertexPosition, 1.0);
+    vColor = aVertexColor;
+  }
+</script>
+<script id="shader-vs-simple" type="x-shader/x-vertex">
+  attribute vec3 aVertexPosition;
+  attribute vec4 aVertexColor;
+  
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  
+  varying vec4 verpos;
+  varying vec4 vColor;
+
+
+  
+  void main(void) 
+  {
+    
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    verpos=vec4(aVertexPosition, 1.0);
+    vColor = aVertexColor;
+  }
+</script>

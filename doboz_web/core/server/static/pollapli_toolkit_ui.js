@@ -1,26 +1,10 @@
-pollapli.test="truc";
-
 pollapli.ui={}
 pollapli.ui.templates={};
 
 pollapli.ui.init=function()
 {
-  $("#loader_dialog").dialog({
-    modal: true,
-    draggable: false,
-    resizable: false,
-    autoOpen: true, 
-    closeOnEscape: false,
-    buttons: {},
-    dialogClass: "loadingScreen",
-    width:400,
-    height:90
-    
-    
-     });
-  
-  
-  
+
+  this.showLoader();
   //load and compile all templates
   this.loadTemplates();
   
@@ -80,7 +64,29 @@ pollapli.ui.loadTemplates=function()
 }
 
 
+pollapli.ui.showLoader=function()
+{
+    $("#loader_dialog").dialog({
+    modal: true,
+    draggable: false,
+    resizable: false,
+    autoOpen: true, 
+    closeOnEscape: false,
+    buttons: {},
+    dialogClass: "loadingScreen",
+    width:400,
+    height:90
+     });
+}
 
+pollapli.ui.init_nodeView=function()
+{
+
+    $( "button").button({ icons: {primary:'ui-icon-lightbulb'},text:true }); 
+    $("#node-dialog").dialog({ autoOpen: false ,show:'slide',width:400})
+    $("#driver-dialog").dialog({ autoOpen: false ,show:'slide',width:400})
+
+}
 
 pollapli.ui.openNodeDialog=function (nodeId,mode)
 {
@@ -175,11 +181,58 @@ pollapli.update=function(op,id)
 }
 
 
+//calendar related methods
+pollapli.ui.init_calendar=function()
+{
+    var date = new Date();
+    var d = date.getDate();
+    var m = date.getMonth();
+    var y = date.getFullYear();
+  
+    $('#calendar').fullCalendar({
+       header: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'month,agendaWeek,agendaDay'
+      },
+      editable: true,
+      selectable:true,
+      theme: true,
+      height: 650,
+      dayClick: function(date, allDay, jsEvent, view) {
+
+        if (allDay) {
+            alert('Clicked on the entire day: ' + date);
+        }else{
+            alert('Clicked on the slot: ' + date);
+        }
+
+        alert('Coordinates: ' + jsEvent.pageX + ',' + jsEvent.pageY);
+
+        alert('Current view: ' + view.name);
+
+        // change the day's background color just for fun
+        $(this).css('background-color', 'black');
+
+    }
+      
+     });
+
+}
+
+//update(s) display related methods
+pollapli.ui.render_update=function()
+{
+  
+}
+
+
+//progressbar related methods
+
 pollapli.ui.init_progressbars=function()
 {
    $('.progressbar').progressbar({value:0});
 }
-
 
 pollapli.ui.init_progressbar=function(divName,percent)
 {
@@ -189,18 +242,12 @@ pollapli.ui.init_progressbar=function(divName,percent)
          change: function(event, ui) 
          {
             var newVal = $(this).progressbar('option', 'value');
-            $('div >.pblabel', this).text(newVal + '%');
-            $("#progbardiv_0 > .pblabel").text(newVal+ '%');
+            $('.pblabel', this).text(newVal + '%');
           }
         });
-       $(divName > "span").text(percent+ '%');
-       $("#progbardiv_0 > .pblabel").text(percent+ '%');
-       
-       /* $(".progresswraper").show("fast");
-    
-    
-    $(".progressbar > div").css({ 'background': 'Orange' });
-    $(".progressbar ").css({ 'border-radius': 0+'px' });
-    $(".progressbar > div").css({ 'border-radius': 0+'px'});*/
-       
+}
+
+pollapli.ui.set_progressbar=function(divName,percent)
+{
+  $(divName).progressbar( "option", "value", percent); 
 }

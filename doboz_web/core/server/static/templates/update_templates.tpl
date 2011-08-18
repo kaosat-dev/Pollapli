@@ -35,10 +35,10 @@
                       </tr>  
                       <tr  >
                         <td> 
-                           <% var progressbarDivId="progbardiv_"+j+'' ;%>
+                           <% var progressbarDivId="progbardiv_"+this.id+'' ;%>
 
-                            <% if(!this.downloaded) { %>
-                            <button onClick="manager.postUpdateDownload()">Download & Install </button>
+                            <% if(!this.downloaded && !this.installed) { %>
+                            <button onClick="manager.start_UpdateDownloadInstall(<%=this.id%>)">Download & Install </button>
                          
                          
                              <divclass="progresswraper " >
@@ -61,3 +61,10 @@
          
                 ]]>
   </script> 
+  
+  <script type="text/x-jqote-template" id="updates_header_tmpl"> 
+          <![CDATA[
+          
+            ]]>
+  </script> 
+  

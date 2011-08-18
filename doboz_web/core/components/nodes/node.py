@@ -295,10 +295,11 @@ class NodeManager(object):
         self.lastNodeId=0
         self.signalChannel="node_manager"
         self.signalHandler=SignalHander(self.signalChannel)
+        self.signalChannelPrefix="environment_"+str(self.parentEnvironment.id)
      
     @defer.inlineCallbacks    
     def setup(self):
-        self.signalChannelPrefix="environment_"+str(self.parentEnvironment.id)
+       
         
         @defer.inlineCallbacks
         def addNode(nodes):

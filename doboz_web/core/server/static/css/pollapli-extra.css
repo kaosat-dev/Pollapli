@@ -198,4 +198,8 @@ display:inline-block;
   display: none;
 }
 
+#calendar {
+    width: 900px;
+    margin: 0 auto;
+    }
 
