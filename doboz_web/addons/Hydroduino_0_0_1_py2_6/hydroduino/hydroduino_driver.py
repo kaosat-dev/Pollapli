@@ -87,11 +87,11 @@ class HydroduinoProtocol(BaseSerialProtocol):
             self.driver.d.callback(None)      
         
     def _set_deviceId(self,id=None):
-        self.send_data("s "+ self.driver.deviceId)
+        self.send_data('99'+ " "+ self.driver.deviceId)
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
-        self.send_data("i")
+        self.send_data('2')
         
     def _format_data_out(self,data,*args,**kwargs):
         """
@@ -105,7 +105,6 @@ class HydroduinoProtocol(BaseSerialProtocol):
         Formats an incomming data block according to some specs/protocol 
         data: the incomming data from the device
         """
-        print("arduino driver formating data out: data:",data)
         data=data.replace("ok",'')
         data=data.replace(" ",'')
         data=data.replace('\n','')
@@ -132,12 +131,16 @@ class HydroduinoDriver(Driver):
         and not instances of those classes
         """
         Driver.__init__(self,HydroduinoHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,connectionType,options,*args,**kwargs)
+        self.autoConnect=True
         #self.hardwareHandler=HydroduinoHardwareHandler(self,*args,**kwargs)
         #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
         
     def teststuff(self,sender,params=None,callback=None,*args,**kwargs):
-        print("arduino driver teststuff:sender",sender,"params",params,"callback",callback)
-        self.send_command(data='g',sender=sender,callback=callback)  
+        #print("arduino driver teststuff:sender",sender,"params",params,"callback",callback)
+        self.send_command(data='5 0',sender=sender,callback=callback)  
     
     def hello_world(self):
-        self.send_command('a')
+        self.send_command('0')
+        
+    def analogRead(self, pin):
+        self.send_command(" ".join([5, pin]))

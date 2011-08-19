@@ -7,6 +7,7 @@ from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from twisted.internet.defer import DeferredQueue
+from collections import deque
 
 class NodeElement(object):
     """A sub element of a node : such as actor, sensor etc """
@@ -111,6 +112,7 @@ class Command(object):
         self.answered=False
         self.completed=False
         self.params=params
+        self.d=defer.Deferred()
         
 class Variable(object):
     def __init__(self,node,name,value,type,unit,defaultValue=None,historyStore=None,historyLength=None,implicitSet=False,channels=[]):
@@ -146,8 +148,8 @@ class Variable(object):
         self.attachedSensors={}
         self.attachedActors={}
         
-        self.commanqueue=DeferredQueue()
-        
+        self._commanqueue=DeferredQueue()
+        self.commandqueue=deque()
          
     def attach_sensor(self,sensor,channel=None,*args,**kwargs):
         realChannel=None
@@ -188,13 +190,17 @@ class Variable(object):
         self.attach_sensors(sensors)
         
     def get(self,saveToHistory=False,sender=None):
-        command=Command(type="get",sender=sender,params={"save":saveToHistory})
-        print("Variable",self.name,"asked for get, by ", sender)
-        print("variable",self.name, "has current sensors attached")
-        for sens in self.attachedSensors.itervalues():
-            print(sens.name," ",sens.type) 
         
-        self.commanqueue.put(command)
+        
+        command=Command(type="get",sender=sender,params={"save":saveToHistory})
+        #print("Variable",self.name,"asked for get, by ", sender)
+       # print("variable",self.name, "has current sensors attached")
+       # for sens in self.attachedSensors.itervalues():
+       #     print(sens.name," ",sens.type) 
+            
+       
+        self.commandqueue.append(command)
+        #self.commanqueue.put(command)
         
         #hack
        # self.node.driver.connect()
@@ -206,6 +212,7 @@ class Variable(object):
 #            getattr(self.node.driver,"get_"+self.name)(value)
 #        except Exception as inst:
 #            log.mg("Node's driver does not have the request feature",system="Node",logLevel=logging.CRITICAL)
+        return command.d
     
     def set(self,value,relative=False,params=None,sender=None):
         """ setting is dependent on the type of  variable
@@ -239,21 +246,32 @@ class Variable(object):
     
     def _updateConfirmed(self,value=None,*args, **kwargs):
         """to be called after a sucessfull get or set with implicit trust"""
+     
+        originalCmd=self.commandqueue.pop()
+       # print("in update confirmed: command",originalCmd)
+        
         try:
             value=self.type(value)
         except Exception as inst:
             print("failed to cast update data for variable",inst)
             
-        log.msg("Variable update confirmed: new value is ",value,logLevel=logging.CRITICAL)
+        log.msg("Variable update confirmed: new value is ",value,logLevel=logging.DEBUG)
         
-        self.value=value
+        if self.implicitSet or originalCmd.type=="get":
+            self.value=value
+               
         if self.historyStore=='memory':
             self.historyIndex+=1
             if self.historyIndex>self.historyLength:
                 self.historyIndex=0
             self.history[self.historyIndex]=value
         elif self.historyStore=='db':
+            pass
             Reading(self.value).save()
+        
+        
+        reactor.callLater(0,originalCmd.d.callback,self.value)
+
 
 """Variable types:
  temperature, pressure, luminosity, humidity,position/distance

@@ -1,13 +1,13 @@
 from twisted.internet.protocol import Protocol, Factory
 #from twisted.internet.serialport import SerialPort
 
-
-
+"""necessary workaround for win32 serial port bugs in twisted"""
 import re, sys, itertools,time, logging,glob
 if sys.platform == "win32":
     from doboz_web.core.patches._win32serialport import SerialPort
 else:
     from twisted.internet.serialport import SerialPort
+    
 from twisted.internet import reactor, defer
 from twisted.internet.task import LoopingCall
 from twisted.python import log,failure
@@ -154,6 +154,18 @@ class SerialHardwareHandler(object):
                     #log.msg("Error while opening port",port,"Error:",inst)
         defer.returnValue(available)
         
+        
+    def pulseDTR(self,target):
+        """emulation of the pulse DTR method"""
+        if self.driver.isConnected:
+            self.serial.setDTR(1)
+            def _set_dtr(*args,**kwargs):
+                self.serial.setDTR(0)
+            reactor.callLater(0.5,_set_dtr)#not sure this would work as time.sleep replacement
+            self.disconnect()
+
+
+
     """The next methods are at least partially deprecated and not in use """   
     def reset_seperator(self):
         self.regex = re.compile(self.seperator)

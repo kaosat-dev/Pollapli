@@ -176,11 +176,13 @@ class Driver(DBObject):
         self.isDeviceIdOk=False
         self.isConnected=False
         self.isPluggedIn=False
+        self.autoConnect=False#if autoconnect is set to true, the device will be connected as soon as a it is plugged in and detected
         
         self.connectionType=connectionType
         self.connectionErrors=0
         self.maxConnectionErrors=2
         self.connectionTimeout=4
+        
         
         """
         Modes :
@@ -257,8 +259,10 @@ class Driver(DBObject):
         self.send_signal("plugged_In",port)
         self.isPluggedIn=True
         
-        #temp hack !!
-        self.connect(1)
+        if self.autoConnect:
+            #slight delay, to prevent certain problems when trying to send data to the device too fast
+            reactor.callLater(1,self.connect,1)
+           
         
     def pluggedOut(self,port):
         self.isConfigured=False  
@@ -274,7 +278,7 @@ class Driver(DBObject):
         self.signalHandler.send_message(prefix+signal,self,data)
     
     def send_command(self,data,sender=None,callback=None,*args,**kwargs):
-        print("going to send command",data,"from",sender)
+       # print("going to send command",data,"from",sender)
         if not self.isConnected:
             raise DeviceNotConnected()
         if self.logicHandler:

@@ -44,27 +44,41 @@ class TaskStatus(object):
 
 class Action(object):
     def __init__(self):
-            pass
+        self.steps=0
+        self.startTime=time.time()
         
     def do_step(self):
         pass
     
     def resultCallback(self,result):
         """we get any results from our target back through here """
-        print("GOT RESULT",result)
+       # print("Action GOT RESULT",result)
+        self.steps+=1
+        #print("here")
+        if self.steps%1000==0:
+                log.msg("1000 steps done in",time.time()-self.startTime,"s",logLevel=logging.CRITICAL)
+                self.startTime=time.time()
+        
+        self.do_step()
     
     def start(self):
         log.msg("starting action")
+        self.startTime=time.time()
         self.do_step()
         
 class UpdateAndGetVariable_action(Action):
     def __init__(self,targetNode,targetVariable):
+        Action.__init__(self)
         self.targetNode=targetNode
         self.targetVariable=targetVariable
         
     def do_step(self):
-        print("doing UpdateAndGetVariable_action step")
-        self.targetVariable.get(True,self)
+        #d=defer.Deferred()
+       # print("doing UpdateAndGetVariable_action step")
+        self.targetVariable.get(True,self).addCallback(self.resultCallback)
+        
+#        print("set callback to variable get")
+    
     
 class Task(DBObject):
     BELONGSTO   = ['environment']    
