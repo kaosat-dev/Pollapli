@@ -112,13 +112,7 @@ class UpdateManager(object):
             
         Update.all().addCallback(_loadAllUpdates)
         yield cls.update_addOns()
-        yield cls.refresh_updateList()
-        
-        """just for testing"""
-#        yield cls.download_update("Virtual device add on")
-#        yield cls.install_update("Virtual device add on")
-#        yield cls.download_update("Arduino Example")
-#        yield cls.install_update("Arduino Example")
+      #  yield cls.refresh_updateList()
         
         cls.updateCheck= task.LoopingCall(cls.refresh_updateList)
         cls.updateCheck.start(interval=240,now=False)

@@ -10,7 +10,7 @@ from zope.interface import Interface, Attribute,implements
 from twisted.plugin import IPlugin,getPlugins
 from twisted.internet.protocol import Protocol
 
-from doboz_web.exceptions import UnknownDriver,NoDriverSet,DeviceIdMismatch
+from doboz_web.exceptions import UnknownDriver,NoDriverSet,DeviceIdMismatch,DeviceNotConnected
 from doboz_web import idoboz_web
 from doboz_web.core.signal_system import SignalHander
 from doboz_web.core.components.updates.update_manager import UpdateManager
@@ -257,6 +257,9 @@ class Driver(DBObject):
         self.send_signal("plugged_In",port)
         self.isPluggedIn=True
         
+        #temp hack !!
+        self.connect(1)
+        
     def pluggedOut(self,port):
         self.isConfigured=False  
         self.isDeviceHandshakeOk=False
@@ -270,9 +273,12 @@ class Driver(DBObject):
         prefix=self.signalChannelPrefix+".driver."
         self.signalHandler.send_message(prefix+signal,self,data)
     
-    def send_command(self,data,sender=None,*args,**kwargs):
+    def send_command(self,data,sender=None,callback=None,*args,**kwargs):
+        print("going to send command",data,"from",sender)
+        if not self.isConnected:
+            raise DeviceNotConnected()
         if self.logicHandler:
-            self.logicHandler._handle_request(data=data,sender=sender)
+            self.logicHandler._handle_request(data=data,sender=sender,callback=callback)
     def _send_data(self,data,*arrgs,**kwargs):
         self.hardwareHandler.send_data(data)
          
@@ -794,7 +800,7 @@ class Command(object):
     """Base command class, encapsulate all request and answer commands, also has a 'special' flag for commands that do no participate in normal flow of gcodes : i
     ie for example , regular poling of temperatures for display (the "OK" from those commands MUST not affect the line by line sending/answering of gcodes)
     """
-    def __init__(self,special=False,multiParts=1,answerRequired=True,request=None,answer=None,sender=None):
+    def __init__(self,special=False,multiParts=1,answerRequired=True,request=None,answer=None,sender=None,callback=None):
         """
         Params:
         special: generally used for "system" commands such as M105 (temperature read) as oposed to general, print/movement commands
@@ -814,6 +820,11 @@ class Command(object):
         self.answer=answer
         self.sender=sender
         
+        self.callback=callback
+        
+    def callCallback(self):
+        if self.callback is not None:
+            self.callback(self.answer)
     def __str__(self):
         #return str(self.request)+" "+str(self.answer)
         return str(self.answer)
@@ -833,18 +844,20 @@ class CommandQueueLogic(object):
         #print("in command queue logic , driver:",driver)
     
         
-    def _handle_request(self,data,sender=None,*args,**kwargs):
+    def _handle_request(self,data,sender=None,callback=None,*args,**kwargs):
         """
         Manages command requests
         """
       
         cmd=Command(**kwargs)
+        
         cmd.request=data
         cmd.sender=sender
+        cmd.callback=callback
         
         
         if cmd.answerRequired and len(self.commandBuffer)<self.bufferSize:
-            log.msg("adding command",cmd,"from",cmd.sender,system="Driver",logLevel=logging.DEBUG)
+            log.msg("adding command",cmd,"from",cmd.sender,"callback",callback,system="Driver",logLevel=logging.DEBUG)
             self.commandBuffer.append(cmd)
             if self.commandSlots>1:
                 self.commandSlots-=1
@@ -873,8 +886,11 @@ class CommandQueueLogic(object):
                     cmd.answerComplete=True
                     cmd.answer=data
                     self.commandSlots+=1#free a commandSlot
+                    
+                    cmd.callCallback()
+                    
                     #print("recieved data ",cmd.answer,"command sender",cmd.sender )
-                    self.driver.send_signal(cmd.sender+".dataRecieved",cmd.answer,True)
+                   # self.driver.send_signal(cmd.sender+".dataRecieved",cmd.answer,True)
                    
                     self.send_next_command()       
             except Exception as inst:

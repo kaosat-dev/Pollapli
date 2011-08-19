@@ -97,10 +97,12 @@ class Tool(NodeComponent):
         NodeComponent.__init__(self, name, parent, isLeaf)
         
         
-#class Reading(DBObject):
-#    BELONGSTO = ['variable']
-#    def __init__(self):
-#        DBObject.__init__(self,**kwargs)
+class Reading(DBObject):
+    #BELONGSTO = ['variable']
+    def __init__(self,data=None,dataTime=None,*args,**kwargs):
+        self.data=data
+        self.dateTime=dataTime or time.time()
+        DBObject.__init__(self,**kwargs)
     
 class Command(object):
     def __init__(self,type=None,sender=None,params=None):
@@ -194,7 +196,10 @@ class Variable(object):
         
         self.commanqueue.put(command)
         
-        #self.node.driver.teststuff()
+        #hack
+       # self.node.driver.connect()
+        
+        self.node.driver.teststuff(self,None,self._updateConfirmed)
         
  #       self.node.driver.variable_get(self)
 #        try:
@@ -232,14 +237,23 @@ class Variable(object):
         else:
             self.value=self.defaultValue
     
-    def _updateConfirmed(self,value=None):
+    def _updateConfirmed(self,value=None,*args, **kwargs):
         """to be called after a sucessfull get or set with implicit trust"""
+        try:
+            value=self.type(value)
+        except Exception as inst:
+            print("failed to cast update data for variable",inst)
+            
+        log.msg("Variable update confirmed: new value is ",value,logLevel=logging.CRITICAL)
+        
         self.value=value
         if self.historyStore=='memory':
             self.historyIndex+=1
             if self.historyIndex>self.historyLength:
                 self.historyIndex=0
             self.history[self.historyIndex]=value
+        elif self.historyStore=='db':
+            Reading(self.value).save()
 
 """Variable types:
  temperature, pressure, luminosity, humidity,position/distance

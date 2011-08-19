@@ -97,7 +97,7 @@ class Node(DBObject):
         self.variables[varName].set(*args,**kwargs)
     
     def variable_test(self):
-        temp=Variable(self,"temperature",0,"float","celcius",0,"db")   
+        temp=Variable(self,"temperature",0,float,"celcius",0,"db")   
         tempSensor=Sensor(type="Sensor",name="temperature sensor",tool="testTool")
         temp.attach_sensor(tempSensor)
         self.testElement=temp

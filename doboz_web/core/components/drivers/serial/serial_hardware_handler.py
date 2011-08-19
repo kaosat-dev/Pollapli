@@ -41,7 +41,7 @@ class SerialHardwareHandler(object):
         
     def connect(self,port=None,*args,**kwargs):
         self.driver.connectionErrors=0
-        log.msg("Connecting... Port:",port," at speed ",self.speed,system="Driver",logLevel=logging.DEBUG)
+        log.msg("Connecting... to port:",port," at speed ",self.speed, " in mode ",self.driver.connectionMode, system="Driver",logLevel=logging.DEBUG)
         if port:  
             self.port=port
         self._connect(port,*args,**kwargs)
@@ -128,7 +128,7 @@ class SerialHardwareHandler(object):
                         break
             else:
                 foundPorts= glob.glob('/dev/ttyUSB*')+ glob.glob('/dev/cu*') 
-            log.msg("Serial Ports on  system:",str(foundPorts),system="Driver",logLevel=logging.DEBUG)
+            #log.msg("Serial Ports on  system:",str(foundPorts),system="Driver",logLevel=logging.DEBUG)
             return foundPorts
         
         reactor.callLater(0.1,d.callback,None)
@@ -192,10 +192,13 @@ class BaseSerialProtocol(Protocol):
         
     def _timeoutCheck(self,*args,**kwargs):
         if self.driver.isConnected:
-            log.msg("Timeout check at ",time.time(),logLevel=logging.DEBUG)
-            self.cancel_timeout()
-            self.driver.connectionErrors+=1
-            self.driver.reconnect()
+            if self.driver.connectionMode==2:
+                log.msg("Here Timeout check at ",time.time(),logLevel=logging.DEBUG)
+                self.cancel_timeout()
+                self.driver.connectionErrors+=1
+                self.driver.reconnect()
+            else:
+                self.cancel_timeout()
         else:
             self.cancel_timeout()
 
@@ -205,7 +208,6 @@ class BaseSerialProtocol(Protocol):
             self.timeout=reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
         
     def cancel_timeout(self):
-        if self.driver.connectionMode==2:
             if self.timeout:
                 try:
                     self.timeout.cancel()

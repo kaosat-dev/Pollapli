@@ -73,6 +73,7 @@ class MainServer():
         exceptionConverter.add_exception(UnknownDriver,500,8,"Unknown connector driver type")
         exceptionConverter.add_exception(DeviceHandshakeMismatch,500,9,"Device handshake failed to match the one defined by the driver")
         exceptionConverter.add_exception(InvalidFile,500,10,"Invalid File")
+        exceptionConverter.add_exception(DeviceNotConnected,500,11,"Attempting to communicate with not connected device")
         
         self.signalChannel="main_signal_listener"
         self.signalHandler=SignalHander(self.signalChannel)

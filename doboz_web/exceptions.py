@@ -22,6 +22,8 @@ class DeviceHandshakeMismatch(Exception):
     pass
 class DeviceIdMismatch(Exception):
     pass
+class DeviceNotConnected(Exception):
+    pass
 class NoAvailablePort(Exception):
     pass
 

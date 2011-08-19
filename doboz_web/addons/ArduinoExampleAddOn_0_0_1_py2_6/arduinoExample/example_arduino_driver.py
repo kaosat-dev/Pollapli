@@ -96,14 +96,15 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         
     def _format_data_out(self,data,*args,**kwargs):
         """
-        Cleanup gcode : remove comments and whitespaces
+        Formats an outgoing data block according to some specs/protocol 
+        data: the outgoing data TO the device
         """
         return data+'\n'
     
     def _format_data_in(self,data,*args,**kwargs):
         """
         Formats an incomming data block according to some specs/protocol 
-        data: the incomming data from the device
+        data: the incomming data FROM the device
         """
         data=data.replace('\n','')
         data=data.replace('\r','')
@@ -129,8 +130,26 @@ class ArduinoExampleDriver(Driver):
         and not instances of those classes
         """
         Driver.__init__(self,ArduinoExampleHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,connectionType,options,*args,**kwargs)
-        #self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
-        #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
         
     def hello_world(self):
-        self.send_command('a')
+        self.send_command(0)
+        
+    def set_mode(self,pin,mode):
+        self.send_command(" ".join([7, pin, mode]))
+        
+    def set_Low(self, pin):
+        self.send_command(" ".join([3, pin]))
+
+    def set_High(self, pin):
+        self.send_command(" ".join([4, pin]))
+
+    def get_State(self, pin):
+        self.send_command('g'+str(pin))
+
+    def analogWrite(self, pin, value):
+        self.send_command(" ".join([3, pin, value]))
+        
+    def analogRead(self, pin):
+        self.send_command(" ".join([5, pin]))
+
+    
