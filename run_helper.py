@@ -22,11 +22,11 @@ def helper():
     except:
         pass
     try:
-        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"reprap1","type":"reprap","description":"just a reprap node"}')
+        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"hydroduino test","type":"hydroduino","description":"just a garden node"}')
     except:
         pass
     try:
-        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"reprap2","type":"reprap","description":"just a reprap node"}')
+        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"repraptest","type":"reprap","description":"just a reprap node"}')
     except:
         pass
     try:
@@ -34,7 +34,7 @@ def helper():
     except:
         pass
     try:
-        client.post('rest/environments/1/nodes/1/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"arduinoexampledriver","driverParams":{"speed":115200}}')
+        client.post('rest/environments/1/nodes/1/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"hydroduinodriver","driverParams":{"speed":115200}}')
     except:
         pass
     try:

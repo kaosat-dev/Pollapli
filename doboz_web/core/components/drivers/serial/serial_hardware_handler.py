@@ -318,7 +318,7 @@ class BaseSerialProtocol(Protocol):
                     except:
                         pass      
         except Exception as inst:
-            log.msg("Critical error in serial",str(inst),system="Driver",logLevel=logging.CRITICAL)
+            log.msg("Critical error in serial...",str(inst),system="Driver",logLevel=logging.CRITICAL)
         
     def send_data(self,data,*args,**kwargs):  
         """

@@ -45,6 +45,7 @@ pathJoin = os.path.join
 env = Environment()
 platform = env['PLATFORM']
 
+
 def getUsbTty(rx):
     usb_ttys = glob(rx)
     if len(usb_ttys) == 1: return usb_ttys[0]
@@ -67,7 +68,12 @@ else:
     ARDUINO_PORT_DEFAULT = getUsbTty('/dev/ttyUSB*')
     AVR_BIN_PREFIX = 'avr-'
 
+
+ARDUINO_HOME_DEFAULT ='/home/ckaos/utilz/Progra/arduino-0022/'
 ARDUINO_BOARD_DEFAULT = os.environ.get('ARDUINO_BOARD', 'atmega328')
+
+
+TARGETPATH    = ARGUMENTS.get('TARGETPATH', os.path.realpath(os.curdir))
 
 ARDUINO_HOME    = ARGUMENTS.get('ARDUINO_HOME', ARDUINO_HOME_DEFAULT)
 ARDUINO_PORT    = ARGUMENTS.get('ARDUINO_PORT', ARDUINO_PORT_DEFAULT)
@@ -84,10 +90,13 @@ ARDUINO_CORE = pathJoin(ARDUINO_HOME, 'hardware/arduino/cores/arduino')
 ARDUINO_SKEL = pathJoin(ARDUINO_CORE, 'main.cpp')
 ARDUINO_CONF = pathJoin(ARDUINO_HOME, 'hardware/arduino/boards.txt')
 
+
 # Some OSs need bundle with IDE tool-chain
 if platform == 'darwin' or platform == 'win32': 
     AVR_BIN_PREFIX = pathJoin(ARDUINO_HOME, 'hardware/tools/avr/bin', 'avr-')
     AVRDUDE_CONF = pathJoin(ARDUINO_HOME, 'hardware/tools/avr/etc/avrdude.conf')
+
+AVRDUDE_CONF = pathJoin(ARDUINO_HOME, 'hardware/tools/avrdude.conf')
 
 ARDUINO_LIBS = []
 if EXTRA_LIB != None:
@@ -120,18 +129,35 @@ def getBoardConf(strPtn):
 MCU = getBoardConf(r'^%s\.build\.mcu=(.*)'%ARDUINO_BOARD)
 F_CPU = getBoardConf(r'^%s\.build\.f_cpu=(.*)'%ARDUINO_BOARD)
 
+
+
 # There should be a file with the same name as the folder and with the extension .pde
-TARGET = os.path.basename(os.path.realpath(os.curdir))
+TARGET = pathJoin(TARGETPATH,os.path.basename(TARGETPATH))
 assert(os.path.exists(TARGET+'.pde'))
+
+print("TARGET ",TARGET)
 
 cFlags = ['-ffunction-sections', '-fdata-sections', '-fno-exceptions',
     '-funsigned-char', '-funsigned-bitfields', '-fpack-struct', '-fshort-enums',
     '-Os', '-mmcu=%s'%MCU]
 envArduino = Environment(CC = AVR_BIN_PREFIX+'gcc', CXX = AVR_BIN_PREFIX+'g++',
-    CPPPATH = ['build/core'], CPPDEFINES = {'F_CPU':F_CPU, 'ARDUINO':ARDUINO_VER},
+    CPPPATH = [TARGETPATH+'/build/core'], CPPDEFINES = {'F_CPU':F_CPU, 'ARDUINO':ARDUINO_VER},
     CFLAGS = cFlags+['-std=gnu99'], CCFLAGS = cFlags, TOOLS = ['gcc','g++'])
 
 
+def fnProcessing(target, source, env):
+    wp = open ('%s'%target[0], 'wb')
+    wp.write(open(ARDUINO_SKEL).read())
+    # Add this preprocessor directive to localize the errors.
+    sourcePath = str(source[0]).replace('\\', '\\\\');
+    wp.write('#line 1 "%s"\r\n' % sourcePath)
+    wp.write(open('%s'%source[0]).read())
+    wp.close()
+    return None
+    
+def tutu(bla, bli):
+  print("in tutu")
+  return "in tutu"
 
 envArduino.Append(BUILDERS = {'Processing':Builder(action = fnProcessing,
         suffix = '.cpp', src_suffix = '.pde')})
@@ -139,15 +165,20 @@ envArduino.Append(BUILDERS={'Elf':Builder(action=AVR_BIN_PREFIX+'gcc '+
         '-mmcu=%s -Os -Wl,--gc-sections -o $TARGET $SOURCES -lm'%MCU)})
 envArduino.Append(BUILDERS={'Hex':Builder(action=AVR_BIN_PREFIX+'objcopy '+
         '-O ihex -R .eeprom $SOURCES $TARGET')})
+    
+envArduino.Append(BUILDERS={'test':Builder(action=tutu)})
+    
 
 # add arduino core sources
-VariantDir('build/core', ARDUINO_CORE)
+VariantDir(TARGETPATH+'/build/core', ARDUINO_CORE)
 gatherSources = lambda x: glob(pathJoin(x, '*.c'))+\
         glob(pathJoin(x, '*.cpp'))+\
         glob(pathJoin(x, '*.S'))
 core_sources = gatherSources(ARDUINO_CORE)
 core_sources = filter(lambda x: not (os.path.basename(x) == 'main.cpp'), core_sources)
-core_sources = map(lambda x: x.replace(ARDUINO_CORE, 'build/core/'), core_sources)
+core_sources = map(lambda x: x.replace(ARDUINO_CORE, TARGETPATH+'/build/core/'), core_sources)
+
+print("SCONS got core_sources",core_sources);
 
 # add libraries
 libCandidates = []
@@ -162,11 +193,13 @@ for line in open (TARGET+'.pde'):
 if ARDUINO_VER >= 20 and 'Ethernet' in libCandidates:
     libCandidates += ['SPI']
 
+print("SCONS got libCandidates",libCandidates);
+
 all_libs_sources = []
 index = 0
 for orig_lib_dir in ARDUINO_LIBS:
     lib_sources = []
-    lib_dir = 'build/lib_%02d'%index
+    lib_dir = TARGETPATH+'/build/lib_%02d'%index
     VariantDir(lib_dir, orig_lib_dir)
     for libPath in filter(os.path.isdir, glob(pathJoin(orig_lib_dir, '*'))):
         libName = os.path.basename(libPath)
@@ -182,18 +215,29 @@ for orig_lib_dir in ARDUINO_LIBS:
         all_libs_sources += lib_sources
     index += 1
 
-# Convert sketch(.pde) to cpp
-envArduino.Processing('build/'+TARGET+'.cpp', 'build/'+TARGET+'.pde')
-VariantDir('build', '.')
+print("SCONS got libs",all_libs_sources);
 
-sources = ['build/'+TARGET+'.cpp']
+# Convert sketch(.pde) to cpp
+trucmuche=TARGETPATH+"/build/"+os.path.basename(TARGETPATH)+'.cpp'
+print("TRUCMUCHE",trucmuche)
+bidule=TARGETPATH+"/"+os.path.basename(TARGETPATH)+'.pde'
+print("BIDULE",bidule)
+
+envArduino.Processing(trucmuche,bidule)
+
+
+#VariantDir('build', '.')
+
+#sources = [TARGETPATH+'/build/'+TARGET+'.cpp']
+sources = [trucmuche]
+print("SOURCES",sources)
 sources += all_libs_sources
 sources += core_sources
 # Add raw sources which live in sketch dir.
-# sources += gatherSources('.')
+#sources += gatherSources(TARGETPATH)
 
 # Finally Build!!
-objs = envArduino.Object(sources) #, LIBS=libs, LIBPATH='.')
+objs = envArduino.Object(sources) 
 envArduino.Elf(TARGET+'.elf', objs)
 envArduino.Hex(TARGET+'.hex', TARGET+'.elf')
 
@@ -202,6 +246,8 @@ envArduino.Hex(TARGET+'.hex', TARGET+'.elf')
 MAX_SIZE = getBoardConf(r'^%s\.upload.maximum_size=(.*)'%ARDUINO_BOARD)
 print ("maximum size for hex file: %s bytes"%MAX_SIZE)
 envArduino.Command(None, TARGET+'.hex', AVR_BIN_PREFIX+'size --target=ihex $SOURCE')
+
+
 
 # Reset
 def pulseDTR(target, source, env):
@@ -213,6 +259,7 @@ def pulseDTR(target, source, env):
     ser.setDTR(0)
     ser.close()
 
+print("RESET TRIGGER",RST_TRIGGER,"AVRDUDE CONF",AVRDUDE_CONF)
 if RST_TRIGGER:
     reset_cmd = '%s %s'%(RST_TRIGGER, ARDUINO_PORT)
 else:
@@ -222,6 +269,8 @@ else:
 UPLOAD_PROTOCOL = getBoardConf(r'^%s\.upload\.protocol=(.*)'%ARDUINO_BOARD)
 UPLOAD_SPEED = getBoardConf(r'^%s\.upload\.speed=(.*)'%ARDUINO_BOARD)
 
+UPLOAD_PROTOCOL="stk500v1"
+
 avrdudeOpts = ['-V', '-F', '-c %s'%UPLOAD_PROTOCOL, '-b %s'%UPLOAD_SPEED,
     '-p %s'%MCU, '-P %s'%ARDUINO_PORT, '-U flash:w:$SOURCES']
 if AVRDUDE_CONF:
@@ -229,9 +278,8 @@ if AVRDUDE_CONF:
 
 fuse_cmd = '%s %s'%(pathJoin(os.path.dirname(AVR_BIN_PREFIX), 'avrdude'),
                      ' '.join(avrdudeOpts))
-
+print("fuse_cmd",fuse_cmd)
 upload = envArduino.Alias('upload', TARGET+'.hex', [reset_cmd, fuse_cmd]);
 AlwaysBuild(upload)
-
 # Clean build directory
-envArduino.Clean('all', 'build/')
+envArduino.Clean('all', TARGETPATH+'/build/')

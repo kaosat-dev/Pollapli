@@ -87,7 +87,7 @@ class HydroduinoProtocol(BaseSerialProtocol):
             self.driver.d.callback(None)      
         
     def _set_deviceId(self,id=None):
-        self.send_data('99'+ " "+ self.driver.deviceId)
+        self.send_data('99'+ " "+ str(self.driver.deviceId))
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
@@ -131,7 +131,7 @@ class HydroduinoDriver(Driver):
         and not instances of those classes
         """
         Driver.__init__(self,HydroduinoHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,connectionType,options,*args,**kwargs)
-        self.autoConnect=True
+        #self.autoConnect=True
         #self.hardwareHandler=HydroduinoHardwareHandler(self,*args,**kwargs)
         #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
         

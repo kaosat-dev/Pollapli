@@ -88,11 +88,11 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
             self.driver.d.callback(None)      
         
     def _set_deviceId(self,id=None):
-        self.send_data("s "+ self.driver.deviceId)
+         self.send_data('99'+ " "+ str(self.driver.deviceId))
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
-        self.send_data("i")
+        self.send_data("2")
         
     def _format_data_out(self,data,*args,**kwargs):
         """

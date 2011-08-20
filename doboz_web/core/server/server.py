@@ -24,6 +24,8 @@ from doboz_web.core.components.drivers.driver import DriverManager
 from doboz_web.core.signal_system import SignalHander
 from doboz_web.core.tools import checksum_tools
 from doboz_web.core.server.rest.data_formater   import JsonFormater
+from doboz_web.core.components.autocompile.compile_upload import  SconsProcessProtocol
+
 
 from twisted.application.service import Application
 from twisted.python import log
@@ -83,8 +85,48 @@ class MainServer():
         self.signalHandler.add_handler(channel="node_manager")
         
         self.setup()
-        self.callbackTests()
+
+        
+        reactor.callLater(2,self.compiler_test)
+        #reactor.callLater(5,self.uploader_test)
+        
         #self.formatter_tests()
+        
+    def compiler_test(self):
+        testTarget=os.path.join(self.addOnsPath,"ArduinoExampleAddOn_0_0_1_py2_6","arduinoExample" ,"firmware","arduinoexample")
+        
+        sconsPath="/home/ckaos/data/Progra/Scons/scons.py"  
+        scp = SconsProcessProtocol()
+        scp.deferred = defer.Deferred()
+        cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i","upload"]
+        p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ,usePTY=True )
+        return scp.deferred
+        
+    def uploader_test(self):
+        testTarget=os.path.join(self.addOnsPath,"ArduinoExampleAddOn_0_0_1_py2_6","arduinoExample" ,"firmware","arduinoexample")
+        
+        sconsPath="/home/ckaos/data/Progra/Scons/scons.py"  
+        scp = SconsProcessProtocol()
+        scp.deferred = defer.Deferred()
+        cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i", "upload"]
+        p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ,usePTY=True )
+        return scp.deferred
+        
+#        compiler=compiler_uploader(arduinoPath="/home/ckaos/utilz/Progra/arduino-0022/",targetDir=testTarget)
+#        compiler.check_boardName()
+#        compiler.do_stuff()
+#        compiler.check_source_main()
+#        compiler.set_flags()
+#        compiler._createBuilders()
+#        compiler.addArduinoCore()
+#        compiler.addArduinoLibs()
+#        compiler.do_convert()
+#        
+#        compiler.build()
+        #compiler.tearDown()
+        
+        #subprocess.call("myProg -arg1 -arg2")
+    
     @defer.inlineCallbacks
     def do_stuff(self):
         #filePath="D:\\data\\projects\\Doboz\\add_ons_egg_tests\\virtualDevice\\dist\\VirtualDeviceAddOn-0.0.1-py2.6.egg"

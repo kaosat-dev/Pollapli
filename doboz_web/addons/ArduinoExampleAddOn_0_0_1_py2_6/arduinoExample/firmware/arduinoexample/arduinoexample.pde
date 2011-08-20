@@ -1,21 +1,19 @@
 #include <EEPROM.h>
 
 char deviceId[37];
-char commandBuffer[64];
+char commandBuffer[128];
 int commandIndex=0 ;
+//4b1fd663-fdb0-4211-acbb-58ff9b3753ac
 
-void setup()
+//returns this arduino's id
+void send_id()
 {
-   Serial.begin(115200);
-   get_id();
-   //reset_id();
-  Serial.println("start");   
+   Serial.println(deviceId); 
 }
-
 //sets this arduino's id to the specified char array/String
 void set_id(char* id)
 {
-  for (int i=0; i<36; i++) 
+  for (int i=0; i<37; i++) 
   {
     EEPROM.write(i,id[i]);
     deviceId[i]=id[i];
@@ -26,7 +24,7 @@ void set_id(char* id)
 //resets this arduino's id to empty (for testing)
 void reset_id()
 {
-   for (int i=0; i<36; i++) 
+   for (int i=0; i<376; i++) 
   {
     EEPROM.write(i,' ');
     deviceId[i]=' ';
@@ -35,16 +33,12 @@ void reset_id()
 //fetches this arduino's id from the eeprom
 void get_id()
 { 
-  for (int i=0; i<36; i++) 
+  for (int i=0; i<37; i++) 
   {
      deviceId[i] = EEPROM.read(i);
   }
 }
-//returns this arduino's id
-void send_id()
-{
-   Serial.println(deviceId); 
-}
+
 
 int get_pin(char* command,int size)
 {
@@ -60,15 +54,12 @@ int get_pin(char* command,int size)
 
 //helper functions
 
-char* sub_array(char* data,int start,int end)
+void sub_array(char* data,int start,int end,char* result)
 {
-  char result[end-start];
-  
-  for (int i=start;i<end;i++)
+  for (int i=start;i<end+1;i++)
   {
       result[i-start]=data[i];
   }
-  return result;
 }
 
 int parse_int(char* data,int start,int end)
@@ -112,8 +103,16 @@ void  betterParse(char* data, int size)
       case 0://debug  test 
         Serial.println("hello python, arduino here");
         break;
-      case 99://set device id         
-        set_id(sub_array(data,markers[0]+1,markers[1]));
+      case 99://set device id     
+      {    
+        char tmp[markers[1]-markers[0]+1];
+        sub_array(data,markers[0]+1,markers[1],tmp);
+        set_id(tmp);
+      break;
+      }
+      case 100://reset device id         
+        reset_id();
+        Serial.println("ok");
       break;
       case 2://get device id
         send_id();
@@ -218,6 +217,17 @@ void parse_command(char* command,int size)
     }  
   
 }
+
+
+void setup()
+{
+   Serial.begin(115200);
+   get_id();
+   //reset_id();
+  Serial.println("start");   
+}
+
+
 void loop()
 {
   
