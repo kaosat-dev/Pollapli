@@ -46,7 +46,10 @@ class GstreamerWebcamHandler(object):
         source=gst.element_factory_make(self.gstdriver,"webcam_source")  
             
         if self.gstdriver=="ksvideosrc":  
-            source.set_property("device-index", 1)
+            source.set_property("device-index", 0)
+        else:
+            source.set_property("device","/dev/video1")
+        #source.set_property("device-index", 0)
             
         ffmpegColorSpace=gst.element_factory_make("ffmpegcolorspace","ffMpeg1")
         ffmpegColorSpace2=gst.element_factory_make("ffmpegcolorspace","ffMpeg2")
@@ -75,7 +78,7 @@ class GstreamerWebcamHandler(object):
                 self.player.set_state(gst.STATE_NULL)
                 err, debug = message.parse_error()
                 log.msg("in GStreamer pipeline ",err,debug,"disconnected ",system="Driver",logLevel=logging.CRITICAL)
-               
+                self.finished.set()
 #                if self.driver.isConnected:
 #                    self.isConnected=True
             elif t==gst.MESSAGE_SEGMENT_DONE:
@@ -120,6 +123,9 @@ class GstreamerWebcamHandler(object):
                 self.player.set_state(gst.STATE_PLAYING)        
             else:
                 time.sleep(0.1)
+            if self.recordingDone:
+                time.sleep(2)
+                self.finished.set()
        
     def send_data(self,command):
         pass
@@ -135,7 +141,7 @@ class GstreamerWebcamHandler(object):
         #self._connect(*args,**kwargs)    
     
         #hack !!
-        self.set_capture("/home/ckaos/data/Projects/Doboz/doboz_web/data/")
+        self.set_capture("/home/ckaos/data/Projects/Doboz/doboz_web/data/environments/home/")
         self.fetch_data()
         threads.deferToThread(self.run, None).addBoth(self._runResult)
     
