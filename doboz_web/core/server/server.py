@@ -87,7 +87,8 @@ class MainServer():
         self.setup()
 
         
-        reactor.callLater(2,self.compiler_test)
+      #  reactor.callLater(2,self.compiler_test)
+       # reactor.callLater(2,self.compiler_test2)
         #reactor.callLater(5,self.uploader_test)
         
         #self.formatter_tests()
@@ -96,9 +97,19 @@ class MainServer():
         testTarget=os.path.join(self.addOnsPath,"ArduinoExampleAddOn_0_0_1_py2_6","arduinoExample" ,"firmware","arduinoexample")
         
         sconsPath="/home/ckaos/data/Progra/Scons/scons.py"  
-        scp = SconsProcessProtocol()
+        scp = SconsProcessProtocol("arduino")
         scp.deferred = defer.Deferred()
-        cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i","upload"]
+        cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i"]
+        p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ,usePTY=True )
+        return scp.deferred
+    
+    def compiler_test2(self):
+        testTarget=os.path.join(self.addOnsPath,"Hydroduino_0_0_1_py2_6","hydroduino" ,"firmware","hydroduino")
+        
+        sconsPath="/home/ckaos/data/Progra/Scons/scons.py"  
+        scp = SconsProcessProtocol("hydroduino")
+        scp.deferred = defer.Deferred()
+        cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i"]
         p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ,usePTY=True )
         return scp.deferred
         

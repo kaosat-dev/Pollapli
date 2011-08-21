@@ -28,5 +28,46 @@
   <div style="overflow:auto;height:99%">
    
   </div>
+  
+  <!--all that follow are experiments , and preparation for future ui elements!-->
+  <div id="reprap_manual_control" style="width:25%">
+    <table id="controlsTable" class="controlsTable"  style="width:100%">
+      <tr  >
+        <td></td>
+        <td> <button>-Y</button></td>
+        <td> <button >-E</button></td>
+        <td>  <button >+Z</button></td>
+      </tr>
+      <tr >
+        <td><button>+X</button></td>
+        <td><button>Zero</button> </td>
+        <td><button>-X</button></td>
+        <td></td>
+      </tr>
+        <tr >
+          <td></td>
+          <td> <button >+Y</button></td>
+          <td> <button >E</button></td>
+          <td> <button   onclick="reprapMgr.sendMoveCommand('G1 Z-')">-Z</button></td>
+        </tr>
+    </table>
+  </div>
+  
+  <div ud="first_node_creation_wizard" style="text-align: center">
+    <h2 style="text-align: left">Welcome to Pollapli, the simple yet powerfull Arduino managment system!</h2>
+    <p style="text-align: left">
+      It seems you do not yet have added any <span>devices!<span> <br><br>
+      
+      This wizard will guide you step by step to setup your first device. <br><br>
+      
+      To make this as efficient as possible , please have the device you want to plug in close by ( don't connect it just yet though!,
+      we will get to that in a bit)
+      
+      If you wish to access this wizard at any time, go to help->wizards->devices
+ 
+    </p>
+    <button>next</button> <button>skip this step</button> <button>exit wizard </button> 
+  </div>
+  
 </div>
 </body>

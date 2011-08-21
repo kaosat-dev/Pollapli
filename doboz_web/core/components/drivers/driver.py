@@ -47,8 +47,7 @@ class Driver(DBObject):
             self.hardwareHandler=hardwareHandlerKlass(self,**self.options)
             self.logicHandler=logicHandlerKlass(self,**self.options)
         except Exception as inst:
-            log.msg("Failed to instanciate hardware and logic handler",system="Driver",logLevel=logging.CRITICAL)
-            print ("error argh for driver ",self.driverType,"error",inst)
+            log.msg("Failed to instanciate hardware and logic handler: error: ",inst, "drivertype",self.driverType,system="Driver",logLevel=logging.CRITICAL)
         #print("driver options",self.options,"type",self.options.__class__)
         #print("hwhandlerklass",hardwareHandlerKlass,"logicHandlerKlass",logicHandlerKlass)
 
@@ -128,8 +127,9 @@ class Driver(DBObject):
                         port=unboundPorts[0]
                         log.msg("Connecting in mode:",self.connectionMode,"to port",port,system="Driver",logLevel=logging.CRITICAL)
                         DriverManager.bindings.bind(self,port)
-                        self.hardwareHandler.connect(port=port)
                         self.pluggedIn(port)
+                        self.hardwareHandler.connect(port=port)
+                        
                 else:
                     self.hardwareHandler.connect()
             else:
@@ -419,7 +419,7 @@ class DriverManager(object):
     def setup(cls,*args,**kwargs):
         log.msg("Driver Manager setup succesfully",system="Driver Manager",logLevel=logging.CRITICAL)
         d=defer.Deferred()
-        #reactor.callLater(cls.pollFrequency,DriverManager.update_deviceList)
+        reactor.callLater(cls.pollFrequency,DriverManager.update_deviceList)
         d.callback(None)        
         return d      
         
@@ -564,6 +564,12 @@ class DriverManager(object):
     def setup_drivers(cls,connectionType):
         """
         method to iterate over driver and try to bind them to the correct available port
+        the only "blocking/waiting" element is with drivers with the same connection type:
+        ie : serial devices need to be done one by one, same with webcams, etc
+        BUT !!
+        you can have these at the same time:
+        -bind serial devices
+        -bind webcams
         """
         
         unbndDrivers=cls.connectionsInfos[connectionType].get_unboundDrivers()
@@ -576,7 +582,7 @@ class DriverManager(object):
         
         
     @classmethod
-    @defer.inlineCallbacks
+   # @defer.inlineCallbacks
     def _start_bindAttempt(cls,driver,binding):
         """this methods tries to bind a given driver to a correct port
         should it fail, it will try to do the binding with the next available port,until either:
@@ -587,11 +593,11 @@ class DriverManager(object):
             if driver.isConfigured:
                 break
             else:
-               yield driver.bind(port).addCallbacks(callback=cls._driver_binding_succeeded\
+                driver.bind(port).addCallbacks(callback=cls._driver_binding_succeeded\
                         ,callbackKeywords={"driver":driver,"port":port,"binding":binding},errback=cls._driver_binding_failed\
                         ,errbackKeywords={"driver":driver,"port":port,"binding":binding})
       
-        defer.returnValue(True)
+       # defer.returnValue(True)
         
     @classmethod
     def _driver_binding_failed(cls,result,driver,port,*args,**kwargs):

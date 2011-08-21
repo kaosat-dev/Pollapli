@@ -51,7 +51,7 @@
                 "demo",
                 "example"
             ],
-            "img": "doboz_web.jpg",
+            "img": "arduino_example.png",
             "file": "ArduinoExampleAddOn-0.0.1-py2.6.egg",
             "fileHash": "50f3085bfc3422bade2709f2b389bfb9"
         }

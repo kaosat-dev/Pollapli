@@ -18,6 +18,17 @@ from doboz_web import idoboz_web
 from doboz_web.exceptions import NoAvailablePort
 
 
+class SerialWrapper(SerialPort):
+      """wrapper around the twisted SerialPort class, for convenience and bugfix"""
+      def __init__(self,*args,**kwargs):
+          SerialPort.__init__(self,*args,**kwargs)
+          self._tempDataBuffer=[]
+          self.d=defer.Deferred()
+     
+      def connectionLost(self,reason="connectionLost"):
+          SerialPort.connectionLost(self,reason)
+          self.d.callback("connection failure")
+
 class SerialHardwareHandler(object):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     blockedPorts=[]
@@ -85,7 +96,7 @@ class SerialHardwareHandler(object):
                 #log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
                 self.driver.isConnected=False
                 self.driver.connectionErrors+=1
-                log.msg("failed to connect serial driver, attempts left:",self.driver.maxConnectionErrors-self.driver.connectionErrors,system="Driver")
+                log.msg("failed to connect serial driver,because of error" ,inst,"attempts left:",self.driver.maxConnectionErrors-self.driver.connectionErrors,system="Driver")
                 if self.driver.connectionErrors<self.driver.maxConnectionErrors:
                     reactor.callLater(self.driver.connectionErrors*5,self._connect)
                 
@@ -165,7 +176,6 @@ class SerialHardwareHandler(object):
             self.disconnect()
 
 
-
     """The next methods are at least partially deprecated and not in use """   
     def reset_seperator(self):
         self.regex = re.compile(self.seperator)
@@ -187,164 +197,6 @@ class SerialHardwareHandler(object):
         self.logger.critical("Serial shutting down")
 
         
-class DummyProtocol(Protocol):
-    pass
-
-
-
-class BaseSerialProtocol(Protocol):
-    """basic , text based protocol for serial devices"""
-    def __init__(self,driver=None,isBuffering=True,seperator='\r\n'):       
-        self.seperator=seperator
-        self.isBuffering=isBuffering
-        self.buffer=""
-        self.regex = re.compile(self.seperator)
-        self.driver=driver
-        self.timeout=None
-        
-    def _timeoutCheck(self,*args,**kwargs):
-        if self.driver.isConnected:
-            if self.driver.connectionMode==2:
-                log.msg("Here Timeout check at ",time.time(),logLevel=logging.DEBUG)
-                self.cancel_timeout()
-                self.driver.connectionErrors+=1
-                self.driver.reconnect()
-            else:
-                self.cancel_timeout()
-        else:
-            self.cancel_timeout()
-
-    def set_timeout(self):
-        if self.driver.connectionMode==2:
-            log.msg("Setting timeout at ",time.time(),logLevel=logging.DEBUG)    
-            self.timeout=reactor.callLater(self.driver.connectionTimeout,self._timeoutCheck)
-        
-    def cancel_timeout(self):
-            if self.timeout:
-                try:
-                    self.timeout.cancel()
-                    log.msg("Cancel timeout at ",time.time(),logLevel=logging.DEBUG)
-                except:pass
             
-    def connectionLost(self,reason="connectionLost"):
-        log.msg("Device disconnected",system="Driver",logLevel=logging.INFO)  
-        if self.driver.connectionMode==1:
-            self.driver.send_signal("disconnected",self.driver.hardwareHandler.port)
-        if self.timeout:
-            try:
-                self.timeout.cancel()
-            except: pass
-        
-    def connectionMade(self):
-        log.msg("Device connected",system="Driver",logLevel=logging.INFO)   
-        self.set_timeout()    
-        if self.driver.connectionMode == 1 :
-            self.driver.send_signal("connected",self.driver.hardwareHandler.port)
-            
-    def _query_deviceInfo(self):
-        """method for retrieval of device info (for id and more) """
-        pass   
-    
-    def _set_deviceId(self,id=None):
-        """ method for setting device id: MANDATORY for all drivers/protocols """
-        pass
-    
-    def _handle_deviceHandshake(self,data):
-        """
-        handles machine (hardware node etc) initialization
-        data: the incoming data from the machine
-        """
-    def _handle_deviceIdInit(self,data):
-        """
-        handles machine (hardware node etc) initialization
-        data: the incoming data from the machine
-        """
-       
-    def _format_data_in(self,data,*args,**kwargs):
-        """
-        Formats an incoming data block according to some specs/protocol 
-        data: the incoming data from the device
-        """
-        data=data.replace('\n','')
-        data=data.replace('\r','')
-        return data
-    
-    def _format_data_out(self,data,*args,**kwargs):
-        """
-        Formats an outgoing block of data according to some specs/protocol 
-        data: the outgoing data to the device
-        """
-        return data
-        
-    def dataReceived(self, data):
-        self.cancel_timeout()
-        try:
-            if self.isBuffering:
-                self.buffer+=str(data.encode('utf-8'))
-                self.set_timeout()
-                #if we have NOT already checked the last state of the data block, then check it
-                results=None
-                try:
-                    results=self.regex.search(self.buffer)        
-                except Exception as inst:
-                    self.logger.critical("Error while parsing serial data :%s",str(inst))
-                            
-                while results is not None:
-                    nDataBlock= self.buffer[:results.start()] 
-                    nDataBlock=self._format_data_in(nDataBlock)
-                    log.msg("Data recieved <<: ",nDataBlock,system="Driver",logLevel=logging.DEBUG)  
-                    
-                    if not self.driver.connectionMode==3:
-                        if not self.driver.isConfigured:
-                                if not self.driver.isDeviceHandshakeOk:
-                                    self._handle_deviceHandshake(nDataBlock)
-                                elif not self.driver.isDeviceIdOk:
-                                    self._handle_deviceIdInit(nDataBlock)
-                        else:
-                            if not self.driver.isDeviceHandshakeOk:
-                                self._handle_deviceHandshake(nDataBlock)
-                            else:
-                                self.driver._handle_response(nDataBlock)
-                    else:
-                        if not self.driver.isDeviceHandshakeOk:
-                                self._handle_deviceHandshake(nDataBlock)
-                        else:
-                            self.driver._handle_response(nDataBlock)
-                        
-                    self.buffer=self.buffer[results.end():]
-                    results=None
-                    try:
-                        results =self.regex.search(self.buffer)
-                    except:
-                        pass      
-        except Exception as inst:
-            log.msg("Critical error in serial...",str(inst),system="Driver",logLevel=logging.CRITICAL)
-        
-    def send_data(self,data,*args,**kwargs):  
-        """
-        Simple wrapper to send data over serial
-        """    
-        try:
-            import unicodedata       
-            data=self._format_data_out(data)
-            if isinstance(data,unicode):
-                data=unicodedata.normalize('NFKD', data).encode('ascii','ignore')
 
-            log.msg("Data sent >>: ",data," done",system="Driver",logLevel=logging.DEBUG)
-            self.set_timeout()
-            self.transport.write(data)
-        except OSError:
-            self.logger.critical("serial device not connected or not found on specified port")
-        
-            
-class SerialWrapper(SerialPort):
-      def __init__(self,*args,**kwargs):
-          SerialPort.__init__(self,*args,**kwargs)
-          self._tempDataBuffer=[]
-          self.d=defer.Deferred()
-
-      
-      def connectionLost(self,reason="connectionLost"):
-          SerialPort.connectionLost(self,reason)
-          self.d.callback("connection failure")
     

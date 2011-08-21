@@ -8,111 +8,50 @@ import uuid
 import logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
 from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
+from doboz_web.core.components.drivers.protocols import BaseTextSerialProtocol
+from doboz_web.core.components.drivers.serial.serial_hardware_handler import SerialHardwareHandler
 
 
-class ArduinoExampleProtocol(BaseSerialProtocol):
+
+class ArduinoExampleProtocol(BaseTextSerialProtocol):
     """
     Class defining the protocol used by this driver: in this case, the reprap 5D protocol (similar to teacup, but with checksum)
     """
-    def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
-        BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
-        
-    def _handle_deviceHandshake(self,data):
-        """
-        handles machine (hardware node etc) initialization
-        data: the incoming data from the machine
-        """
-        log.msg("Attempting to validate device handshake",system="Driver",logLevel=logging.INFO)
-        if "start" in data:
-            self.driver.isDeviceHandshakeOk=True
-            log.msg("Device handshake validated",system="Driver",logLevel=logging.INFO)
-            self._query_deviceInfo()
-        else:
-            log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
-            self.driver.reconnect()
-        
+    # these aren't used for anything yet, just sitting here for reference
+    messages = {
+        # Input Messages
+        'debug_confirm':      0,     
+        'set_id':   99,     # device id set confirm
+        'get_id':   2,     # device id get 
+        'pin_low':   3,     # pin low confirm 
+        'pin_high':   4,     # pin high confirm 
+        }       
     
-    def _handle_deviceIdInit(self,data):
-        """
-        handles machine (hardware node etc) initialization
-        data: the incoming data from the machine
-        """
-        log.msg("Attempting to configure device Id",system="Driver",logLevel=logging.INFO)
-        def validate_uuid(data):
-            if len(str(data))==36:
-                fields=str(data).split('-')
-                if len(fields[0])==8 and len(fields[1])==4 and len(fields[2])==4 and len(fields[3])==4 and len(fields[4])==12:
-                    return True
-            return False
-        if self.driver.connectionErrors>=self.driver.maxConnectionErrors:
-            self.driver.disconnect()
-            self.driver.d.errback(None)  
-        sucess=False
-        if self.driver.connectionMode==2 or self.driver.connectionMode==0:
-            """if we are trying to set the device id"""    
-            if validate_uuid(data):
-                """if the remote device has already go a valid id, and we don't, update accordingly"""
-                if not self.driver.deviceId :
-                    self.driver.deviceId=data
-                    sucess=True
-                elif self.driver.deviceId!= data:
-                    self._set_deviceId()
-                    #self._query_deviceInfo()
-                    """if we end up here again, it means something went wrong with 
-                    the remote setting of id, so add to errors"""
-                    self.driver.connectionErrors+=1
-                    
-                elif self.driver.deviceId==data:
-                    sucess=True     
-            else:
-                if not self.driver.deviceId:
-                    self.driver.deviceId=str(uuid.uuid4())
-                self.driver.connectionErrors+=1
-                self._set_deviceId()
-                
-        else:
-            """ some other connection mode , that still requires id check"""
-            if not validate_uuid(data) or self.driver.deviceId!= data:
-                log.msg("Device id not set or not valid",system="Driver")
-                self.driver.connectionErrors+=1
-                self.driver.reconnect()
-            else:
-                sucess=True
-                
-        if sucess is True: 
-            self.driver.isDeviceIdOk=True
-            log.msg("DeviceId match ok: id is ",data,system="Driver")
-            self.driver.isConfigured=True 
-            self.driver.disconnect()
-            self.driver.d.callback(None)      
-        
+    def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
+        BaseTextSerialProtocol.__init__(self,driver,isBuffering,seperator)
+           
     def _set_deviceId(self,id=None):
          self.send_data('99'+ " "+ str(self.driver.deviceId))
         
     def _query_deviceInfo(self):
         """method for retrieval of device info (for id and more) """
-        self.send_data("2")
+        self.send_data("2")    
         
-    def _format_data_out(self,data,*args,**kwargs):
-        """
-        Formats an outgoing data block according to some specs/protocol 
-        data: the outgoing data TO the device
-        """
-        return data+'\n'
-    
     def _format_data_in(self,data,*args,**kwargs):
         """
         Formats an incomming data block according to some specs/protocol 
-        data: the incomming data FROM the device
+        data: the incomming data from the device
         """
+        message=data.split(" ")[1:]
+        if " " in data:
+            data="".join(data.split(" ")[1:])
+
+        data=data.replace("ok",'')
+        data=data.replace(" ",'')
         data=data.replace('\n','')
         data=data.replace('\r','')
-        return data
+        return data  
     
-    def connectionLost(self,reason="connectionLost"):
-        self.driver.isDeviceHandshakeOk=False
-        BaseSerialProtocol.connectionLost(self,reason)
         
 class ArduinoExampleHardwareHandler(SerialHardwareHandler):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)

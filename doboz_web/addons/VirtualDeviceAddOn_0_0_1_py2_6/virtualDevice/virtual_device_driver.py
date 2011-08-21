@@ -9,7 +9,7 @@ import logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
 from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
 from doboz_web.core.components.drivers.protocols import BaseProtocol
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
+from doboz_web.core.components.drivers.serial.serial_hardware_handler import SerialHardwareHandler
 
 
 class VirtualDeviceProtocol(BaseProtocol):
@@ -22,7 +22,7 @@ class VirtualDeviceProtocol(BaseProtocol):
         
     def connectionMade(self):
         log.msg("Device connected",system="Driver",logLevel=logging.INFO)   
-        self.set_timeout()    
+        self._set_timeout()    
         if self.driver.connectionMode == 1 :
             self.driver.send_signal("connected",self.driver.hardwareHandler.port) 
         self.virtualDevice.setup()

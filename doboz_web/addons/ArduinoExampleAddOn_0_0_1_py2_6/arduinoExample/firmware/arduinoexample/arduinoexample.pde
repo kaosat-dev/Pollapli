@@ -8,7 +8,7 @@ int commandIndex=0 ;
 //returns this arduino's id
 void send_id()
 {
-   Serial.println(deviceId); 
+   Serial.print(deviceId); 
 }
 //sets this arduino's id to the specified char array/String
 void set_id(char* id)
@@ -98,10 +98,13 @@ void  betterParse(char* data, int size)
     Serial.print(cmd);
     Serial.print(" total size: ");
     Serial.println(size);*/
+    //answer prefix
+    Serial.print(cmd);
+    Serial.print(" ");
      switch(cmd)
     {
       case 0://debug  test 
-        Serial.println("hello python, arduino here");
+        Serial.print("hello python, arduino here");
         break;
       case 99://set device id     
       {    
@@ -112,7 +115,6 @@ void  betterParse(char* data, int size)
       }
       case 100://reset device id         
         reset_id();
-        Serial.println("ok");
       break;
       case 2://get device id
         send_id();
@@ -121,19 +123,17 @@ void  betterParse(char* data, int size)
         pin=parse_int(data,markers[0]+1,markers[1]);
         digitalWrite(pin, LOW);
         Serial.print(pin);
-        Serial.println("ok");
       break;
       
       case 4: //setting pin high
         pin=parse_int(data,markers[0]+1,markers[1]);
         digitalWrite(pin, HIGH);
         Serial.print(pin);
-        Serial.println("ok");
       break;
       
       case 5://analog read
         pin=parse_int(data,markers[0]+1,markers[1]);
-        Serial.println(analogRead(pin));
+        Serial.print(analogRead(pin));
       break;
       
       case 6://analog write
@@ -141,7 +141,7 @@ void  betterParse(char* data, int size)
         pin=parse_int(data,markers[0]+1,markers[1]);
         int value=parse_int(data,markers[1]+1,markers[2]);
         analogWrite(pin,value);
-        Serial.println("ok");
+        Serial.print(pin);
       break;
       }
       
@@ -157,66 +157,20 @@ void  betterParse(char* data, int size)
         {
           pinMode(pin, INPUT);
         }
+        Serial.print(pin);
         
-        Serial.println("ok");
       break;
       }
 
       default:
-        Serial.println("ok");
+        
        break;  
     }  
+    Serial.println("");
 }
 
 
 
-void parse_command(char* command,int size)
-{
-  char cmd= command[0];
-  int pin=0;
-   switch(cmd)
-    {
-      case 'x'://debug  test 
-        Serial.println("hello python, arduino here");
-        break;
-      case 's'://set device id     
-        char payload[size-2];
-        for (int i=2;i<size;i++)
-        {
-           payload[i-2]=command[i];
-        }
-        set_id(payload);
-      break;
-      case 'i'://get device id
-        send_id();
-      break;
-      case 'l'://setting pin low
-        pin=get_pin(command,size);
-        digitalWrite(pin, LOW);
-        Serial.print(pin);
-        Serial.println("ok");
-      break;
-      
-      case 'h': //setting pin high
-        pin=get_pin(command,size);
-        digitalWrite(pin, HIGH);
-        Serial.print(pin);
-        Serial.println("ok");
-      break;
-      
-      case 'a'://analog read
-        pin=get_pin(command,size);
-        Serial.println(analogRead(pin));
-      break;
-      
-      default:
-        Serial.print(command);
-        Serial.println("ok");
-       break;
-       
-    }  
-  
-}
 
 
 void setup()

@@ -154,7 +154,10 @@ def fnProcessing(target, source, env):
     wp.write(open('%s'%source[0]).read())
     wp.close()
     return None
-
+    
+def tutu(bla, bli):
+  print("in tutu")
+  return "in tutu"
 
 envArduino.Append(BUILDERS = {'Processing':Builder(action = fnProcessing,
         suffix = '.cpp', src_suffix = '.pde')})
@@ -163,7 +166,8 @@ envArduino.Append(BUILDERS={'Elf':Builder(action=AVR_BIN_PREFIX+'gcc '+
 envArduino.Append(BUILDERS={'Hex':Builder(action=AVR_BIN_PREFIX+'objcopy '+
         '-O ihex -R .eeprom $SOURCES $TARGET')})
     
-
+envArduino.Append(BUILDERS={'test':Builder(action=tutu)})
+    
 
 # add arduino core sources
 VariantDir(TARGETPATH+'/build/core', ARDUINO_CORE)
@@ -214,17 +218,18 @@ for orig_lib_dir in ARDUINO_LIBS:
 print("SCONS got libs",all_libs_sources);
 
 # Convert sketch(.pde) to cpp
-cppTarget=TARGETPATH+"/build/"+os.path.basename(TARGETPATH)+'.cpp'
-pdeSource=TARGETPATH+"/"+os.path.basename(TARGETPATH)+'.pde'
+trucmuche=TARGETPATH+"/build/"+os.path.basename(TARGETPATH)+'.cpp'
+print("TRUCMUCHE",trucmuche)
+bidule=TARGETPATH+"/"+os.path.basename(TARGETPATH)+'.pde'
+print("BIDULE",bidule)
 
-
-envArduino.Processing(cppTarget,pdeSource)
+envArduino.Processing(trucmuche,bidule)
 
 
 #VariantDir('build', '.')
 
-
-sources = [cppTarget]
+#sources = [TARGETPATH+'/build/'+TARGET+'.cpp']
+sources = [trucmuche]
 print("SOURCES",sources)
 sources += all_libs_sources
 sources += core_sources

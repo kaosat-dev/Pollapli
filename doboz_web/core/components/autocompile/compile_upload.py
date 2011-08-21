@@ -1,26 +1,25 @@
 import sys,re,os,logging
 from glob import glob
 from twisted.internet import protocol, utils, reactor,defer
-
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
+from twisted.internet import protocol
 
 from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
+#from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
+from doboz_web.core.signal_system import SignalHander
 
 
 #from doboz_web.dependencies.SCons.Environment import *
 
 
-from twisted.internet import protocol
+
 class SconsProcessProtocol(protocol.ProcessProtocol):
-    
-    def __init__(self,*args,**kwargs):
-        print("args",args,"kwargs",kwargs)
+    def __init__(self,name=None,*args,**kwargs):
+        self.name=name
         self.outPutBuff=""
-    
     def connectionMade(self):
-        print("connection to process was made")
+        log.msg("SconsProcessProtocol connected")     
         #output = utils.getProcessOutput(self.prog)
        # output.addCallbacks(self.writeResponse, self.noResponse)
        
@@ -47,24 +46,47 @@ class SconsProcessProtocol(protocol.ProcessProtocol):
         print "inConnectionLost! stdin is closed! (we probably did it)"
         
     def errConnectionLost(self):
-        print "ConnectionLost! The child closed their stderr."
+        log.msg("process",self.name, "  failed!",logLevel=logging.CRITICAL)
         
     def childDataReceived(self, childFD, data):
-       # self.outPutBuff+=data+"/n"
-       # print("child data recieved") 
-        print(data)
+        log.msg("CompilerUpder ",self.name ," Data recieved",data,logLevel=logging.CRITICAL)
+        if "Writing" in data:
+            #print("writing in data")
+            try:
+                tmp=data.split(" ")
+                percent=tmp[len(tmp)-2]
+                print("Upload Percent:",percent)
+            except Exception as inst:
+                print("error",inst)
         
-      
-    def processExited(self, reason):
-        print("process ended :",reason.value.exitCode)
+#    def processExited(self, reason):
+#        log.msg("process ",self.name, " exited : total output:",self.outPutBuff,reason.value.exitCode,logLevel=logging.CRITICAL)
       
     def processEnded(self, status):
-        print("process ended : total output:",self.outPutBuff)
+        log.msg("process",self.name, " ended",not bool(status.value.exitCode),logLevel=logging.CRITICAL)
+       # print("process ended : total output:",self.outPutBuff)
         rc = status.value.exitCode
         if rc == 0:
             self.deferred.callback(self)
         else:
             self.deferred.errback(rc)
+
+
+
+class FirmwareInfo(object):pass
+
+class ArduinoFirmwareInfo(FirmwareInfo):
+    def __init__(self):
+        self.arduinoPath=None
+        self.avrBinPrefix=None
+        self.avrDudeConf=None
+
+class UploaderDownloader(object):
+    
+    def __init__(self):
+        self.firmwareInfos={}
+
+    
 
 
 #from SCons.Environment import Environment

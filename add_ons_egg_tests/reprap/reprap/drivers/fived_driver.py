@@ -56,6 +56,15 @@ class FiveDProtocol(BaseSerialProtocol):
         self.deviceHandshakeOk=False
         BaseSerialProtocol.connectionLost(self,reason)
         
+        
+    def enqueue_point(self,point):
+       pass
+    def set_extruder_temperature(self,temperature):
+       self.send_data("M104S"+temperature)
+    def set_bed_temperature(self,temperature):
+       self.send_data("M140S"+temperature)
+       
+       
 class FiveDHardwareHandler(SerialHardwareHandler):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     def __init__(self,*args,**kwargs):

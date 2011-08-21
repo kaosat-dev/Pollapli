@@ -30,6 +30,10 @@ def helper():
     except:
         pass
     try:
+        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"webcamtest","type":"gstreamercam","description":"just a webcam node"}')
+    except:
+        pass
+    try:
         client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"testNode","type":"reprap","description":"just a test node"}')
     except:
         pass
@@ -39,6 +43,10 @@ def helper():
         pass
     try:
         client.post('rest/environments/1/nodes/2/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"virtualdevicedriver","driverParams":{"speed":19200}}')
+    except:
+        pass
+    try:
+        client.post('rest/environments/1/nodes/3/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"gstreamerwebcamdriver","driverParams":{}}')
     except:
         pass
     try:
