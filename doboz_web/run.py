@@ -42,17 +42,8 @@ def configure_all():
     
     sys.path.insert(0, os.path.join(rootPath, "addons"))
     sys.path.insert(0, os.path.join(rootPath))
- 
     sys.path.insert(0, os.path.join(rootPath,"dependencies"))
-    """"""""""""""""""""""""""""""""""""
-    """Reprap config elements"""
-    #reprapNode = ReprapNode()
-   
-    reprapDriver=  Config.get("Reprap", "driver")
-    speed=  Config.getint("Reprap", "speed")
-    seperator=Config.get("Reprap", "seperator")
-    bufferSize=Config.getint("Reprap", "bufferSize")
-    
+    #sys.path.insert(0, os.path.join(rootPath,"dependencies","pyusb"))
     
     """"""""""""""""""""""""""""""""""""
     """WebCam config elements"""

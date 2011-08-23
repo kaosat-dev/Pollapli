@@ -7,7 +7,7 @@ from twisted.python import log,failure
 from twisted.internet import reactor, defer
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
 from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
-
+from doboz_web.core.file_manager import FileManager
 
 from threading import Event, Thread
 import gobject
@@ -23,9 +23,12 @@ class GstreamerWebcamHandler(object):
     classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
     avalailablePorts=[]
     avalailablePorts.append("port"+str(uuid.uuid4()))
+    avalailablePorts.append("port"+str(uuid.uuid4()))
+    deviceIndex=0
     
     def __init__(self,driver,*args,**kwargs):
         self.driver=driver
+        
         
         self.player = gst.Pipeline("testpipeline")
         bus = self.player.get_bus()
@@ -37,34 +40,40 @@ class GstreamerWebcamHandler(object):
 
         self.recordingRequested=False
         self.recordingDone=True
-        self.gstdriver="v4l2src"#gstdriver#
+        if sys.platform == "win32":
+            self.gstdriver="ksvideosrc"
+        #    self.gstdriver="dshowvideosrc"
+        else:
+            self.gstdriver="v4l2src"
+            
         
-        
+       
+       
         """
         Configure the gstreamer pipeline element  
         """
-        source=gst.element_factory_make(self.gstdriver,"webcam_source")  
-            
+        self.source=gst.element_factory_make(self.gstdriver,"webcam_source")         
         if self.gstdriver=="ksvideosrc":  
-            source.set_property("device-index", 0)
+            self.source.set_property("device-index", self.deviceIndex)           
         else:
-            source.set_property("device","/dev/video1")
-        #source.set_property("device-index", 0)
-            
-        ffmpegColorSpace=gst.element_factory_make("ffmpegcolorspace","ffMpeg1")
-        ffmpegColorSpace2=gst.element_factory_make("ffmpegcolorspace","ffMpeg2")
+            self.source.set_property("device","/dev/video1")
+        log.msg("setting webcam driver to",self.gstdriver,"with id",self.deviceIndex,system="Driver",logLevel=logging.CRITICAL)     
+       # probe=gst.property_probe(source)
         
-        
+        ffmpegColorSpace=gst.element_factory_make("ffmpegcolorspace","ffMpeg1")       
         encoder=gst.element_factory_make("pngenc","png_encoder")
         fileSink= gst.element_factory_make("filesink", "file_destination")
+        fvidscale=gst.element_factory_make("videoscale","fvidscale")
+        fvidscale_cap = gst.element_factory_make("capsfilter", "fvidscale_cap")
+        fvidscale_cap.set_property('caps', gst.caps_from_string('video/x-raw-yuv, width=640, height=480'))
+       #width=640, height=480
         
+        self.player.add(self.source,fvidscale,fvidscale_cap,ffmpegColorSpace, encoder, fileSink)
+        gst.element_link_many(self.source,fvidscale,fvidscale_cap,ffmpegColorSpace, encoder, fileSink)
         
-        self.player.add(source,ffmpegColorSpace,ffmpegColorSpace2, encoder, fileSink)
-        gst.element_link_many(source,ffmpegColorSpace,ffmpegColorSpace2, encoder, fileSink)
-        
-        
-        
-        
+       # gst.inspect self.gstdriver device0
+        print("config done")
+   
     def on_message(self, bus, message):
         """
         Gstreamer message handling
@@ -74,13 +83,13 @@ class GstreamerWebcamHandler(object):
             if t == gst.MESSAGE_EOS:
                 log.msg("Recieved eos message",system="Driver",logLevel=logging.CRITICAL)
                 self.recordingDone=True
-            elif t == gst.MESSAGE_ERROR:
                 self.player.set_state(gst.STATE_NULL)
-                err, debug = message.parse_error()
-                log.msg("in GStreamer pipeline ",err,debug,"disconnected ",system="Driver",logLevel=logging.CRITICAL)
                 self.finished.set()
-#                if self.driver.isConnected:
-#                    self.isConnected=True
+            elif t == gst.MESSAGE_ERROR:
+                #self.player.set_state(gst.STATE_NULL)
+                err, debug = message.parse_error()
+                log.msg("in GStreamer pipeline ",err,"debug",debug,"disconnected ",system="Driver",logLevel=logging.CRITICAL)           
+            
             elif t==gst.MESSAGE_SEGMENT_DONE:
                 log.msg("Recieved segment done message ",system="Driver",logLevel=logging.CRITICAL)
             elif t== gst.MESSAGE_ELEMENT:
@@ -88,7 +97,8 @@ class GstreamerWebcamHandler(object):
             elif t== gst.MESSAGE_STATE_CHANGED:
                 old, new, pending = message.parse_state_changed()
                 log.msg("Recieved state changed message old",old,"new",new,system="Driver",logLevel=logging.CRITICAL)
-            
+            else:
+                log.msg("Recieved other message : type",t,"messag",message,system="Driver",logLevel=logging.CRITICAL)    
             return gst.BUS_PASS
         except Exception as inst:
             log.msg("Error in messaging",inst,system="Driver",logLevel=logging.CRITICAL)
@@ -103,49 +113,83 @@ class GstreamerWebcamHandler(object):
         self.newRecording=False
         log.msg("Starting capture to",filePath,system="Driver",logLevel=logging.CRITICAL)
         #self.player.get_by_name("file_destination").set_property("location", "tmp.png") 
-        self.player.get_by_name("file_destination").set_property("location", self.filePath+"tmp.png")   
+        self.player.get_by_name("file_destination").set_property("location", self.filePath)   
        
        
     def run(self,*args,**kwargs):
         """Main loop"""
         while not self.finished.isSet():
-
             if self.recordingDone and self.recordingRequested:  
                 log.msg("Doing next snapshot",system="Driver",logLevel=logging.CRITICAL)
-                #copy the temporary file to the final file name, to prevent display problems when the webserver tries to server a file currently beeing 
-                #written by gstreamer fgh
-#                if os.path.exists(self.filePath+"tmp.png"):
-#                    shutil.copy2(self.filePath+"tmp.png", self.filePath+".png")
-                self.player.set_state(gst.STATE_NULL)
-                
+                self.player.set_state(gst.STATE_NULL) 
                 self.recordingRequested=False
                 self.recordingDone=False
                 self.player.set_state(gst.STATE_PLAYING)        
             else:
                 time.sleep(0.1)
-            if self.recordingDone:
-                time.sleep(2)
-                self.finished.set()
        
     def send_data(self,command):
         pass
         
+    INSPECT_PROGRAM='gst-inspect-0.10'
+
+    def find_program_in_path(self,p):
+        for d in os.getenv('PATH').split(':'):
+            fp=os.path.join(d, p)
+        if os.path.exists(fp):
+            return fp
+        return None
+        
     def connect(self,*args,**kwargs):
         self.driver.connectionErrors=0
         log.msg("Connecting... webcam:",system="Driver",logLevel=logging.DEBUG)
+        #self._connect(port,*args,**kwargs)
         self.driver.isConnected=True
         self.driver.isDeviceHandshakeOk=True
         self.driver.isDeviceIdOk=True
         self.driver.isConfigured=True 
-       
         #self._connect(*args,**kwargs)    
-    
         #hack !!
-        self.set_capture("/home/ckaos/data/Projects/Doboz/doboz_web/data/environments/home/")
+        self.deviceIndex=GstreamerWebcamHandler.deviceIndex
+        GstreamerWebcamHandler.deviceIndex+=1
+        print("GstreamerWebcamHandler.deviceIndex",GstreamerWebcamHandler.deviceIndex)
+        self.source.set_property("device-index", self.deviceIndex)     
+        filePath=os.path.join(FileManager.rootDir,"environments","home","test"+str(self.deviceIndex)+".png")
+        log.msg("setting webcam capture to:",filePath,system="Driver",logLevel=logging.CRITICAL)
+        self.set_capture(filePath)
         self.fetch_data()
         threads.deferToThread(self.run, None).addBoth(self._runResult)
-    
-        self.driver.d.callback(None)   
+        self.driver.d.callback(None) 
+        
+    def _connect(self,*args,**kwargs):
+        """Port connection/reconnection procedure"""   
+        if self.port and self.driver.connectionErrors<self.driver.maxConnectionErrors:
+            try:      
+                #self.port=str((yield self.scan())[0])   
+                if not self.port in GstreamerWebcamHandler.blockedPorts:
+                    GstreamerWebcamHandler.blockedPorts.append(self.port)        
+                self.driver.isConnected=True
+              
+            except Exception as inst:          
+                #log.msg("cricital error while (re-)starting gstreamercam connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
+                self.driver.isConnected=False
+                self.driver.connectionErrors+=1
+                log.msg("failed to connect gstreamerCam driver,because of error" ,inst,"attempts left:",self.driver.maxConnectionErrors-self.driver.connectionErrors,system="Driver")
+                if self.driver.connectionErrors<self.driver.maxConnectionErrors:
+                    reactor.callLater(self.driver.connectionErrors*5,self._connect)
+                
+        if self.driver.connectionErrors>=self.driver.maxConnectionErrors:
+            try:
+                self.disconnect(clearPort=True)
+            except:pass
+            
+            if self.driver.connectionMode==1:
+                log.msg("cricital error while (re-)starting gstreamerCam connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver",logLevel=logging.CRITICAL)
+            else:
+                log.msg("Failed to establish correct connection with device/identify device by id",system="Driver",logLevel=logging.DEBUG)
+                reactor.callLater(0.1,self.driver.d.errback,failure.Failure())
+                
+          
     def _runResult(self,result):
         print("got run result",result)
         try:
@@ -170,10 +214,14 @@ class GstreamerWebcamHandler(object):
         """
         d=defer.Deferred()
         def _list_ports(*args,**kwargs):
-            #foundPorts=[]
-            #cls.avalailablePorts.append()
-            
-            return cls.avalailablePorts 
+            foundPorts=[]
+            if sys.platform == "win32":
+                foundPorts= cls.avalailablePorts 
+            else:
+                foundPorts= glob.glob('/dev/video*')
+            #log.msg("Serial Ports on  system:",str(foundPorts),system="Driver",logLevel=logging.DEBUG)
+            return foundPorts
+        
         reactor.callLater(0.1,d.callback,None)
         d.addCallback(_list_ports)
         return d

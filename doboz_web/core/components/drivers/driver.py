@@ -91,6 +91,9 @@ class Driver(DBObject):
         
         #just a test
         self.signalHandler=SignalHander("driver_manager")
+        
+        """for exposing capabilites"""
+        self.endpoints=[]
          
     def _toDict(self):
         return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
@@ -194,6 +197,14 @@ class Driver(DBObject):
         pass
     def variable_get(self,variable,params,sender=None,*args,**kwargs):
         pass
+    """thoughts for future evolution
+    each driver will have a series of endpoints or slots/hooks, which represent the actual subdevices it handles
+    for example for reprap type devices, there is a "position" endpoint (abstract), 3 endpoints for the 
+    cartesian bot motors , at least an endpoint for head temperature , one for the heater etc
+    or this could be in a hiearchy , reflecting the one off the nodes:
+    variable endpoint : position, and sub ones for motors
+    """
+    
     
 class PortDriverBindings(object):
     """

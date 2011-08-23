@@ -1,6 +1,4 @@
-import logging
-import sys
-import os
+import logging, sys,os,shutil
 from twisted.python import log
 from twisted.web.static import File
 from twisted.web.server import Site
@@ -25,7 +23,9 @@ from doboz_web.core.signal_system import SignalHander
 from doboz_web.core.tools import checksum_tools
 from doboz_web.core.server.rest.data_formater   import JsonFormater
 from doboz_web.core.components.autocompile.compile_upload import  SconsProcessProtocol
-
+from doboz_web.dependencies.usb import core  
+from doboz_web.dependencies import usb
+from doboz_web.dependencies.wmi import wmi
 
 from twisted.application.service import Application
 from twisted.python import log
@@ -41,7 +41,7 @@ class MainServer():
         self.updatesPath=os.path.join(dataPath,"updates")
         self.addOnsPath=os.path.join(self.rootPath,"addons")
         self.environmentsPath=os.path.join(self.dataPath,"environments")
-        
+        self.depenciesPath=os.path.join(self.rootPath,"dependencies")
         if not os.path.exists(self.rootPath):
             os.makedirs(self.rootPath)
         if not os.path.exists(self.dataPath):
@@ -87,26 +87,148 @@ class MainServer():
         self.setup()
 
         
-      #  reactor.callLater(2,self.compiler_test)
+        #reactor.callLater(2,self.compiler_test)
        # reactor.callLater(2,self.compiler_test2)
         #reactor.callLater(5,self.uploader_test)
         
         #self.formatter_tests()
+        #self.usbTest2()
+        #reactor.callLater(1,self.gstInspectTest)
         
-    def compiler_test(self):
-        testTarget=os.path.join(self.addOnsPath,"ArduinoExampleAddOn_0_0_1_py2_6","arduinoExample" ,"firmware","arduinoexample")
-        
-        sconsPath="/home/ckaos/data/Progra/Scons/scons.py"  
-        scp = SconsProcessProtocol("arduino")
+    def gstInspectTest(self):
+        path="C:\\Program Files\\OSSBuild\\GStreamer\\v0.10.6\\bin\gst-inspect.exe"
+        scp = SconsProcessProtocol("truc")
         scp.deferred = defer.Deferred()
-        cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i"]
-        p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ,usePTY=True )
+        cmd = [path]     
+       
+        p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ )
+        #p = reactor.spawnProcess(processProtocol=scp, executable=cmd[0],args=cmd,env=os.environ )
         return scp.deferred
+    def usbTest_pyusb(self):
+        #import pysusb.usb.core
+        dev = usb.core.find(find_all=True)
+        print("dev ",dev)
+    def usbTest(self):
+        
+        #print("core inst",core.__name__)
+        devices= usb.core.find(find_all=True)
+        print("total devices",devices)
+        try:
+            for device in devices:
+                print("====DEVICE====")
+                _name = usb.util.get_string(device,256,device.iProduct)  #This is where I'm having trouble
+                print ("device name=",_name)
+                #print ("Device:", device.filename)
+                print("descriptor type",device.bDescriptorType)
+                print("highest usb type",device.bcdUSB)
+                print("class",device.bDeviceClass)
+                print("subClass",device.bDeviceSubClass)
+                print("vendor id",device.idVendor)
+                print("device id",device.idProduct)
+                print("bDeviceProtocol",device.bDeviceProtocol)
+                print("bcdDevice",device.bcdDevice)
+                print("iSerialNumber",device.iSerialNumber)
+                print("serialNumber",usb.util.get_string(device,256,device.iSerialNumber))
+                print("iManufacturer",device.iManufacturer)
+                print("manufacturer",usb.util.get_string(device,256,device.iManufacturer))
+                print("iProduct",device.iProduct)
+                print("product",usb.util.get_string(device,256,device.iProduct))
+                print("configs",device.bNumConfigurations)
+                print("   **getting data**")
+                
+                print("test",usb.util.get_string(device,256,3))
+                
+                #device.set_configuration(0)
+                activeConf=device.get_active_configuration()
+                print("active conf", activeConf)
+                print("bconfValue", activeConf.bConfigurationValue)
+                print("bNumInterfaces", activeConf.bNumInterfaces)
+                for interf in activeConf:
+                    print("bInterfaceNumber", interf.bInterfaceNumber)
+                    print("interfaceInterf", interf.iInterface)
+                    print("interfaceBaseClass", interf.bInterfaceClass)
+                    print("interfaceSubClass", interf.bInterfaceSubClass)
+
+        except Exception as inst:
+            print("error",inst)
+                
+#        busses = usb.busses()
+#        print("busses",busses)
+#        for bus in busses:
+#            devices = bus.devices
+#            for dev in devices:
+#                print "Device:", dev.filename
+#                _name = usb.util.get_string(device,256,0)  #This is where I'm having trouble
+#                print ("device name=",_name)
+#                print "  idVendor: %d (0x%04x)" % (dev.idVendor, dev.idVendor)
+#                print "  idProduct: %d (0x%04x)" % (dev.idProduct, dev.idProduct)
+        reactor.stop()
+    def usbTest2(self):
+       # import wmi
+
+        c = wmi.WMI()
+        
+        drivers=c.Win32_PnPSignedDriver()
+        for driver in drivers:
+            print(driver)
+        print("devices")
+        devices= c.Win32_USBControllerDevice()
+        for dev in devices:
+            #print(dev)
+            devId=dev.Dependent.DeviceID
+            for device in c.Win32_PnPEntity(DeviceID=devId):
+                #print(device)
+                print(device.DeviceID)
+                #print (device.ClassGuid,device.Name,device.DeviceID)
+#        dep=devices[0].Dependent 
+#        print("Did",dep)
+        
+#        for device in c.Win32_PnPEntity(DeviceID=dep.DeviceID):
+#            print (device)
+    def spawn_test(self):
+        trucpath=os.path.join("d:\\Progra","arduino-0018","arduino.exe")
+        trucpath=os.path.join("d:\\","data","projects","Doboz","doboz_web","dependencies","scons","scons.py")
+
+        """
+        env = os.environ.copy()
+                env['PYTHONPATH'] = os.pathsep.join(sys.path)
+                reactor.callLater(0,reactor.spawnProcess, env=env, *self.spawn)
+                """
+        print('PYTHONPATH',os.environ['PYTHONPATH'])
+
+        scp = SconsProcessProtocol("truc")
+        scp.deferred = defer.Deferred()
+        print("os environ",os.environ)
+        print("sys exect",sys.executable)
+        cmd = ["C:\Progra\Python26\python.exe",trucpath]   
+        cmd=[sys.executable,trucpath]  
+       
+        p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ )
+        #p = reactor.spawnProcess(processProtocol=scp, executable=cmd[0],args=cmd,env=os.environ )
+        return scp.deferred
+    
+    def compiler_test(self):
+        testTarget=os.path.join(self.addOnsPath,"ArduinoExampleAddOn","arduinoExample" ,"firmware","arduinoexample")
+        sconsPath=os.path.join(self.depenciesPath,"scons","scons.py")
+        shutil.copy2(os.path.join(self.rootPath,"core","components","autocompile","SConstruct"),os.path.join(testTarget,"SConstruct"))
+        if os.path.exists(sconsPath):
+            print("scons found")
+            print("sconsPath",sconsPath)
+            scp = SconsProcessProtocol("arduino")
+            scp.deferred = defer.Deferred()
+            """on linux """
+            #cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i"]
+            """on win32"""
+            cmd =[sys.executable,sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i"]
+            p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ )
+            return scp.deferred
+        else:
+            print("scons not found")
     
     def compiler_test2(self):
         testTarget=os.path.join(self.addOnsPath,"Hydroduino_0_0_1_py2_6","hydroduino" ,"firmware","hydroduino")
         
-        sconsPath="/home/ckaos/data/Progra/Scons/scons.py"  
+        sconsPath=os.path.join(self.depenciesPath,"scons.py")  
         scp = SconsProcessProtocol("hydroduino")
         scp.deferred = defer.Deferred()
         cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i"]
@@ -248,6 +370,7 @@ class MainServer():
         
         
         factory = Site(root)
+        #self.port=9071#TEMP HACK!!
         reactor.listenTCP(self.port, factory)
         log.msg("Server started!", system="server", logLevel=logging.CRITICAL)
         reactor.run()

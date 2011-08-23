@@ -1,19 +1,21 @@
 syntax: glob
 bin/*
-dependencies/*
 develop-eggs/*
 parts/*
 eggs/*
+dependencies/*
 Doboz_Web.egg-info/*
 .settings/*
 *.pyc
 *.pyo
 .project
 .installed.cfg
+.scons.dblite
+dropin.cache
 
 
 
 syntax: regexp
 ^doboz_web/data/environments/home$
 ^doboz_web/data/environments/home/home\.db$
-^doboz_web/data$
+^doboz_web/data/environments/printFiles$

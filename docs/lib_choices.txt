@@ -1,0 +1,14 @@
+- why yes/no PYUSB:
+*see this info at :
+http://sourceforge.net/mailarchive/forum.php?thread_name=A389CA2909F7E548A28A6A30A9446C09336284%40REAMBX.NA.RTA&forum_name=pyusb-users
+It is, however IMHO it could be made more clear in the readme.txt in
+> the zip, some thing like WARNING under Windows libusb-x.x must be
+> installed for each devices, before the device can be opened... see
+> inf-wizard......'. Obviuosly this is the wrong list to send my idea
+> out to :-)
+*also after a bit of searching it CAN work but only if you use a visual tool 
+called zadig, which adds a driver for ALREADY INSTALLED DEVICES!!
+*edit : ok, no, actually , after tryint out the wmi alternative, it seems that pyusb is still the less
+painfull solution for this
+-why yes/no to platform specific utilities:
+ie: windows: WMI

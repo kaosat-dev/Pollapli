@@ -68,9 +68,13 @@ else:
     ARDUINO_PORT_DEFAULT = getUsbTty('/dev/ttyUSB*')
     AVR_BIN_PREFIX = 'avr-'
 
+#nux
+#ARDUINO_HOME_DEFAULT ='/home/ckaos/utilz/Progra/arduino-0022/'
+#win
+ARDUINO_HOME_DEFAULT ='D:\\Progra\\arduino-0018\\'
 
-ARDUINO_HOME_DEFAULT ='/home/ckaos/utilz/Progra/arduino-0022/'
 ARDUINO_BOARD_DEFAULT = os.environ.get('ARDUINO_BOARD', 'atmega328')
+
 
 
 TARGETPATH    = ARGUMENTS.get('TARGETPATH', os.path.realpath(os.curdir))
