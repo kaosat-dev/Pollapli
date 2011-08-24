@@ -1,4 +1,4 @@
-import sys,re,os,logging
+import sys,re,os,logging,shutil
 from glob import glob
 from twisted.internet import protocol, utils, reactor,defer
 from twisted.python import log,failure
@@ -15,9 +15,10 @@ from doboz_web.core.signal_system import SignalHander
 
 
 class SconsProcessProtocol(protocol.ProcessProtocol):
-    def __init__(self,name=None,*args,**kwargs):
+    def __init__(self,name=None,tmpDir=None,*args,**kwargs):
         self.name=name
         self.outPutBuff=""
+        self.tmpDir=tmpDir
     def connectionMade(self):
         log.msg("SconsProcessProtocol connected")     
         #output = utils.getProcessOutput(self.prog)
@@ -42,11 +43,12 @@ class SconsProcessProtocol(protocol.ProcessProtocol):
     def errReceived(self, data):
         print ("errReceived! with  bytes!" ,len(data),data)
         
-    def inConnectionLost(self):
-        print "inConnectionLost! stdin is closed! (we probably did it)"
+#    def inConnectionLost(self):
+#        print "inConnectionLost! stdin is closed! (we probably did it)"
         
-    def errConnectionLost(self):
-        log.msg("process",self.name, "  failed!",logLevel=logging.CRITICAL)
+#    def errConnectionLost(self):
+#        log.msg("process",self.name, "  failed!",logLevel=logging.CRITICAL)
+        
         
     def childDataReceived(self, childFD, data):
         log.msg("CompilerUpder ",self.name ," Data recieved",data,logLevel=logging.CRITICAL)
@@ -70,7 +72,11 @@ class SconsProcessProtocol(protocol.ProcessProtocol):
             self.deferred.callback(self)
         else:
             self.deferred.errback(rc)
-
+        if self.tmpDir is not None:
+            if os.path.isdir(self.tmpDir):
+                pass
+                #shutil.rmtree(self.tmpDir)
+                #os.rmdir(self.tmpDir)
 
 
 class FirmwareInfo(object):pass

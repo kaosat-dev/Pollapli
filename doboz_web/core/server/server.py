@@ -1,4 +1,4 @@
-import logging, sys,os,shutil
+import logging, sys,os,shutil,uuid,tempfile
 from twisted.python import log
 from twisted.web.static import File
 from twisted.web.server import Site
@@ -87,7 +87,7 @@ class MainServer():
         self.setup()
 
         
-        #reactor.callLater(2,self.compiler_test)
+        reactor.callLater(2,self.compiler_test)
        # reactor.callLater(2,self.compiler_test2)
         #reactor.callLater(5,self.uploader_test)
         
@@ -207,8 +207,9 @@ class MainServer():
         #p = reactor.spawnProcess(processProtocol=scp, executable=cmd[0],args=cmd,env=os.environ )
         return scp.deferred
     
-    def compiler_test(self):
-        testTarget=os.path.join(self.addOnsPath,"ArduinoExampleAddOn","arduinoExample" ,"firmware","arduinoexample")
+    
+    def compiler_test3(self):
+        testTarget=os.path.join(self.rootPath,"arduinoexample")
         sconsPath=os.path.join(self.depenciesPath,"scons","scons.py")
         shutil.copy2(os.path.join(self.rootPath,"core","components","autocompile","SConstruct"),os.path.join(testTarget,"SConstruct"))
         if os.path.exists(sconsPath):
@@ -221,6 +222,58 @@ class MainServer():
             """on win32"""
             cmd =[sys.executable,sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i"]
             p = reactor.spawnProcess(scp, cmd[0], cmd,env=os.environ )
+            return scp.deferred
+        else:
+            print("scons not found")
+    
+    
+    def compiler_test(self):
+        """todo: add temp file deletion"""
+        testTarget=os.path.join(self.addOnsPath,"ArduinoExampleAddOn","arduinoExample" ,"firmware","arduinoexample")
+        print(testTarget)
+        #print("tutu","\\\?\\")
+        ##apparently, max path limitation could get avoided with : "\\\?\\" prefix, causes the build
+        ##to fail though
+        
+        envCopy=os.environ.copy()
+        
+        sconsPath=os.path.join(self.depenciesPath,"scons","scons.py")
+        
+        
+        def create_dir_struture(source,inTemp=False):
+            if inTemp:
+                import distutils.dir_util
+                targetBuildDir=tempfile.mkdtemp()
+                distutils.dir_util.copy_tree(testTarget, targetBuildDir)
+            else:
+                buildsDir=os.path.join(self.rootPath,"builds")
+                if not os.path.exists(buildsDir):
+                    os.makedirs(buildsDir)
+        
+                targetBuildName=str(uuid.uuid4())
+                targetBuildDir=os.path.join(buildsDir,targetBuildName)
+                shutil.copytree(testTarget, targetBuildDir)
+            """rename the pde file"""
+            tmp = os.path.basename(testTarget)
+            tmpDst=os.path.basename(targetBuildDir)
+            shutil.move( os.path.join(targetBuildDir,tmp+".pde"),os.path.join(targetBuildDir,tmpDst+".pde"))
+            """copy scons file to folder"""
+            shutil.copy2(os.path.join(self.rootPath,"core","components","autocompile","SConstruct"),targetBuildDir)
+            return targetBuildDir
+        
+        testTarget=create_dir_struture(testTarget)
+        
+        
+        if os.path.exists(sconsPath):
+            print("scons found")
+            print("sconsPath",sconsPath)
+            scp = SconsProcessProtocol("arduino",testTarget)
+            scp.deferred = defer.Deferred()
+            """on linux """
+            #cmd = [sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i"]
+            """on win32"""
+            cmd =[sys.executable,sconsPath,"-Y"+testTarget,"TARGETPATH="+testTarget,"-i","--diskcheck=none","--cache-disable","--config=force"]
+            p = reactor.spawnProcess(scp, cmd[0], cmd,env=envCopy )
             return scp.deferred
         else:
             print("scons not found")

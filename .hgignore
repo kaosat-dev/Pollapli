@@ -4,6 +4,7 @@ develop-eggs/*
 parts/*
 eggs/*
 dependencies/*
+builds/*
 Doboz_Web.egg-info/*
 .settings/*
 *.pyc

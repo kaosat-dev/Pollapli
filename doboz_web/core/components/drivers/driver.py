@@ -430,7 +430,7 @@ class DriverManager(object):
     def setup(cls,*args,**kwargs):
         log.msg("Driver Manager setup succesfully",system="Driver Manager",logLevel=logging.CRITICAL)
         d=defer.Deferred()
-        reactor.callLater(cls.pollFrequency,DriverManager.update_deviceList)
+        #reactor.callLater(cls.pollFrequency,DriverManager.update_deviceList)
         d.callback(None)        
         return d      
         

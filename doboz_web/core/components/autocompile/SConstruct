@@ -137,15 +137,16 @@ F_CPU = getBoardConf(r'^%s\.build\.f_cpu=(.*)'%ARDUINO_BOARD)
 
 # There should be a file with the same name as the folder and with the extension .pde
 TARGET = pathJoin(TARGETPATH,os.path.basename(TARGETPATH))
+print("TARGET ",TARGET)
 assert(os.path.exists(TARGET+'.pde'))
 
-print("TARGET ",TARGET)
+
 
 cFlags = ['-ffunction-sections', '-fdata-sections', '-fno-exceptions',
     '-funsigned-char', '-funsigned-bitfields', '-fpack-struct', '-fshort-enums',
     '-Os', '-mmcu=%s'%MCU]
 envArduino = Environment(CC = AVR_BIN_PREFIX+'gcc', CXX = AVR_BIN_PREFIX+'g++',
-    CPPPATH = [TARGETPATH+'/build/core'], CPPDEFINES = {'F_CPU':F_CPU, 'ARDUINO':ARDUINO_VER},
+    CPPPATH = [pathJoin(TARGETPATH,'build','core')], CPPDEFINES = {'F_CPU':F_CPU, 'ARDUINO':ARDUINO_VER},
     CFLAGS = cFlags+['-std=gnu99'], CCFLAGS = cFlags, TOOLS = ['gcc','g++'])
 
 
@@ -176,7 +177,7 @@ gatherSources = lambda x: glob(pathJoin(x, '*.c'))+\
         glob(pathJoin(x, '*.S'))
 core_sources = gatherSources(ARDUINO_CORE)
 core_sources = filter(lambda x: not (os.path.basename(x) == 'main.cpp'), core_sources)
-core_sources = map(lambda x: x.replace(ARDUINO_CORE, TARGETPATH+'/build/core/'), core_sources)
+core_sources = map(lambda x: x.replace(ARDUINO_CORE, pathJoin(TARGETPATH,'build','core')), core_sources)
 
 print("SCONS got core_sources",core_sources);
 
@@ -199,7 +200,7 @@ all_libs_sources = []
 index = 0
 for orig_lib_dir in ARDUINO_LIBS:
     lib_sources = []
-    lib_dir = TARGETPATH+'/build/lib_%02d'%index
+    lib_dir = pathJoin(TARGETPATH,'build','lib_%02d'%index) #TARGETPATH+'/build/lib_%02d'%index
     VariantDir(lib_dir, orig_lib_dir)
     for libPath in filter(os.path.isdir, glob(pathJoin(orig_lib_dir, '*'))):
         libName = os.path.basename(libPath)
@@ -218,8 +219,8 @@ for orig_lib_dir in ARDUINO_LIBS:
 print("SCONS got libs",all_libs_sources);
 
 # Convert sketch(.pde) to cpp
-cppTarget=TARGETPATH+"/build/"+os.path.basename(TARGETPATH)+'.cpp'
-pdeSource=TARGETPATH+"/"+os.path.basename(TARGETPATH)+'.pde'
+cppTarget=pathJoin(TARGETPATH,'build',os.path.basename(TARGETPATH)+'.cpp')
+pdeSource=pathJoin(TARGETPATH,os.path.basename(TARGETPATH)+'.pde')
 
 
 envArduino.Processing(cppTarget,pdeSource)
