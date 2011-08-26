@@ -23,9 +23,9 @@ from doboz_web.core.signal_system import SignalHander
 from doboz_web.core.tools import checksum_tools
 from doboz_web.core.server.rest.data_formater   import JsonFormater
 from doboz_web.core.components.autocompile.compile_upload import  SconsProcessProtocol
-from doboz_web.dependencies.usb import core  
-from doboz_web.dependencies import usb
-from doboz_web.dependencies.wmi import wmi
+#from doboz_web.dependencies.usb import core  
+#from doboz_web.dependencies import usb
+#from doboz_web.dependencies.wmi import wmi
 
 from twisted.application.service import Application
 from twisted.python import log
@@ -61,6 +61,7 @@ class MainServer():
         UpdateManager.updatesPath=self.updatesPath
         EnvironmentManager.envPath=self.environmentsPath
         FileManager.rootDir=self.dataPath        
+        FileManager.corePath=os.path.join(self.rootPath,"core")
         self.environmentManager=EnvironmentManager(self.dataPath)
         
         """"""""""""""""""""""""""""""""""""""
@@ -87,7 +88,7 @@ class MainServer():
         self.setup()
 
         
-        reactor.callLater(2,self.compiler_test)
+       # reactor.callLater(2,self.compiler_test)
        # reactor.callLater(2,self.compiler_test2)
         #reactor.callLater(5,self.uploader_test)
         

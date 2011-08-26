@@ -16,6 +16,10 @@ class NodeElement(object):
         self.type=type
         self.boundVariable=boundVariable #what variable is it bound to
         self.channel=variableChannel
+        self.driverEndpoint=None
+        
+    def set_endPoint(self,endPoint):
+        self.driverEndpoint=endPoint
 
 class Actor(NodeElement):
     def __init__(self,type="BaseActor",name="",tool="",boundVariable=None,variableChannel=None):
@@ -121,7 +125,7 @@ class Variable(object):
         historyPersistance/store : None,memory,database,file
         historyLength: how much old values do we store: None, all, or any numeric value
         """
-        #Node.__init__(self,name=name,isLeaf=True)
+
         self.node=node
         self.name=name
         self.value=value
@@ -190,22 +194,14 @@ class Variable(object):
         self.attach_sensors(sensors)
         
     def get(self,saveToHistory=False,sender=None):
-        
-        
         command=Command(type="get",sender=sender,params={"save":saveToHistory})
-        #print("Variable",self.name,"asked for get, by ", sender)
-       # print("variable",self.name, "has current sensors attached")
-       # for sens in self.attachedSensors.itervalues():
-       #     print(sens.name," ",sens.type) 
-            
-       
         self.commandqueue.append(command)
         #self.commanqueue.put(command)
+        print("lskjfsdlfkj")
         
-        #hack
-       # self.node.driver.connect()
-        
-        self.node.driver.teststuff(self,None,self._updateConfirmed)
+       # self.node.driver.teststuff(self,None,self._updateConfirmed)
+        #self.node.query_driver(self)
+       
         
  #       self.node.driver.variable_get(self)
 #        try:

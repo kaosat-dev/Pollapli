@@ -6,10 +6,9 @@ from twisted.python import log,failure
 from twisted.internet import reactor, defer
 import uuid,logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
-from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
+from doboz_web.core.components.drivers.driver import Driver,CommandQueueLogic,EndPoint
 from doboz_web.core.components.drivers.protocols import BaseTextSerialProtocol
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import SerialHardwareHandler
-
+from doboz_web.core.components.drivers.serial_hardware_handler import SerialHardwareHandler
 
 class HydroduinoProtocol(BaseTextSerialProtocol):
     """
@@ -52,33 +51,47 @@ class HydroduinoProtocol(BaseTextSerialProtocol):
     def got_device_id(self):
         pass
 
-        
-class HydroduinoHardwareHandler(SerialHardwareHandler):
-    classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
-    def __init__(self,*args,**kwargs):
-        SerialHardwareHandler.__init__(self,protocol=HydroduinoProtocol(*args,**kwargs),*args,**kwargs)
-
-
 class HydroduinoDriver(Driver):
     """Class defining the components of the driver for a basic arduino,using attached firmware """
     classProvides(IPlugin, idoboz_web.IDriver) 
     TABLENAME="drivers"   
-    def __init__(self,driverType="Hydroduino",deviceType="Arduino",deviceId="",connectionType="serial",options={},*args,**kwargs):
+    def __init__(self,deviceType="Arduino",connectionType="serial",options={},*args,**kwargs):
         """
-        very important : the first two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
+        very important : the  two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
         and not instances of those classes
         """
-        Driver.__init__(self,HydroduinoHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,connectionType,options,*args,**kwargs)
-        #self.autoConnect=True
-        #self.hardwareHandler=HydroduinoHardwareHandler(self,*args,**kwargs)
-        #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
+        Driver.__init__(self,deviceType,connectionType,SerialHardwareHandler,CommandQueueLogic,HydroduinoProtocol,options,*args,**kwargs)
+        self.endpoints.append(EndPoint(0,"device",0,None,True,self.analogRead))
+        self.endpoints.append(EndPoint(1,"device",0,None,False,self.analogWrite))
+       
         
     def teststuff(self,sender,params=None,callback=None,*args,**kwargs):
         #print("arduino driver teststuff:sender",sender,"params",params,"callback",callback)
         self.send_command(data='5 0',sender=sender,callback=callback)  
     
+    
+    def start_command(self):
+        pass
+    def close_command(self):
+        pass
+
     def hello_world(self):
-        self.send_command('0')
+        self.send_command(0)
+        
+    def set_mode(self,pin,mode):
+        self.send_command(" ".join([7, pin, mode]))
+        
+    def set_Low(self, pin):
+        self.send_command(" ".join([3, pin]))
+
+    def set_High(self, pin):
+        self.send_command(" ".join([4, pin]))
+
+    def get_State(self, pin):
+        self.send_command('g'+str(pin))
+
+    def analogWrite(self, pin, value):
+        self.send_command(" ".join([3, pin, value]))
         
     def analogRead(self, pin):
         self.send_command(" ".join([5, pin]))

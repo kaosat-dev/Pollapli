@@ -65,7 +65,9 @@ class Action(object):
         log.msg("starting action")
         self.startTime=time.time()
         self.do_step()
-        
+   
+
+         
 class UpdateAndGetVariable_action(Action):
     def __init__(self,targetNode,targetVariable):
         Action.__init__(self)
@@ -73,12 +75,12 @@ class UpdateAndGetVariable_action(Action):
         self.targetVariable=targetVariable
         
     def do_step(self):
-        #d=defer.Deferred()
-       # print("doing UpdateAndGetVariable_action step")
+
+        print("self.targetVariable",self.targetVariable)
         self.targetVariable.get(True,self).addCallback(self.resultCallback)
-        
-#        print("set callback to variable get")
-    
+        cmd={"type":0,"target":"test","sender":self}
+        self.targetNode.add_command(cmd)
+
     
 class Task(DBObject):
     BELONGSTO   = ['environment']    
@@ -132,29 +134,7 @@ class TaskManager(object):
     The following are the "CRUD" (Create, read, update,delete) methods for the general handling of tasks
     """
     
-    @defer.inlineCallbacks
-    def create(parentEnvironment=None,taskType=None,taskParams={},*args,**kwargs): 
-        
-      
-#        task=None
-#        if taskType:
-#            plugins= (yield UpdateManager.get_plugins(idoboz_web.ITask))
-#            for taskKlass in plugins:
-#                if taskType==taskKlass.__name__.lower():
-#                    task=yield Task(taskType=taskType,options=taskParams).save()
-#                    yield task.save()  
-#                    task.environment.set(parentEnvironment)
-#                    yield task.setup()
-#                    break
-#        else:
-#            task=yield Task(taskType=taskType,options=taskParams).save()
-#        if not task:
-#            raise UnknownTask()
-#        else:
-#            log.msg("Added  task ",name, logLevel=logging.CRITICAL)
-#            self.send_signal("task_created", task)
-        defer.returnValue(task)
-        
+ 
     @defer.inlineCallbacks
     def load(self,parentEnvironment=None,taskId=None,taskType=None,*args,**kwargs):
         if taskId is not None:
@@ -184,7 +164,7 @@ class TaskManager(object):
             defer.returnValue(tasks)
     
     @defer.inlineCallbacks
-    def add_task(self,name="task",description="",taskType=None,params={},*args,**kwargs):
+    def add_task(self,nodeId=None,nodeElement=None,name="task",description="",taskType=None,params={},*args,**kwargs):
         """
         Add a new task to the list of task of the current environment
         Params:
@@ -199,8 +179,10 @@ class TaskManager(object):
         """JUST FOR TESTING !!!!
         The finding of nodes and target variables should be done using the normal element.get_subelement(params) API
         """    
+        
         targetNode= yield self.parentEnvironment.get_node(1)
         targetVariable=targetNode.testElement
+        print("zerzer",targetVariable)
         
         
         task=yield Task(taskType=taskType,options=None).save()

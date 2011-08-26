@@ -72,6 +72,8 @@ class Node(DBObject):
         
         self.testElement=None
         self.variable_test()
+        #self.link_componentToEndpoint()
+        #self.linkedElements=[]
         
         """this is for internal comms handling"""
         self.signalChannelPrefix=str(self.id)
@@ -87,9 +89,23 @@ class Node(DBObject):
         env= (yield self.environment.get())
         self.signalChannelPrefix="environment_"+str(env.id)+".node_"+str(self.id)
         
-        log.msg("Node with id",self.id, "setup successfully", logLevel=logging.CRITICAL,system="Node")
+        log.msg("Node with id",self.id, "setup successfully",system="Node", logLevel=logging.CRITICAL)
         self.elementsandVarsTest()
         defer.returnValue(None)
+        
+    def add_command(self,command):  
+        log.msg("Node with id",self.id, "recieved command",command,system="Node", logLevel=logging.CRITICAL)
+        
+        
+    def link_componentToEndpoint(self):
+        self.tempSensor.set_endPoint(self.driver.endpoints[0])
+        self.linkedElements.append(self.tempSensor)
+        
+    def query_driver(self,sender=None):
+        #f sender in self.linkedElements:
+        if isinstance(sender,Variable):
+           sender.attachedSensors["root"].driverEndpoint.get() 
+        
         
     def variable_set(self,sender,varName,*args,**kwargs):
         self.variables[varName].set(*args,**kwargs)
@@ -98,8 +114,9 @@ class Node(DBObject):
     
     def variable_test(self):
         temp=Variable(self,"temperature",0,float,"celcius",0,"db")   
-        tempSensor=Sensor(type="Sensor",name="temperature sensor",tool="testTool")
+        tempSensor=Sensor(type="Sensor",name="temperature sensor",tool="testTool") 
         temp.attach_sensor(tempSensor)
+        self.tempSensor=tempSensor
         self.testElement=temp
     
     def elementsandVarsTest(self):

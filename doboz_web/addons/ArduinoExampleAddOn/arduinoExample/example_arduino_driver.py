@@ -7,10 +7,9 @@ from twisted.internet import reactor, defer
 import uuid
 import logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
-from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
+from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic,EndPoint
 from doboz_web.core.components.drivers.protocols import BaseTextSerialProtocol
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import SerialHardwareHandler
-
+from doboz_web.core.components.drivers.serial_hardware_handler import SerialHardwareHandler
 
 
 class ArduinoExampleProtocol(BaseTextSerialProtocol):
@@ -53,22 +52,23 @@ class ArduinoExampleProtocol(BaseTextSerialProtocol):
         return data  
     
         
-class ArduinoExampleHardwareHandler(SerialHardwareHandler):
-    classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
-    def __init__(self,*args,**kwargs):
-        SerialHardwareHandler.__init__(self,protocol=ArduinoExampleProtocol(*args,**kwargs),*args,**kwargs)
+
 
 
 class ArduinoExampleDriver(Driver):
     """Class defining the components of the driver for a basic arduino,using attached firmware """
     classProvides(IPlugin, idoboz_web.IDriver) 
     TABLENAME="drivers"   
-    def __init__(self,driverType="ArduinoExample",deviceType="Arduino",deviceId="",connectionType="serial",options={},*args,**kwargs):
+    def __init__(self,deviceType="Arduino",connectionType="serial",options={},*args,**kwargs):
         """
         very important : the first two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
         and not instances of those classes
         """
-        Driver.__init__(self,ArduinoExampleHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,connectionType,options,*args,**kwargs)
+        Driver.__init__(self,deviceType,connectionType,SerialHardwareHandler,CommandQueueLogic,ArduinoExampleProtocol,options,*args,**kwargs)
+        
+        self.endpoints.append(EndPoint(0,"device",0,None,self.analogRead,self.analogWrite))
+        self.endpoints.append(EndPoint(1,"device",13,None,self.analogRead,self.analogWrite))
+        
         
     def hello_world(self):
         self.send_command(0)
@@ -90,5 +90,7 @@ class ArduinoExampleDriver(Driver):
         
     def analogRead(self, pin):
         self.send_command(" ".join([5, pin]))
+        
+    
 
     

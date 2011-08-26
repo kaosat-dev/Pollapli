@@ -490,7 +490,7 @@ class UpdateManager(object):
                 log.msg("error2 in fetching plugin: ",str(inst),system="Update Manager",logLevel=logging.CRITICAL)
             defer.returnValue(plugins)
         
- 
+        
         for addOn in cls.addons.itervalues():
             if addOnName:
                 if addOn.name==addOnName and addOn.enabled:

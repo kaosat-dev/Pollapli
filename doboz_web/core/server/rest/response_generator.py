@@ -29,7 +29,8 @@ class ResponseGenerator(object):
         formater=JsonFormater(resource=self.resource)
         
         if isinstance(payload, failure.Failure):
-            print("Failure",payload.getErrorMessage())
+            print("Failure: error message:",payload.getErrorMessage(),"printTraceback:")
+            payload.printTraceback()
             payload=self._handle_errors(payload)
             self.request.setResponseCode(payload.responseCode)
             self.request.setHeader("Content-Type", "application/pollapli.error+json")

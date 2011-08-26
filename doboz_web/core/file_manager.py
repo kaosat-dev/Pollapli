@@ -1,5 +1,6 @@
 class FileManager(object):
     rootDir=None
+    corePath=None
     
     @classmethod
     def getRootDir(cls):

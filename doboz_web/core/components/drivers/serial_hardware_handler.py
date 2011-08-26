@@ -36,10 +36,9 @@ class SerialHardwareHandler(object):
     availablePorts=[]
 
     def __init__(self,driver=None,protocol=None,speed=115200,*args,**kwargs):
-        self.logger=logging.getLogger("pollapli.core.components.driver")
         self.driver=driver
         self.serial=None    
-        self.protocol=protocol
+        self.protocol=protocol(self.driver,*args,**kwargs)
         self.speed=speed
         self.port=None
         self.isConnected=False

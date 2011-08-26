@@ -44,17 +44,9 @@ class TasksHandler(DefaultRestHandler):
         Handler for POST requests of tasks
         extract the data from the request body to add a new task
         """ 
-        @defer.inlineCallbacks
-        def extract_args(result):
-            name=result["name"] or ""
-            description=result.get("description") or ""
-            type=result.get("type") 
-            params=result.get("params")
-            defer.returnValue((yield self.environmentManager.get_environment(self.envId).add_task(name=name,description=description,type=type,params=params)))
-             
         r=ResponseGenerator(request,status=201,contentType="application/pollapli.task+json",resource="task",rootUri=self.rootUri)
         d=RequestParser(request,"task",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
-        d.addCallbacks(extract_args,errback=r._build_response)    
+        d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).add_task(**params),errback=r._build_response)    
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET

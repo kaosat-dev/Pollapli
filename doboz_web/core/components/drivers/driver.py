@@ -8,49 +8,76 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from zope.interface import Interface, Attribute,implements
 from twisted.plugin import IPlugin,getPlugins
+from twisted.internet.interfaces import IProtocol
 from twisted.internet.protocol import Protocol
+
 
 from doboz_web.exceptions import UnknownDriver,NoDriverSet,DeviceIdMismatch,DeviceNotConnected
 from doboz_web import idoboz_web
 from doboz_web.core.signal_system import SignalHander
 from doboz_web.core.components.updates.update_manager import UpdateManager
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import SerialHardwareHandler
 
 
 
 
+class EndPoint(object):
+    def __init__(self,id,type=None,port=None,infos=[],getter=True,funct=None):
+        self.id=id
+        self.type=type
+        self.port=port
+        self.infos=infos
+        self.getter=getter
+        self.funct=funct
+ 
+    def set(self,value):
+        if self.getter:
+            raise Exception("this is a getter endpoint")
+        self.funct(self.port,value)
+    def get(self):
+        if not self.getter:
+            raise Exception("this is a setter endpoint")
+        self.funct(self.port)
+    
+
+    
+        
 class Driver(DBObject):
     """
     Driver class: higher level handler of device connection that formats outgoing and incoming commands
      according to a spec before they get sent to the lower level connector.
      It actually mimics the way system device drivers work in a way.
      You can think of the events beeing sent out by the driver (dataRecieved etc) as interupts of sorts
+     
+      ConnectionModes :
+        0:setup
+        1:normal
+        2:setId
+        3:forced: to forcefully connect devices which have no deviceId stored 
+     
+    Thoughts for future evolution
+    each driver will have a series of endpoints or slots/hooks, which represent the actual subdevices it handles
+    for example for reprap type devices, there is a "position" endpoint (abstract), 3 endpoints for the 
+    cartesian bot motors , at least an endpoint for head temperature , one for the heater etc
+    or this could be in a hiearchy , reflecting the one off the nodes:
+    variable endpoint : position, and sub ones for motors
     """
     BELONGSTO = ['node']
     EXPOSE=["driverType","deviceType","deviceId","options","isConnected","isPluggedIn"]
-    def __init__(self,hardwareHandlerKlass=None,logicHandlerKlass=None,driverType="",deviceType="",deviceId="",connectionType="",options={},*args,**kwargs):
-        self.logger = logging.getLogger("pollapli.core.components.driver")      
-        self.logger.setLevel(logging.INFO)
+    
+    def __init__(self,deviceType="",connectionType="",hardwareHandlerKlass=None,logicHandlerKlass=None,protocol=None,options={},*args,**kwargs):    
+        self.driverType=self.__class__.__name__.lower()
+        self.deviceType=deviceType
+        self.connectionType=connectionType
+        self.options=options
+        self.protocol=protocol
+        self.hardwareHandlerKlass=hardwareHandlerKlass
+        self.logicHandlerKlass=logicHandlerKlass
         DBObject.__init__(self,**kwargs)
                
-        self.driverType=driverType
-        self.deviceType=deviceType
-        self.deviceId=deviceId
-        """will be needed to identify a specific device, as the system does not work base on ports"""
-        if not isinstance(options,dict):
-            self.options=ast.literal_eval(options)
-        else:
-            self.options=options
-        """this is a workaround needed when loading a driver from db"""
-        
-        try:
-            self.hardwareHandler=hardwareHandlerKlass(self,**self.options)
-            self.logicHandler=logicHandlerKlass(self,**self.options)
-        except Exception as inst:
-            log.msg("Failed to instanciate hardware and logic handler: error: ",inst, "drivertype",self.driverType,system="Driver",logLevel=logging.CRITICAL)
-        #print("driver options",self.options,"type",self.options.__class__)
-        #print("hwhandlerklass",hardwareHandlerKlass,"logicHandlerKlass",logicHandlerKlass)
 
+        self.deviceId=None
+        """will be needed to identify a specific device, as the system does not work base on ports"""
+     
         self.signalHandler=None 
         self.signalChannelPrefix=""
         self.signalChannel=""
@@ -62,19 +89,11 @@ class Driver(DBObject):
         self.isPluggedIn=False
         self.autoConnect=False#if autoconnect is set to true, the device will be connected as soon as a it is plugged in and detected
         
-        self.connectionType=connectionType
+       
         self.connectionErrors=0
         self.maxConnectionErrors=2
         self.connectionTimeout=4
-        
-        
-        """
-        Modes :
-        0:setup
-        1:normal
-        2:setId
-        3:forced: to forcefully connect devices which have no deviceId stored 
-        """
+         
         self.connectionMode=1
         self.d=defer.Deferred()
         
@@ -94,21 +113,28 @@ class Driver(DBObject):
         
         """for exposing capabilites"""
         self.endpoints=[]
-         
-    def _toDict(self):
-        return {"driver":{"hardwareHandler":self.hardwareHandlerType,"logicHandler":self.logicHandlerType,"options":self.options,"link":{"rel":"node"}}}
+        
+        
+    def afterInit(self):
+       
+        """this is a workaround needed when loading a driver from db"""
+        try:
+            if not isinstance(self.options,dict):
+                self.options=ast.literal_eval(self.options)
+        except Exception as inst:
+            log.critical("Failed to load driver options from db:",inst,system="Driver",logLevel=logging.CRITICAL)
+
     
     @defer.inlineCallbacks    
-    def setup(self,*args,**kwargs):    
+    def setup(self,*args,**kwargs):  
+        self.hardwareHandler=self.hardwareHandlerKlass(self,self.protocol,**self.options)
+        self.logicHandler=self.logicHandlerKlass(self,**self.options)  
+        
         
         node= (yield self.node.get())
         env= (yield node.environment.get())
         self.signalChannelPrefix="environment_"+str(env.id)+".node_"+str(node.id)
-        
-#        self.signalChannel="node"+self.signalChannelPrefix+".driver"
-#        self.signalHandler=SignalHander(self.signalChannel)
 
-        #self.signalHandler.add_handler(signal="dataRecieved")
         self.signalHandler.add_handler(handler=self.send_command,signal="addCommand")
         log.msg("Driver of type",self.driverType ,"setup sucessfully",system="Driver",logLevel=logging.INFO)
         
@@ -171,6 +197,7 @@ class Driver(DBObject):
             raise DeviceNotConnected()
         if self.logicHandler:
             self.logicHandler._handle_request(data=data,sender=sender,callback=callback)
+    
     def _send_data(self,data,*arrgs,**kwargs):
         self.hardwareHandler.send_data(data)
          
@@ -197,13 +224,37 @@ class Driver(DBObject):
         pass
     def variable_get(self,variable,params,sender=None,*args,**kwargs):
         pass
-    """thoughts for future evolution
-    each driver will have a series of endpoints or slots/hooks, which represent the actual subdevices it handles
-    for example for reprap type devices, there is a "position" endpoint (abstract), 3 endpoints for the 
-    cartesian bot motors , at least an endpoint for head temperature , one for the heater etc
-    or this could be in a hiearchy , reflecting the one off the nodes:
-    variable endpoint : position, and sub ones for motors
+    
     """
+    ####################################################################################
+                                Experimental
+    """ 
+    def start_command(self):
+        pass
+    def close_command(self):
+        pass
+    
+    def get_endpoint(self,filter=None):
+        """return a list of endpoints, filtered by parameters"""
+        d=defer.Deferred()
+        
+        def filter_check(endpoint,filter):
+            for key in filter.keys():
+                if not getattr(endpoint, key) in filter[key]:
+                    return False
+            return True
+      
+        def get(filter):
+            if filter:
+                return [endpoint for endpoint in self.endpoints if filter_check(endpoint,filter)]
+            else:               
+                return nodesList
+            
+        d.addCallback(get)
+        reactor.callLater(0.5,d.callback,filter)
+        return d
+        
+
     
     
 class PortDriverBindings(object):
@@ -212,9 +263,9 @@ class PortDriverBindings(object):
     It relies on a "pseudo bidictionary": the elements dicts  contains keys for both
     drivers and ports 
     
-    TODO: need to add a secondary dict of "invalid devices":
+    also add a secondary dict of "invalid devices":
     Devices that have been tried for every driver, and failed
-    This dict's contents would be reset if that port is removed
+    This dict's contents get reset if that port is removed
     or if a new driver is added
     """
     
@@ -430,7 +481,7 @@ class DriverManager(object):
     def setup(cls,*args,**kwargs):
         log.msg("Driver Manager setup succesfully",system="Driver Manager",logLevel=logging.CRITICAL)
         d=defer.Deferred()
-        #reactor.callLater(cls.pollFrequency,DriverManager.update_deviceList)
+        reactor.callLater(cls.pollFrequency,DriverManager.update_deviceList)
         d.callback(None)        
         return d      
         
@@ -443,10 +494,9 @@ class DriverManager(object):
     def create(cls,parentNode=None,driverType=None,driverParams={},*args,**kwargs):   
         plugins= (yield UpdateManager.get_plugins(idoboz_web.IDriver))
         driver=None
-        print(driverParams)
         for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
-                driver=yield driverKlass(driverType=driverType,options=driverParams,**driverParams).save()
+                driver=yield driverKlass(options=driverParams,**driverParams).save()
                 yield driver.save()  
                 driver.node.set(parentNode)
                 yield driver.setup()
@@ -593,7 +643,7 @@ class DriverManager(object):
         
         
     @classmethod
-   # @defer.inlineCallbacks
+    @defer.inlineCallbacks
     def _start_bindAttempt(cls,driver,binding):
         """this methods tries to bind a given driver to a correct port
         should it fail, it will try to do the binding with the next available port,until either:
@@ -604,11 +654,11 @@ class DriverManager(object):
             if driver.isConfigured:
                 break
             else:
-                driver.bind(port).addCallbacks(callback=cls._driver_binding_succeeded\
+               yield driver.bind(port).addCallbacks(callback=cls._driver_binding_succeeded\
                         ,callbackKeywords={"driver":driver,"port":port,"binding":binding},errback=cls._driver_binding_failed\
                         ,errbackKeywords={"driver":driver,"port":port,"binding":binding})
       
-       # defer.returnValue(True)
+        defer.returnValue(True)
         
     @classmethod
     def _driver_binding_failed(cls,result,driver,port,*args,**kwargs):

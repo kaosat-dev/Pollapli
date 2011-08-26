@@ -4,15 +4,15 @@ from doboz_web import idoboz_web
 from zope.interface import classProvides
 from twisted.python import log,failure
 from twisted.internet import reactor, defer
-import uuid
-import logging
+from twisted.internet.interfaces import IProtocol
+import uuid, logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
 from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
 from doboz_web.core.components.drivers.protocols import BaseProtocol
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import SerialHardwareHandler
 
 
 class VirtualDeviceProtocol(BaseProtocol):
+    classProvides(IPlugin, IProtocol)
     """
     Class defining the protocol used by this driver: in this case, the reprap 5D protocol (similar to teacup, but with checksum)
     """
@@ -137,9 +137,9 @@ class VirtualDeviceHardwareHandler(object):
     avalailablePorts=[]
     avalailablePorts.append("port"+str(uuid.uuid4()))
     
-    def __init__(self,driver,*args,**kwargs):
+    def __init__(self,driver,protocol,*args,**kwargs):
         self.driver=driver
-        self.protocol=VirtualDeviceProtocol(driver,*args,**kwargs)
+        self.protocol=protocol(driver,*args,**kwargs)
         self.speed=115200
        
         
@@ -252,14 +252,13 @@ class VirtualDeviceDriver(Driver):
     """Class defining the components of the driver for a basic arduino,using attached firmware """
     classProvides(IPlugin, idoboz_web.IDriver) 
     TABLENAME="drivers"   
-    def __init__(self,driverType="Virtual",deviceType="Virtual",deviceId="",connectionType="virtual",options={},*args,**kwargs):
+    def __init__(self,deviceType="Virtual",deviceId="",connectionType="virtual",options={},*args,**kwargs):
         """
         very important : the first two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
         and not instances of those classes
         """
-        Driver.__init__(self,VirtualDeviceHardwareHandler,CommandQueueLogic,driverType,deviceType,deviceId,connectionType,options,*args,**kwargs)
-        #self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
-        #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
+        Driver.__init__(self,deviceType,connectionType,VirtualDeviceHardwareHandler,CommandQueueLogic,VirtualDeviceProtocol,options,*args,**kwargs)
+
         
     def hello_world(self):
         self.send_command('a')

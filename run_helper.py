@@ -41,12 +41,12 @@ def helper():
     try:
         client.post('rest/environments/1/nodes/3/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"gstreamerwebcamdriver","driverParams":{}}')
     except:pass
-    try:
-        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"webcamtest","type":"gstreamercam","description":"just a webcam node"}')
-    except:pass
-    try:
-        client.post('rest/environments/1/nodes/4/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"gstreamerwebcamdriver","driverParams":{}}')
-    except:pass
+#    try:
+#        client.post('rest/environments/1/nodes',headers={'Content-Type': 'application/pollapli.nodeList+json'},payload='{"name":"webcamtest","type":"gstreamercam","description":"just a webcam node"}')
+#    except:pass
+#    try:
+#        client.post('rest/environments/1/nodes/4/driver',headers={'Content-Type': 'application/pollapli.driver+json'},payload='{"driverType":"gstreamerwebcamdriver","driverParams":{}}')
+#    except:pass
     try:
         pass
         #client.post('rest/environments/1/nodes/1/tasks',headers={'Content-Type': 'application/pollapli.taskList+json'},payload='{"name":"testTask","description":"a task for printing 3D models","taskType":"print","params":{"filepath":"test.gcode"}}')

@@ -1,4 +1,4 @@
-import uuid, logging,os,sys,time,shutil
+import uuid, logging,os,sys,time,shutil,glob
 from zope.interface import implements
 from twisted.plugin import IPlugin
 from doboz_web import idoboz_web 
@@ -86,10 +86,12 @@ class GstreamerWebcamHandler(object):
                 self.player.set_state(gst.STATE_NULL)
                 self.finished.set()
             elif t == gst.MESSAGE_ERROR:
-                #self.player.set_state(gst.STATE_NULL)
+                
                 err, debug = message.parse_error()
                 log.msg("in GStreamer pipeline ",err,"debug",debug,"disconnected ",system="Driver",logLevel=logging.CRITICAL)           
-            
+                self.player.set_state(gst.STATE_NULL)
+                self.finished.set()
+                
             elif t==gst.MESSAGE_SEGMENT_DONE:
                 log.msg("Recieved segment done message ",system="Driver",logLevel=logging.CRITICAL)
             elif t== gst.MESSAGE_ELEMENT:
@@ -150,15 +152,20 @@ class GstreamerWebcamHandler(object):
         self.driver.isConfigured=True 
         #self._connect(*args,**kwargs)    
         #hack !!
-        self.deviceIndex=GstreamerWebcamHandler.deviceIndex
-        GstreamerWebcamHandler.deviceIndex+=1
-        print("GstreamerWebcamHandler.deviceIndex",GstreamerWebcamHandler.deviceIndex)
-        self.source.set_property("device-index", self.deviceIndex)     
-        filePath=os.path.join(FileManager.rootDir,"environments","home","test"+str(self.deviceIndex)+".png")
-        log.msg("setting webcam capture to:",filePath,system="Driver",logLevel=logging.CRITICAL)
-        self.set_capture(filePath)
-        self.fetch_data()
-        threads.deferToThread(self.run, None).addBoth(self._runResult)
+#        self.deviceIndex=GstreamerWebcamHandler.deviceIndex
+#        
+#        
+#        if self.gstdriver=="ksvideosrc":  
+#            self.source.set_property("device-index", self.deviceIndex)           
+#        else:
+#            self.source.set_property("device","/dev/video"+str(self.deviceIndex))
+#        GstreamerWebcamHandler.deviceIndex+=1
+#        
+#        filePath=os.path.join(FileManager.rootDir,"environments","home","test"+str(self.deviceIndex)+".png")
+#        log.msg("setting webcam capture to:",filePath,system="Driver",logLevel=logging.CRITICAL)
+#        self.set_capture(filePath)
+#        self.fetch_data()
+#        threads.deferToThread(self.run, None).addBoth(self._runResult)
         self.driver.d.callback(None) 
         
     def _connect(self,*args,**kwargs):
@@ -236,15 +243,14 @@ class GstreamerWebcamDriver(Driver):
     """Class defining the components of the driver for a basic arduino,using attached firmware """
     classProvides(IPlugin, idoboz_web.IDriver) 
     TABLENAME="drivers"   
-    def __init__(self,driverType="webcam",deviceType="webcam",deviceId="",connectionType="usb",options={},*args,**kwargs):
+    def __init__(self,deviceType="Webcam",connectionType="video",options={},*args,**kwargs):
         """
         very important : the first two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
         and not instances of those classes
         """
-        Driver.__init__(self,GstreamerWebcamHandler,CommandQueueLogic,driverType,deviceType,deviceId,connectionType,options,*args,**kwargs)
+        Driver.__init__(self,deviceType,connectionType,GstreamerWebcamHandler,CommandQueueLogic,None,options,*args,**kwargs)
         #self.hardwareHandler=ArduinoExampleHardwareHandler(self,*args,**kwargs)
         #self.logicHandler=CommandQueueLogic(self,*args,**kwargs)
-        
         
         
         

@@ -6,16 +6,18 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-from zope.interface import Interface, Attribute,implements
+from zope.interface import Interface, Attribute,implements,classProvides
 from twisted.plugin import IPlugin,getPlugins
 from twisted.internet.protocol import Protocol
-
+from twisted.internet.interfaces import IProtocol
 
 class DummyProtocol(Protocol):
+    classProvides(IPlugin, IProtocol)
     """used for connection checks"""
     pass
 
 class BaseProtocol(Protocol):
+    classProvides(IPlugin, IProtocol)
     """generic base protocol, cannot be used directly"""
     def __init__(self,driver=None,isBuffering=True,seperator=None,handshake=None):             
         self.driver=driver
@@ -153,6 +155,7 @@ class BaseProtocol(Protocol):
         
             
 class BaseTextSerialProtocol(BaseProtocol):
+    classProvides(IPlugin, IProtocol)
     """basic , text based protocol for serial devices"""
     def __init__(self,driver=None,isBuffering=True,seperator='\r\n',handshake="start"):  
         BaseProtocol.__init__(self, driver, isBuffering, seperator,handshake)
