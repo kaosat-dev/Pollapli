@@ -11,6 +11,7 @@ pollapli.ui.init=function()
   //initialize visual elements
   //progressbars
   this.init_progressbars();
+
 }
 
 
@@ -51,6 +52,17 @@ pollapli.ui.loadTemplates=function()
         });
     });
     $.get('templates/environment_templates.tpl', 
+    function(doc) 
+    {
+        // Store a reference to the remote file's templates
+        var tmpls = $(doc).filter('script');
+        tmpls.each(function() 
+        {
+            pollapli.ui.templates[this.id] = $.jqotec(this);
+           
+        });
+    });
+    $.get('templates/file_templates.tpl', 
     function(doc) 
     {
         // Store a reference to the remote file's templates
@@ -227,6 +239,13 @@ pollapli.ui.render_update=function()
 }
 
 
+//
+pollapli.ui.render_filesList=function()
+{
+  $('#fileList').jqotesub(pollapli.ui.templates.files_tmpl,null); 
+  $("#_filesLi").jqotesub(pollapli.ui.templates.files_list_tmpl,manager.files); 
+}
+
 //progressbar related methods
 
 pollapli.ui.init_progressbars=function()
@@ -251,3 +270,10 @@ pollapli.ui.set_progressbar=function(divName,percent)
 {
   $(divName).progressbar( "option", "value", percent); 
 }
+
+pollapli.ui.deleteFile=function(file)
+{
+  
+  manager.deleteFile(file);
+}
+

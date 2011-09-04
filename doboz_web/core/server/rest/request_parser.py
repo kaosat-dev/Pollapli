@@ -32,10 +32,11 @@ class RequestParser(object):
             contentType=contentType.split(";")[0]
         except:pass
         
+      
+        
         if not contentType in self.validContentTypes:
             raise UnhandledContentTypeException("expected"+str(self.validContentTypes)+" got "+ contentType )
         if not set(self.request.args.keys()).issubset(set(self.validGetParams)):
-            print("TUUT",self.request.args.keys())
             raise ParameterParseException()
         
         return defer.succeed(True)
@@ -45,15 +46,15 @@ class RequestParser(object):
         method parses query params into a dictionary of lists for filter criteria
         """
         params={}
-        if self.request.method=="POST" or self.request.method=="PUT":
+        if self.request.method=="POST" or self.request.method=="PUT" or self.request.method=="DELETE":
             data=self.request.content.getvalue()
             if data != None or data != '':
                 """ In python pre 2.6.5, bug in unicode dict keys"""
                 try:
                     params=json.loads(data,encoding='utf8')
                     params=self._stringify_data(params)
-                except ValueError:
-                    raise ParameterParseException()
+                except ValueError:pass
+                   #removed to handle file uploads raise ParameterParseException()
         elif self.request.method=="GET":
             pass
         def convertElem(elem):

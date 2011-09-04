@@ -19,4 +19,4 @@ dropin.cache
 syntax: regexp
 ^doboz_web/data/environments/home$
 ^doboz_web/data/environments/home/home\.db$
-^doboz_web/data/environments/printFiles$
+^doboz_web/data/uploads$

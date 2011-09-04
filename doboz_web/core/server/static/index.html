@@ -22,7 +22,8 @@
   <script type='text/javascript' src='/js/jquery.flot.js'></script>
   <script  type="text/javascript" src="/js/jquery.datalink.js"></script>
   <script type='text/javascript' src="/js/fullcalendar.min.js"></script>
-
+  <script type="text/javascript" src="/js/jquery.iframe-transport.js"></script>
+  <script type="text/javascript" src="/js/jquery.fileupload.js"></script>
 
   <script  type="text/javascript" src="/pollapli_toolkit.js"></script>
   <script  type="text/javascript" src="/pollapli_toolkit_ui.js"></script>
@@ -130,11 +131,25 @@
        $("button").button();
       // $('#cornerTest').corner( "bottom steep 12px").corner("top steep 12px");
       setMenu("devices");
-      $("#node-dialog").dialog({ autoOpen: false })
+      $("#node-dialog").dialog({ autoOpen: false });
+     
+    // 
      
      
+     $('#uploadForm').attr('action', pollapli.mainUrl+'rest/config/files');
+     $('#fileUploadDialog').dialog();
      
-     
+      /*$('#fileUploadDialog').fileupload(
+      {
+        dataType: 'json',
+        url: pollapli.mainUrl+'rest/config/files',
+        done: function (e, data) 
+        {
+            $.each(data.result, function (index, file) {
+                $('<p/>').text(file.name).appendTo('body');
+            });
+        }
+    });*/
      
      
     }
@@ -182,6 +197,8 @@
     <div id="contextMenu" style="width:20%; height:670px;display:inline-block;float:left;" class=" ui-corner-all"></div>
     <div id="contextContent" style="width:79%; height:670px;display:inline-block;float:left;" class=" ui-corner-all"></div>
   </div>
+   <button onClick="pollapli.ui.render_filesList();">Files</button>
+  <div id="fileList"></div>
   <div id="events" style="width:100%; height:500px;display:inline-block;float:left;overflow:auto;"></div>
     <div id="node-dialog" title="Node "></div>
    
@@ -190,6 +207,18 @@
       <div class="title">Please wait, files are being fetched from the server.   <img style="width:16px;height:16px"src="/img/ajax-loader.gif"/></div>
   </div>
 
+  <div id="fileUploadDialog"  title="Upload file" >
+    <div >
+    Add file:
+    <form id="uploadForm"  action="/rest", method="post" enctype="multipart/form-data" target="uploadTarget" onsubmit="" name="uploadForm">
+      <input id="datafileField" name="datafile" type="file" onclick="" multiple/>
+      <button  onclick="submit()">Send</button> 
+      <iframe id="uploadTarget" src="" style="width:0px;height:0px;visibility:hidden"> </iframe>
+    </form>
+    </div>
+    <div id="uploadProgressBar" style="width:100%;height:10px;" > </div>
+  </div>
+ 
   
 </div>
 </body>

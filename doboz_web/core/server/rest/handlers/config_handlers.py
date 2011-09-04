@@ -14,7 +14,7 @@ from twisted.internet.error import ConnectionDone
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-from doboz_web.core.components.updates.update_manager import UpdateManager
+from doboz_web.core.server.rest.handlers.file_handlers import FilesHandler
 from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.signal_system import SignalHander
 
@@ -29,6 +29,10 @@ class ConfigHandler(DefaultRestHandler):
         self.putChild("updates",UpdatesHandler(subPath))
         subPath=self.rootUri+"/events"
         self.putChild("events",GlobalEventsHandler(subPath))
+        subPath=self.rootUri+"/files"
+        self.putChild("files",FilesHandler(subPath))
+        
+        
     def render_GET(self, request):
         """
         Handler for GET requests of config

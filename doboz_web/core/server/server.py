@@ -52,6 +52,7 @@ class MainServer():
             os.makedirs(self.addOnsPath)
         if not os.path.exists(self.environmentsPath):
             os.makedirs(self.environmentsPath)
+        
 
         
         """""""""""""""""""""""""""""""""""""""""
@@ -62,6 +63,19 @@ class MainServer():
         EnvironmentManager.envPath=self.environmentsPath
         FileManager.rootDir=self.dataPath        
         FileManager.corePath=os.path.join(self.rootPath,"core")
+        
+        FileManager.rootPath=self.rootPath    
+        FileManager.filePath=self.filePath    
+        FileManager.uploadPath=os.path.join(self.dataPath,"uploads")
+        FileManager.dataPath=self.dataPath
+        FileManager.logPath=self.logPath
+        FileManager.updatesPath=self.updatesPath
+        FileManager.addOnPath=self.addOnsPath
+        FileManager.depenciesPath=self.depenciesPath
+        
+        if not os.path.exists(FileManager.uploadPath):
+            os.makedirs(FileManager.uploadPath)
+        
         self.environmentManager=EnvironmentManager(self.dataPath)
         
         """"""""""""""""""""""""""""""""""""""

@@ -2,7 +2,7 @@
 .. py:module:: files_handler
    :synopsis: rest handler for files interaction.
 """
-import logging
+import logging,re,os
 from twisted.internet import reactor, defer
 from twisted.web.resource import Resource,NoResource
 from twisted.web import resource, http
@@ -14,59 +14,73 @@ from twisted.internet.task import deferLater
 from doboz_web.core.server.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.server.rest.request_parser import RequestParser
 from doboz_web.core.server.rest.response_generator import ResponseGenerator
-
+from doboz_web.core.file_manager import FileManager
 
 class FilesHandler(DefaultRestHandler):
     """
-    Resource in charge of handling the environments (plural) so :
-    Adding a new environment
-    Listing all environments
+    Resource in charge of handling the uploaded files (plural) so :
+    Adding a new file
+    Listing all uploaded files
     """
     isLeaf=False
     def __init__(self,rootUri="http://localhost"):
-        DefaultRestHandler.__init__(self,rootUri)
-        self.logger=log.PythonLoggingObserver("dobozweb.core.server.rest.filessHandler")
-        
+        DefaultRestHandler.__init__(self,rootUri)     
         self.valid_contentTypes.append("application/pollapli.fileList+json")   
+        self.valid_contentTypes.append("multipart/form-data")
         self.validGetParams.append('id')
-      
+        self.validGetParams.append('datafile')
+        
+    def getChild(self, id, request):
+        try:
+            return FileHandler(self.rootUri,id)  
+        except ValueError :
+             return self
     
     def render_POST(self,request):  
         """
         Handler for POST requests of files
         """ 
-#         datafile = request.params["datafile"]
-#            self.uploadProgress=0
-#            saved_file=open(os.path.join(server.rootPath,"files","machine","printFiles",datafile.filename),'w')
-#            saved_file.write(datafile.value)
-#            saved_file.close()
-#            self.uploadProgress=100
-        @defer.inlineCallbacks
-        def extract_args(result):
-            name=result["name"] or ""
-            description=result.get("description") or ""
-            status=result.get("status") or "live"
-            defer.returnValue((yield self.environmentManager.add_environment(name=name,description=description,status=status)))
-             
-        r=ResponseGenerator(request,status=201,contentType="application/pollapli.environment+json",resource="environment")
-        d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
-        d.addCallbacks(extract_args,errback=r._build_response)    
+        def save_file(result):
+            def find_fileName():
+                savedPosition = request.content.tell()
+                try:
+                    request.content.seek(0)
+                    request.content.readline()
+                    match = re.search(r'filename="([^"]+)"',
+                                      request.content.readline())
+                    if match:
+                        return match.group(1)
+                    else:
+                        return None
+                finally:
+                    request.content.seek(savedPosition)
+            fileName=find_fileName()
+            saved_file=open(os.path.join(FileManager.dataPath,"printFiles",fileName),'w')
+            saved_file.write(result.get("datafile")[0])
+            saved_file.close()
+            
+            
+        print("POST REQUESt",request,"content",str(request.content))
+        r=ResponseGenerator(request,status=201,contentType="application/pollapli.fileList+json",resource="files",rootUri=self.rootUri)
+        d=RequestParser(request,"files",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()      
+        d.addCallbacks(callback=save_file,errback=r._build_response)
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
+             
     
     def render_GET(self, request):
         """
         Handler for GET requests of files
         """
-#         fileList=os.listdir(os.path.join(server.rootPath,"files","machine","printFiles"))
-#        try:     
-#            finalFileList=map(self.fullPrintFileInfo, fileList)
-#            data={"files": finalFileList }
-        r=ResponseGenerator(request,status=200,contentType="application/pollapli.environmentsList+json",resource="environments")
-        d=RequestParser(request,"environment",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()
-        d.addCallbacks(self.environmentManager.get_environments,errback=r._build_response)
+
+        r=ResponseGenerator(request,status=200,contentType="application/pollapli.fileList+json",resource="files",rootUri=self.rootUri)
+        d=RequestParser(request,"files",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()      
+        d.addCallbacks(callback=lambda params:FileManager.list_files(),errback=r._build_response)
         d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
+        
     
     def render_DELETE(self,request):
         """ 
@@ -74,11 +88,32 @@ class FilesHandler(DefaultRestHandler):
         WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes ALL
         files
         """
-#         fileName=request.params["filename"].strip()
-#            filePath=os.path.join(server.rootPath,"files","machine","printFiles",fileName)
-#            os.remove(filePath)
-#            self.logger.critical("Deleted file: %s",fileName)
         r=ResponseGenerator(request,status=200)
-        d= self.environmentManager.clear_environments()
+        d=RequestParser(request,"files",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams() 
+        d.addCallbacks(callback=lambda params:FileManager.delete_files(),errback=r._build_response) 
         d.addBoth(r._build_response)
-        return NOT_DONE_YET   
+        request._call=reactor.callLater(0,d.callback,None)
+        return NOT_DONE_YET
+    
+class FileHandler(DefaultRestHandler):
+    """
+    Resource in charge of handling a file :
+    """
+    isLeaf=True
+    def __init__(self,rootUri="http://localhost",id=None):
+        DefaultRestHandler.__init__(self,rootUri)     
+        self.id=id
+        self.valid_contentTypes.append("application/pollapli.file+json")   
+           
+    
+    def render_DELETE(self,request):
+        """ 
+        Handler for DELETE requests of file
+        WARNING !! needs to be used very carefully, with confirmation on the client side, as it deletes the file
+        """
+        r=ResponseGenerator(request,status=200)
+        d=RequestParser(request,"files",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()  
+        d.addCallbacks(callback=lambda params:FileManager.delete_file(self.id),errback=r._build_response)
+        d.addBoth(r._build_response)
+        request._call=reactor.callLater(0,d.callback,None)
+        return NOT_DONE_YET

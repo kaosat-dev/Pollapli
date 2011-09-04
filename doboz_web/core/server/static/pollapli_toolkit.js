@@ -33,6 +33,7 @@ pollapli.Manager=function Manager()
   this.nodes=new Array();
   this.testEnvironment={ };
   this.driverTypes=Array();
+  this.files={}
   
 $(document).ajaxError(function(e, xhr, settings, exception) 
 { 
@@ -136,7 +137,6 @@ pollapli.Manager.prototype.deleteData=function(dataUrl,contentType,data,successC
         {
           successCallback=this.genericSuccessHandler;
         }
-
         $.ajax({
         type: 'DELETE',
         async:true,
@@ -151,7 +151,7 @@ pollapli.Manager.prototype.deleteData=function(dataUrl,contentType,data,successC
       });
 
 }
-
+   
 
 
 pollapli.Manager.prototype.genericCompleteHandler=function (response)
@@ -167,7 +167,8 @@ pollapli.Manager.prototype.genericSuccessHandler=function (response)
 }
     
 pollapli.Manager.prototype.genericErrorHandler=function (response, strError)
-    { console.log("Error "+strError);
+    { 
+      console.log("Error "+strError);
       
       //errorInfo=$.parseJSON(response.responseText);
       //console.log("Error: "+errorInfo.errorCode+" msg: "+errorInfo.errorMessage+" raw: "+strError)
@@ -195,6 +196,7 @@ pollapli.Manager.prototype.initRequesters=function ()
       manager.fetchEnvironments(manager);
       
       manager.fetchUpdates()
+      self.fetchFiles();
       self.getNodesTest();
       self.getDriverTypes();
       manager.longPoll(manager);
@@ -208,29 +210,19 @@ pollapli.Manager.prototype.initRequesters=function ()
 pollapli.Manager.prototype.longPoll=function (self)
 {
   //curTimeStamp=(new Date()).getTime();
-  
-   
+
   self.fetchData(self.mainUrl+"rest/config/events",'application/pollapli.eventList+json',
   function (response)
   {   
     self.handleNodeEvent(response.events.items);
     $('#events').jqoteapp(pollapli.ui.templates.events_tmpl, response.events.items);
     var nEvent=response.events.items.pop();
- 
     if(nEvent)
     {
       self.lastEvent=nEvent;
       self.lastLongPollTimeStamp=self.lastEvent.time;
     }
-    
-    
     self.longPoll(self);
-    
-     
-    
-    
-    
-    
     },
   function (response)
   {
@@ -250,6 +242,15 @@ pollapli.Manager.prototype.longPoll=function (self)
 ); 
 }
 
+pollapli.Manager.prototype.fetchFiles=function ()
+{
+  self=this;
+  this.fetchData(self.mainUrl+"rest/config/files",'application/pollapli.fileList+json',
+  function (response)
+  {
+     self.files=response.files.items;
+   }); 
+}
 
 pollapli.Manager.prototype._setFields=function (sourceObject,resultObject)
 {
@@ -708,12 +709,83 @@ pollapli.Manager.prototype.start_UpdateDownloadInstall=function(updateId)
   });
   
 }
+/*
+pollapli.validateExtension=function(filePath)
+{
+  var ext = filePath.substring(filePath.lastIndexOf('.') + 1).toLowerCase();
+  if(ext!="gcode")
+  {
+    return false;
+  }
+  return true;
+}
 
+pollapli.uploadFile()
+{
+  if(this.validateExtension($("input[name=datafile]").val()))
+   {
+   $("#uploadProgress").show();
+   var self = this; 
+   this.uploadTimer=setInterval(function()
+   { 
+      self.getUploadProgress(); 
+   }, 500); 
+   }
+   else
+   {
+     alert("not a good file format");
+   }
+  
+}
+     */ 
+     
+ 
+pollapli.Manager.prototype.removeFiles=function(fileName)
+{
+  this.files=[];
+} 
+     
+pollapli.Manager.prototype.removeAFile=function(fileName)
+{
+  
+  for(var i = this.files.length-1; i >= 0; i--)
+      { 
+         if (fileName==this.files[i].name)
+       {
+         this.files.splice(i,1);
+         break;
+       } 
+      }
+}
+pollapli.Manager.prototype.deleteFile=function(fileName)
+{
+  self=this;
+  this.deleteData(
+    manager.mainUrl+"rest/config/files/"+fileName,'application/pollapli.file+json',"{}",
+  function(response)
+  {
+    
+    self.removeAFile(fileName)
+    pollapli.ui.render_filesList();
 
+  }
+  );
+}
 
+pollapli.Manager.prototype.deleteFiles=function()
+{
+  self=this;
+  this.deleteData(
+    manager.mainUrl+"rest/config/files",'application/pollapli.fileList+json',"{}",
+  function(response)
+  {
+    
+    self.removeFiles()
+    pollapli.ui.render_filesList();
 
-      
-
+  }
+  );
+}
 
 
 
