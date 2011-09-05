@@ -34,8 +34,10 @@ class RequestParser(object):
         
       
         
-        if not contentType in self.validContentTypes:
-            raise UnhandledContentTypeException("expected"+str(self.validContentTypes)+" got "+ contentType )
+#        if not contentType in self.validContentTypes:
+#           
+#            raise UnhandledContentTypeException()
+           # raise UnhandledContentTypeException("expected"+str(self.validContentTypes)+" got "+ contentType )
         if not set(self.request.args.keys()).issubset(set(self.validGetParams)):
             raise ParameterParseException()
         

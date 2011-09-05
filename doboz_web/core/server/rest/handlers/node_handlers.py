@@ -38,7 +38,8 @@ class NodesHandler(DefaultRestHandler):
         try:
             return NodeHandler(self.rootUri+"/"+str(id),self.environmentManager,self.envId,int(id))  
         except ValueError :
-             return self#no id , so return self
+            return NoResource()
+           
     
     def render_POST(self,request):  
         """

@@ -14,20 +14,27 @@
   <link type="text/css" href="/css/pollapli-extra.css" rel="Stylesheet" />  
  
   
-  <script  type="text/javascript" src="/js/jquery-1.6.2.min.js"></script>
-  <script  type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
+  <script type="text/javascript" src="/js/jquery-1.6.2.min.js"></script>
+  <script type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
   <script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
   <script type="text/javascript" src="/js/jquery.mousewheel.js"></script>
   <script type="text/javascript" src="/js/jquery.corner.js"></script>
   <script type='text/javascript' src='/js/jquery.flot.js'></script>
-  <script  type="text/javascript" src="/js/jquery.datalink.js"></script>
+  <script type="text/javascript" src="/js/jquery.datalink.js"></script>
   <script type='text/javascript' src="/js/fullcalendar.min.js"></script>
   <script type="text/javascript" src="/js/jquery.iframe-transport.js"></script>
   <script type="text/javascript" src="/js/jquery.fileupload.js"></script>
+  
+  <script type="text/javascript" src="/js/underscore-min.js"></script>
+  <script type="text/javascript" src="/js/backbone.js"></script> 
+
 
   <script  type="text/javascript" src="/pollapli_toolkit.js"></script>
   <script  type="text/javascript" src="/pollapli_toolkit_ui.js"></script>
   <script  type="text/javascript" src="/pollapli_toolkit_rest.js"></script>
+  <script  type="text/javascript" src="/pollapli_backbone.js"></script>
+
+  
   <script type="text/javascript">
  
   var manager=new pollapli.Manager(); 
@@ -127,6 +134,9 @@
        manager.init();
        pollapli.ui.init();
        pollapli.rest.init();
+       pollapli.backbone.init();
+       
+       
        $("img").hover(menuLinker);
        $("button").button();
       // $('#cornerTest').corner( "bottom steep 12px").corner("top steep 12px");

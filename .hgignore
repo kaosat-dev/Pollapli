@@ -20,3 +20,4 @@ syntax: regexp
 ^doboz_web/data/environments/home$
 ^doboz_web/data/environments/home/home\.db$
 ^doboz_web/data/uploads$
+^doboz_web/data/printFiles$

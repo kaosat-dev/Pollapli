@@ -429,6 +429,7 @@ class NodeManager(object):
              has a chance to be dispatched), the id + data of a node to be deleted gets saved, then the event is dispatched using
               this "fake node"'s data 
             """
+           
             nodeName=self.nodes[id].name    
             tmpNode=self.nodes[id]
             tmpId=tmpNode.id
@@ -437,6 +438,8 @@ class NodeManager(object):
             tmpNode.id=tmpId
             self.send_signal("node_deleted", tmpNode)
             log.msg("Removed node ",nodeName,"with id ",id,logLevel=logging.CRITICAL)
+        if not id in self.nodes.keys():
+            raise NodeNotFound()
         _remove(id)
         defer.succeed(True)
  
