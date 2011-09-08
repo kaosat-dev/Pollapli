@@ -134,7 +134,7 @@
        manager.init();
        pollapli.ui.init();
        pollapli.rest.init();
-       pollapli.backbone.init();
+      // pollapli.backbone.init();
        
        
        $("img").hover(menuLinker);
@@ -144,7 +144,7 @@
       $("#node-dialog").dialog({ autoOpen: false });
      
     // 
-     
+   
      
      $('#uploadForm').attr('action', pollapli.mainUrl+'rest/config/files');
      $('#fileUploadDialog').dialog();
@@ -173,7 +173,12 @@
   
   
 
-
+<div id="backboneNavTest" > 
+  <a style="color:black" href="#pages/updates">NAVIGATION TEST</a>
+  <a style="color:black" href="#pages/tests">NAVIGATION TEST2</a>
+</div>
+<div id="backboneTest"> sdf</div>
+<div id="backboneTest2"> sdf</div>
 
 <div id="global">
   <div id="topSpacer" class="lef" style="display:inline-block;float:left;height:10px;width:100%"> </div>
@@ -228,7 +233,8 @@
     </div>
     <div id="uploadProgressBar" style="width:100%;height:10px;" > </div>
   </div>
- 
+  
+  
   
 </div>
 </body>

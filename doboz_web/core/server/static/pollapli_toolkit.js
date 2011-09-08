@@ -184,6 +184,7 @@ pollapli.Manager.prototype.genericErrorHandler=function (response, strError)
 pollapli.Manager.prototype.init=function ()
 {
   this.initRequesters()
+  
 }
 
 pollapli.Manager.prototype.initRequesters=function ()

@@ -20,3 +20,15 @@
 
     ]]>
   </script>
+  
+   <script type="text/x-jqote-template" id="environments_tmpl_simple">
+<![CDATA[
+    <Strong>Name </Strong><%= this.name %> <Strong>Description </Strong> <%= this.description %> <Strong>Status </Strong> <%= this.status %><br/><br/>
+    ]]>
+  </script>
+  
+   <script type="text/x-jqote-template" id="environments_tmpl_simple2">
+<![CDATA[
+    dgdgf<red><Strong>Name </Strong></red><%= this.name %> <Strong>Description </Strong> <%= this.description %> <Strong>Status </Strong> <%= this.status %>dfgdfgdf<br/><br/>
+    ]]>
+  </script>

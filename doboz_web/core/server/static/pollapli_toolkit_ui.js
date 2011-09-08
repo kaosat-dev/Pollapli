@@ -73,6 +73,20 @@ pollapli.ui.loadTemplates=function()
            
         });
     });
+    $.get('templates/test.tpl', 
+    function(doc) 
+    {
+        // Store a reference to the remote file's templates
+        var tmpls = $(doc).filter('script');
+        tmpls.each(function() 
+        {
+            pollapli.ui.templates[this.id] = $.jqotec(this);
+
+        });
+         pollapli.backbone.init();
+    });
+    
+     
 }
 
 
