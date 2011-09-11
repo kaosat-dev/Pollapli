@@ -50,7 +50,7 @@ class ResponseGenerator(object):
             payload= callback+"("+payload+")" 
         response=payload or ""
         
-        response=response.encode("utf-8")
+        response=response.encode("utf-8")  
         self.request.setHeader('Content-Encoding', 'charset=utf-8')
         log.msg("building response using payload:",payload,logLevel=logging.DEBUG)
         

@@ -159,9 +159,12 @@ var EnvironmentView= Backbone.View.extend
       {
         this.template=pollapli.ui.templates["environments_tmpl_simple"];
       }
-      this.render();
+      
       //_.bindAll(this, "render", "add");
+      _.bindAll( this, 'render' )
       this.collection.bind("all", this.render,this);
+      this.render();
+      
     },
     render: function() 
     {

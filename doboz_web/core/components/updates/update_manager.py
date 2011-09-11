@@ -34,7 +34,7 @@ class Update(DBObject):
             setattr(update,key,value)  
         return update
     
-    def __init__(self,type=None,name=None,description=None,version=None,downloadUrl=None,img=None,tags=None,installPath=None,enabled=False,file=None,fileHash=None,*args,**kwargs):
+    def __init__(self,type=None,name=None,description=None,version=None,downloadUrl=None,img=None,tags=None,installPath=None,downloaded=False,installed=False,enabled=False,file=None,fileHash=None,*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.type=type
         self.name=name
@@ -46,9 +46,9 @@ class Update(DBObject):
         self.tags=tags
         self.file=file
         self.fileHash=fileHash
-        self.downloaded=False
+        self.downloaded=downloaded
         self.enabled=enabled
-        self.installed=False
+        self.installed=installed
         self.installPath=installPath
         
         self.parentManager=None
@@ -62,6 +62,11 @@ class Update(DBObject):
        
         
     def afterInit(self):  
+        def str2bool(v):
+            return v.lower() in ("yes", "true", "t", "1")
+        self.downloaded=str2bool(self.downloaded)
+        self.installed=str2bool(self.installed)
+        self.enabled=str2bool(self.enabled)
         self.tags=ast.literal_eval(self.tags)
         self.downloadUrl=str(self.downloadUrl)
         
