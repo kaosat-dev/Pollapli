@@ -25,7 +25,7 @@
       <br>
       <a href="#" class="deleteButton ui-priority-primary ui-corner-all ui-state-default block" onCLick=manager.deleteNodeTest(<%=this.id%>)>Delete <span class="ui-icon ui-icon-trash "></span></a>
       <button class="deleteButton ui-priority-primary ui-corner-all ui-state-default" onCLick=manager.deleteNodeTest(<%=this.id%>)>Delete <span class="ui-icon ui-icon-trash "></span></button>
-      <button class="modifyButton ui-priority-primary ui-corner-all ui-state-default" onClick=pollapli.ui.openNodeDialog_test(<%=j%>,"modify") > Update <span class="ui-icon ui-icon-arrowthick-1-n "></button>
+      <button class="modifyButton ui-priority-primary ui-corner-all ui-state-default" > Update <span class="ui-icon ui-icon-arrowthick-1-n "></button>
       
     </div>
 </script> 

@@ -54,6 +54,7 @@
     },
     clearFilters : function()
     {
+      $(this.el).trigger('tutuEvent');
       this.filterParams={};
       $('#filterTruc input').each(function() 
       {
@@ -64,12 +65,13 @@
     doClick : function(e)
     {  
       alert("kljlk")    ;
+      
     },
     events: 
     {
        'change select ' : 'order',
        'click input': 'filter',  
-       'click #clearFiltersButton': 'clearFilters'
+       'click #clearFiltersButton': 'clearFilters',
     },
    }
 );

@@ -20,96 +20,69 @@ function guid() {
 pollapli.clientId=guid();
 
 
-
-pollapli.ui.loadTemplates=function()
+//method for loading and compiling all templates:
+//upon completion, the callback function is fired
+pollapli.ui.loadTemplates=function(callback)
 {
-    var templateUrl="pollapli/templates/"
-    // Using jQuery's GET method
-    $.get(templateUrl+'node_templates.tpl', 
-    function(doc) 
-    {
-        // Store a reference to the remote file's templates
-        var tmpls = $(doc).filter('script');
-        tmpls.each(function() 
-        {
-            pollapli.ui.templates[this.id] = $.jqotec(this);
-        });
-    });
-    $.get(templateUrl+'update_templates.tpl', 
-    function(doc) 
-    {
-        // Store a reference to the remote file's templates
-        var tmpls = $(doc).filter('script');
-        tmpls.each(function() 
-        {
-            pollapli.ui.templates[this.id] = $.jqotec(this);
-           
-        });
-    });
-    $.get(templateUrl+'event_templates.tpl', 
-    function(doc) 
-    {
-        // Store a reference to the remote file's templates
-        var tmpls = $(doc).filter('script');
-        tmpls.each(function() 
-        {
-            pollapli.ui.templates[this.id] = $.jqotec(this);
-           
-        });
-    });
-    $.get(templateUrl+'environment_templates.tpl', 
-    function(doc) 
-    {
-        // Store a reference to the remote file's templates
-        var tmpls = $(doc).filter('script');
-        tmpls.each(function() 
-        {
-            pollapli.ui.templates[this.id] = $.jqotec(this);
-           
-        });
-    });
-    $.get(templateUrl+'file_templates.tpl', 
-    function(doc) 
-    {
-        // Store a reference to the remote file's templates
-        var tmpls = $(doc).filter('script');
-        tmpls.each(function() 
-        {
-            pollapli.ui.templates[this.id] = $.jqotec(this);
-           
-        });
-    });
-    $.get(templateUrl+'test.tpl', 
-    function(doc) 
-    {
-        // Store a reference to the remote file's templates
-        var tmpls = $(doc).filter('script');
-        tmpls.each(function() 
-        {
-            pollapli.ui.templates[this.id] = $.jqotec(this);
-
-        });
-         
-    });
-    $.get(templateUrl+'filter_widget_templates.tpl', 
-    function(doc) 
-    {
-        // Store a reference to the remote file's templates
-        var tmpls = $(doc).filter('script');
-        tmpls.each(function() 
-        {
-            pollapli.ui.templates[this.id] = $.jqotec(this);
-
-        });
-         
-    });
-     
+   var templateUrl="pollapli/templates/"; 
+   var templates=['header_template.tpl','filter_widget_templates.tpl','file_templates.tpl', 'environment_templates.tpl','event_templates.tpl','update_templates.tpl','node_templates.tpl','page_templates.tpl'  ];
+   
+   var onAllLoaded = function(){console.log("finished compiling templates");callback()};
+   var afterFunction = _.after(templates.length, onAllLoaded);
+  
+   var templateCompiler=function(templateName)
+   {
+     $.get(templateUrl+templateName, 
+      function(doc) 
+      {
+          var tmpls = $(doc).filter('script');
+          tmpls.each(function() 
+          {
+              try
+              {
+                pollapli.ui.templates[this.id] = $.jqotec(this);
+              }
+              catch(error)
+              {
+                console.log("error: "+error+" while loading template"+this.id + " in file: "+templateUrl+templateName);
+              }
+              
+          });
+          console.log("finished compiling template file: "+templateUrl+templateName); 
+          afterFunction();
+      });
+    }
+    _.each(templates, templateCompiler); 
 }
 
-pollapli.dependencies=
-["pollapli/routers/pages_models.js",
-"pollapli/routers/main_router.js",
-]
+//method for dynamically loading and script files
+//upon completion, the callback function is fired
+pollapli.loadScripts=function(callback)
+{
+    var dependencies=
+    ['models/pages_models.js','routers/main_router.js','views/header_view.js','views/page_view.js','models/nodes_models.js',
+    'views/filter_view.js','models/updates_models.js','views/updates_view.js','models/events_models.js','views/events_view.js',
+    'models/pages_models.js','views/node_view.js','models/nodes_models.js'
+    ];  
+    var onAllLoaded = function(){console.log("finished loading scripts");callback();};
+    var afterFunction = _.after(dependencies.length, onAllLoaded);
+    
+    var scriptLoader=function(scriptName)
+    {
+      try
+      {
+        $.getScript("pollapli/"+scriptName,this.initMain);
+      }
+      catch(error)
+      {
+        console.log("error: "+error+" while loading script"+scriptName );
+      }
+       afterFunction();
+    }
+    
+    _.each(dependencies, scriptLoader); 
+}
+
 
 var App = 
 {
@@ -118,8 +91,9 @@ var App =
     Routers: {},
     init: function() 
     { 
-       pollapli.ui.loadTemplates();
-       this.loadAppScripts();
+       pollapli.loadScripts(this.loadAppScripts);
+       pollapli.ui.loadTemplates(this.initMain);
+
     },
     initMain:function()
     {
@@ -128,16 +102,8 @@ var App =
     },
     loadAppScripts:function()
     {
-     
-        //$.getScript("pollapli/models/pages_models.js");
-        //$.getScript("pollapli/models/updates_models.js");
-        //$.getScript("pollapli/views/updates_view.js");
-        $.getScript("pollapli/routers/main_router.js",this.initMain);
 
-    },
-    _loadScripts:function()
-    {
-      
+        //$.getScript("pollapli/routers/main_router.js",this.initMain);
     },
     success:function(data,textStatus)
     {

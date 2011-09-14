@@ -19,5 +19,14 @@ var NodeCollection = Backbone.Collection.extend(
   parse: function(response) 
   {
     return response.nodes.items;
-  }
+  },
+  tutu : function()
+    {
+      alert("child event tutu raised and intercepted in node collection")
+    },
+    events: 
+    {
+       'tutuEvent': 'tutu'
+    },
+  
 });

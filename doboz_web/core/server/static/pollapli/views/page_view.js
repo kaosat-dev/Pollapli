@@ -1,4 +1,4 @@
-var InterfacePageView= Backbone.View.extend
+var PageView= Backbone.View.extend
 (
   {
     initialize: function() 
@@ -6,7 +6,7 @@ var InterfacePageView= Backbone.View.extend
       this.template=this.options.template;
       if (this.template==null)
       {
-        this.template=pollapli.ui.templates["nodes_tmpl"];
+        this.template=pollapli.ui.templates["basePage_tmpl"];
       }
       
       this.collection.bind("all", this.render,this);

@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <title>Pollapli experimental web ui</title>
+  <meta name="description" content="Pollapli experimental web control arduinos & derived devices (reprap,hydroduino,etc)" />
+  <META http-equiv="Cache-Control" content="no-cache">
+  <META http-equiv="Pragma" content="no-cache">
+  <META http-equiv="Expires" content="0"> 
+  
+  
+  <link type="text/css" href="/css/absolution_alt/jquery-ui-1.8.10.custom.css" rel="Stylesheet" id="mainCss"/> 
+  <link type="text/css" href="/css/fullcalendar.css" rel="Stylesheet" /> 
+  <link type="text/css" href="/css/pollapli-extra.css" rel="Stylesheet" />  
+ 
+  
+  <script type="text/javascript" src="/js/jquery-1.6.2.min.js"></script>
+  <script type="text/javascript" src="/js/jquery-ui-1.8.15.custom.min.js"></script>
+  <script type="text/javascript" src="/js/jquery.jqote2.min.js"></script> 
+  <script type="text/javascript" src="/js/jquery.mousewheel.js"></script>
+  <script type="text/javascript" src="/js/jquery.corner.js"></script>
+  <script type='text/javascript' src='/js/jquery.flot.js'></script>
+  <script type="text/javascript" src="/js/jquery.datalink.js"></script>
+  <script type='text/javascript' src="/js/fullcalendar.min.js"></script>
+  <script type="text/javascript" src="/js/jquery.iframe-transport.js"></script>
+  <script type="text/javascript" src="/js/jquery.fileupload.js"></script>
+  
+  <script type="text/javascript" src="/js/underscore-min.js"></script>
+  <script type="text/javascript" src="/js/backbone.js"></script> 
+
+
+  <script  type="text/javascript" src="/pollapli_toolkit.js"></script>
+  <script  type="text/javascript" src="/pollapli_toolkit_ui.js"></script>
+  <script  type="text/javascript" src="/pollapli_toolkit_rest.js"></script>
+  <script  type="text/javascript" src="/pollapli_backbone.js"></script>
+
+  
+  <script type="text/javascript">
+ 
+  var manager=new pollapli.Manager(); 
+  var currentSelection=""
+  
+  function thingy()
+  {
+    var pageHeight = jQuery(window).height();
+    var navHeight = pageHeight - 100;
+   
+    $("#bla").css({ "max-height": navHeight + 'px' });
+    $("#bla").css({ "height": navHeight + 'px' });
+  }
+ 
+  function menuLinker()
+  {
+    
+    if (currentSelection != $(this).attr("alt"))
+    {
+     // currentSelection=$(this).attr("alt");
+      $("#button-description").text("|"+$(this).attr("alt").toUpperCase());
+    }
+  }
+  
+  function setMenu(element)
+  {
+    if (currentSelection != element)
+    {
+      $("#"+currentSelection+"_icon").css({ "opacity": 0.5 }); 
+      currentSelection=element;
+      $("#"+element+"_icon").css({ "opacity": 1 }); 
+      
+      if(element!="errors")
+      {
+      $("#button-description").text("|"+element.toUpperCase())
+      
+      $('#contextMenu').load(element+".html #controls");
+      
+      $('#contextContent').load(element+".html #content",
+
+      function()
+      {
+        
+        $("button").button();
+         if(element=="devices")
+       {  
+         manager.dostuff();
+        }
+        else if (element=="overview")
+        {
+          pollapli.ui.init_nodeView();
+        }
+        else if(element=="updates")
+        {
+            
+           manager.dostuff2();
+           pollapli.ui.init_progressbars();
+        }
+        else if(element=="tasks")
+        {
+          pollapli.ui.init_calendar();
+        }
+        else if (element=="data")
+        {
+
+       var d1 = [];
+    for (var i = 0; i < 14; i += 0.5)
+        d1.push([i, Math.sin(i)]);
+ 
+    var d2 = [[0, 3], [4, 8], [8, 5], [9, 13]];
+ 
+    // a null signifies separate line segments
+    var d3 = [[0, 12], [7, 12], null, [7, 2.5], [12, 2.5]];
+    
+    $.plot($("#placeholder"), [ d1, d2, d3 ]);
+    
+          
+          
+        }
+           
+        });
+          //$('#contextContent').width($('#contextContent').width());
+          // $('#contextContent').show("clip", { direction: "vertical" }, 300);
+     }
+     }
+     else
+     {
+       $('#contextContent').append($('#events'));
+       $('#events').fadeIn("slow");
+       
+     }
+  }
+  
+  $(document).ready(
+    function() 
+    {
+       manager.init();
+       pollapli.ui.init();
+       pollapli.rest.init();
+      // pollapli.backbone.init();
+       
+       
+       $("img").hover(menuLinker);
+       $("button").button();
+      // $('#cornerTest').corner( "bottom steep 12px").corner("top steep 12px");
+      setMenu("devices");
+      $("#node-dialog").dialog({ autoOpen: false });
+     
+    // 
+   
+     
+     $('#uploadForm').attr('action', pollapli.mainUrl+'rest/config/files');
+     $('#fileUploadDialog').dialog();
+     
+      /*$('#fileUploadDialog').fileupload(
+      {
+        dataType: 'json',
+        url: pollapli.mainUrl+'rest/config/files',
+        done: function (e, data) 
+        {
+            $.each(data.result, function (index, file) {
+                $('<p/>').text(file.name).appendTo('body');
+            });
+        }
+    });*/
+     
+     
+    }
+  );
+  
+  </script>
+  
+  
+</head>
+<body>
+  
+  
+
+<div id="backboneNavTest" > 
+  <a style="color:black" href="#pages/updates">NAVIGATION TEST</a>
+  <a style="color:black" href="#pages/tests">NAVIGATION TEST2</a>
+</div>
+<div id="backboneTest"> sdf</div>
+<div id="backboneTest2"> sdf</div>
+
+<div id="global">
+  <div id="topSpacer" class="lef" style="display:inline-block;float:left;height:10px;width:100%"> </div>
+  <div id="mainMenu" class="leftBlock"  style="width:100%">
+      <div id="mainMenu_buttons" style="display:inline-block;float:left;" class="mainMenu">    
+        <div style="display:inline-block;float:left">
+          <img src="/img/pollapli-overview-icon.png" alt="overview" id="overview_icon" onClick="setMenu('overview')"/>
+          <img src="/img/pollapli-devices-icon.png" alt="devices" id="devices_icon" onClick="setMenu('devices')"/>
+          <img src="/img/pollapli-tasks-icon.png" alt="tasks" id="tasks_icon" onClick="setMenu('tasks')"/>
+          <img src="/img/pollapli-data-icon.png" alt="data" id="data_icon" onClick="setMenu('data')"/>
+          <img src="/img/pollapli-tools-icon.png" alt="tools" id="tools_icon" onClick="setMenu('tools')"/>
+          <img src="/img/pollapli-settings-icon.png" alt="settings" id="settings_icon" onClick="setMenu('settings')"/>
+        </div>
+        <div style="display:inline-block;float:right;width:20px"></div>
+        <div id="button-description" style="display:inline-block;float:right">|</div>
+      </div>
+      <div id="mainMenu_additional" style="display:inline-block;float:right"  class="infos">
+          <div id="mainmenu_lastNotification" class="leftBlock" style="text-align:center;margin:8px 7px 1px 7px;"></div>
+         <div id="mainMenu_notifications" style="display:inline-block;float:left">
+            <img src="/img/pollapli-errors-icon.png" alt="errors" id="errors_icon" onClick="setMenu('errors')"/>
+            <img src="/img/pollapli-updates-icon.png" alt="updates" id="updates_icon" onClick="setMenu('updates')"/>
+        </div>
+        <div id="mainMenu_help" style="display:inline-block;float:right">
+          <div style="display:inline-block;float:left;text-align:center;margin:8px 7px 1px 7px;">Pollapli 0.5.0</div>
+         <img src="/img/pollapli-help-icon.png" />
+        </div>
+       </div>
+  </div>
+ 
+  <div id="mainContent"  style="height:700px;width:100%;padding:0;margin:0" class=" ui-corner-all leftBlock">
+    <div id="contextMenu" style="width:20%; height:670px;display:inline-block;float:left;" class=" ui-corner-all"></div>
+    <div id="contextContent" style="width:79%; height:670px;display:inline-block;float:left;" class=" ui-corner-all"></div>
+  </div>
+   <button onClick="pollapli.ui.render_filesList();">Files</button>
+  <div id="fileList"></div>
+  <div id="events" style="width:100%; height:500px;display:inline-block;float:left;overflow:auto;"></div>
+    <div id="node-dialog" title="Node "></div>
+   
+  <div id="nodes_test"></div>
+  <div id="loader_dialog" title="Loading data">
+      <div class="title">
+        Please wait, files are being fetched from the server.   
+        <img style="width:16px;height:16px"src="/img/ajax-loader.gif"/>
+      </div>
+  </div>
+
+  <div id="fileUploadDialog"  title="Upload file" >
+    <div >
+    Add file:
+    <form id="uploadForm"  action="/rest", method="post" enctype="multipart/form-data" target="uploadTarget" onsubmit="" name="uploadForm">
+      <input id="datafileField" name="datafile" type="file" onclick="" multiple/>
+      <button  onclick="submit()">Send</button> 
+      <iframe id="uploadTarget" src="" style="width:0px;height:0px;visibility:hidden"> </iframe>
+    </form>
+    </div>
+    <div id="uploadProgressBar" style="width:100%;height:10px;" > </div>
+  </div>
+  
+  
+  
+</div>
+</body>
+</html>
