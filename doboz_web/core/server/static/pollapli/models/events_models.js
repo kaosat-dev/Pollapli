@@ -1,42 +1,4 @@
-function parseEvent(response,key)
-{
-    eventArgs=response.signal.split('.');
-    eventType=eventArgs[eventArgs.length-1];
-    eventData=response.data;
-    
-    targetElement=null;
-    targetElementId=null;
-    data=response.data;
-    
-    console.log("long poll event recieved "+eventType);
-    
-    if (eventType =="node_created")
-    {
-      targetElement=eventArgs[eventArgs.length-2];
-      targetElementId=targetElement.split("_").pop();
-      data={"name":response.data.name};
-    }
-    else if (eventType=="plugged_In")
-    {
-      targetElement=eventArgs[eventArgs.length-3];
-      targetElementId=targetElement.split("_").pop();
-    }
-    else if (eventType=="plugged_Out")
-    {
-      targetElement=eventArgs[eventArgs.length-3];
-      targetElementId=targetElement.split("_").pop();
-    }
-    else if (eventType=="download_updated")
-    {
-      targetElement=eventArgs[eventArgs.length-2]
-      id=targetElement.split("_").pop()
-      
-      console.log("update_id of download "+id+ " data "+ JSON.stringify(eventData)+ " progress "+eventData.progress);
-      //$("#mainmenu_lastNotification").text(targetElement+" "+_event);
-      //pollapli.ui.set_progressbar("#progbardiv_"+id,eventData.progress*100);
-    }
-    return {time:response.time,signal:response.signal,sender:response.sender,data:data,"eventType":eventType,"targetElement":targetElement,"targetElementId":targetElementId};
-}
+
 
 var LongPollEvent = Backbone.Model.extend(
 {
@@ -88,13 +50,75 @@ var LongPollEvents = Backbone.Collection.extend(
     this.timeOutFunct=null;
     this.lastPollTime=(new Date()).getTime();  
     this.bind("add",this.updateTimeStamp );
-  
+    this.callbacks=[];
     console.log("events init: lastPollTime:"+this.lastPollTime);
+    _.bindAll(this, "addCallback","parseEvent");
   },
   parse: function(response) 
   {
     console.log("long poll event recieved"+JSON.stringify(response.events.items)+"last event time"+this.lastPollTime); 
-    return _.map(response.events.items, parseEvent);
+    return _.map(response.events.items, this.parseEvent);
+  },
+  parseEvent : function(response,key)
+{
+    eventArgs=response.signal.split('.');
+    eventType=eventArgs[eventArgs.length-1];
+    eventData=response.data;
+    
+    targetElement=null;
+    targetElementId=null;
+    data=response.data;
+    
+    element=null;
+    
+    console.log("long poll event recieved "+eventType);
+    
+    if (eventType =="node_created")
+    {
+      targetElement=eventArgs[eventArgs.length-2];
+      targetElementId=targetElement.split("_").pop();
+      element="node";
+    }
+    else if (eventType=="plugged_In")
+    {
+      targetElement=eventArgs[eventArgs.length-3];
+      targetElementId=targetElement.split("_").pop();
+    }
+    else if (eventType=="plugged_Out")
+    {
+      targetElement=eventArgs[eventArgs.length-3];
+      targetElementId=targetElement.split("_").pop();
+    }
+    else if (eventType=="download_updated")
+    {
+      targetElement=eventArgs[eventArgs.length-2]
+      id=targetElement.split("_").pop()
+      
+      console.log("update_id of download "+id+ " data "+ JSON.stringify(eventData)+ " progress "+eventData.progress);
+      //$("#mainmenu_lastNotification").text(targetElement+" "+_event);
+      //pollapli.ui.set_progressbar("#progbardiv_"+id,eventData.progress*100);
+    }
+    
+    var tmpEventData= {time:response.time,signal:response.signal,sender:response.sender,data:data,"eventType":eventType,"targetElement":targetElement,"targetElementId":targetElementId};
+    if(this.callbacks[element])
+    {
+    
+      _.each(this.callbacks[element],function(callback)
+      {
+       callback(tmpEventData);
+      });
+      
+    }
+    
+    return {time:response.time,signal:response.signal,sender:response.sender,data:data,"eventType":eventType,"targetElement":targetElement,"targetElementId":targetElementId};
+},
+  addCallback : function(eventType,callback)
+  {
+    if(!this.callbacks[eventType])
+    {
+        this.callbacks[eventType]=[];
+    }
+    this.callbacks[eventType].push(callback);
   },
   updateTimeStamp:function()
   {
@@ -110,13 +134,11 @@ var LongPollEvents = Backbone.Collection.extend(
       }
     }
     this.longPoll();
-  },
-  
+  },  
   startLongPoll:function(response)
   {
     this.retry();
   },
-  
   stopLongPoll:function()
   {
     if(this.timeOutFunct !=null)
@@ -124,14 +146,12 @@ var LongPollEvents = Backbone.Collection.extend(
       this.timeOutFunct.cancel();
     }
   },
-  
   longPoll:function()
   { 
     this.fetch( { data: { "altTimeStamp": this.lastPollTime, "clientId":pollapli.clientId },add: true });
   },
   retry:function()
   {
-    
     self=this;
     setTimeout
     (
@@ -140,7 +160,6 @@ var LongPollEvents = Backbone.Collection.extend(
         self.longPoll();
       },
       this.timeOut
-      
     );
   }
  

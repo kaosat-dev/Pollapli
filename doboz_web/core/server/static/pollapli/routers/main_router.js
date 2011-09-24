@@ -6,6 +6,9 @@ var MainRouter = Backbone.Router.extend(
   },
   initialize:function()
   {
+    this.events=new LongPollEvents();
+    this.events.startLongPoll();
+    
     this.headerView=new HeaderView({el: $("#header")});
     this.headerView.parent=this;
     
@@ -13,9 +16,7 @@ var MainRouter = Backbone.Router.extend(
     
     this.nodes=new NodeCollection();
     this.nodes.fetch();
-    
-    this.events=new LongPollEvents();
-    this.events.startLongPoll();
+    this.events.addCallback("node",this.nodes.justATest)
     
     this.updates=new Updates();
     this.updates.fetch(); 
@@ -32,6 +33,7 @@ var MainRouter = Backbone.Router.extend(
     this.updatesView.parent=this;
     
     $("#loader_dialog").dialog('close');  
+    
   },
   openInterfacePage : function(pageName) 
   {

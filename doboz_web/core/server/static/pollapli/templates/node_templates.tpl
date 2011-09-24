@@ -1,6 +1,6 @@
 <script type="text/x-jqote-template" id="nodes_tmpl"> 
     <% var divId="nodediv_"+j+'' ; %>
-    <div id="<%=divId%>" class="ui-corner-all ui-state-default ">
+    <div id="<%=divId%>" class="ui-corner-all ui-state-default " >
       <div name="id" id="id">Id: <%=this.id%></div>
       <div name="name" id="name">Name: <%=this.name%></div>
       <div name="description" id="description">description: <%=this.description%></div>
@@ -8,54 +8,97 @@
       <% if(this.driver) { %>
             <div >isPluggedIn: <%=this.driver.isPluggedIn%></div>
             <div >isConnected: <%=this.driver.isConnected%></div>
-            <button onclick="pollapli.ui.openDriverDialog(<%=j%>,'modify')">Modify driver </button>
-        
-      <% }else { %>
-         <button onclick="pollapli.ui.openDriverDialog(<%=j%>,'set')">Set driver</button>
+      <% }else 
+      { %>
+        No driver set
        <% }%>
-       <br>
-       <% if(this.recipe) { %>
-           
-            <button onclick="pollapli.ui.openRecipeDialog(<%=j%>,'modify')">Modify recipe </button>
-        
-      <% }else { %>
-         <button onclick="pollapli.ui.openRecipeDialog(<%=j%>,'set')">Set recipe</button>
-       <% }%>
-       
+
       <br>
-      <a href="#" class="deleteButton ui-priority-primary ui-corner-all ui-state-default block" onCLick=manager.deleteNodeTest(<%=this.id%>)>Delete <span class="ui-icon ui-icon-trash "></span></a>
-      <button class="deleteButton ui-priority-primary ui-corner-all ui-state-default" onCLick=manager.deleteNodeTest(<%=this.id%>)>Delete <span class="ui-icon ui-icon-trash "></span></button>
-      <button class="modifyButton ui-priority-primary ui-corner-all ui-state-default" > Update <span class="ui-icon ui-icon-arrowthick-1-n "></button>
-      
+      <a href="#" class="deleteButton ui-priority-primary ui-corner-all ui-state-default block" >Delete <span class="block ui-icon ui-icon-trash "></span></a>
+      <a href="#" class="modifyButton ui-priority-primary ui-corner-all ui-state-default block" >Update <span class="block ui-icon ui-icon-arrowreturnthick-1-n"></span></a>
+     
     </div>
 </script> 
 
 
 <script type="text/x-jqote-template" id="nodes_dialog_tmpl"> 
-    <% if (!this.node)
+    <% if (!this.element)
     {
-      this.node={name:"...",description:"...",type:"...",id:-1};
+      this.element={name:"Default device",description:"This is a default device",type:"...",id:-1};
     }
     this.environmentId=1;
     %>
     <div >  
-    <form>
+    <% if(this.mode!="delete") { %>
+    <form class="cmxform">
         <fieldset>   
-          <input title="name this node, keep it short!" type="text" name="nodes_dialog_name" id="nodes_dialog_name" value="<%= this.node.name %>"  style="width:70%"/>
-          <label for="nodes_dialog_name" class="title">Name</label>
-          <textarea title="description of this node" rows="4" cols="25" name="nodes_dialog_description" id="nodes_dialog_description"  style="width:70%"><% this.node.description=$.trim(this.node.description);%><%=this.node.description %></textarea>
-          <label for="nodes_dialog_description" class="title">Description</label>
-          <input title="recipe being used by this node" type="text" name="nodes_dialog_recipe"  id="nodes_dialog_recipe" value=" " style="width:70%"/>
-          <label for="nodes_dialog_recipe" class="title">Recipe</label>
+          <legend class="title">Node Infos</legend>
+          <ol>
+             <li>
+             Environment id: <%= this.environmentId %>
+             </li>
+             <li>
+             Node id: <%= this.element.id%>
+             </li>
+             <li>
+              <label for="name" class="title">Name</label>
+              <input title="name this node, keep it short!" type="text" name="name" id="name" value="<%= this.element.name %>" />
+             </li>
+             <li>
+              <label for="description" class="title">Description</label>
+              <textarea title="description of this node" rows="4" cols="25" name="description" id="description" ><% this.element.description=$.trim(this.element.description);%><%=this.element.description %></textarea>
+             </li>
+         </ol>
+        </fieldset>
+        <fieldset>   
+          <legend class="title">Driver Settings</legend>
+          <ol>
+               <% if(this.element.driver) { %>
+              <li>
+               Current: <%= this.element.driver.driverType %>
+              </li>
+               <li>
+                Can be used for device of type: <%= this.element.driver.deviceType%>
+              </li>
+              <%}%>
+             <li>
+                <label for="driver" class="title">Driver</label>
+                  <select id="deviceDriver">
+                   <option value='' selected='selected'></option>
+                   <option value="">Teacup driver</option>
+                   <option value="">Makerbot driver</option>
+                 </select> 
+              </li>
+         </ol>
+        </fieldset>
+        <fieldset>   
+          <legend class="title">Device structure Settings</legend>
+          <ol>
+              <li>
+              <label for="deviceRecipe" class="title">Recipe</label>
+              <select id="deviceRecipe">
+                 <option value='' selected='selected'></option>
+                 <option value="">Mendel Reprap: Standard </option>
+                 <option value="">Prussa Reprap: Standard </option>
+                 <option value="">Makerbot Cupcake: Standard </option>
+              </select>
+             </li>
+         </ol>
         </fieldset>
       </form>
+      
       <div>
-      <div class="title ">Infos</div>
-      <div class="leftBlock"> Environment id: <%= this.environmentId %></div>
-      <div class="rightblock"> Node id: <%= this.node.id%></div>
-    </div>
     
-    <button onCLick="pollapli.validateNodeOp('<%= this.mode%>',<%= this.node.id%>)"> <%= this.mode%> </button> 
+    </div>
+    <div align="center">
+    <a href="#" class="validateButton ui-priority-primary ui-corner-all ui-state-default block" ><%= this.mode%><span class="ui-icon ui-icon-check block"></span></a>
+     </div>
+      <% }else { %>
+       Are you sure you want to delete this node ? this operation is permanent!<br>
+       <a href="#" class="validateButton ui-priority-primary ui-corner-all ui-state-default block" >Yes<span class="ui-icon ui-icon-check block"></span></a>
+       <a href="#" class="cancelButton ui-priority-primary ui-corner-all ui-state-default block" >No<span class="ui-icon ui-icon-closethick block"></span></a>
+      
+      <% } %>
     </div>
 </script> 
 
@@ -67,8 +110,8 @@
 
 <script type="text/x-jqote-template" id="driver_dialog_tmpl"> 
    <% if (!this.driver)
-    {
-      this.driver={driverType:null,options:{'speed':115200}};
+   {
+      this.node={name:"Default-device name",description:"This is a default device",type:"...",id:-1};
     }
     this.environmentId=1;
   %>
@@ -91,13 +134,10 @@
  
  
   <script type="text/x-jqote-template" id="nodes_dialog_old_tmpl"> 
-    <![CDATA[
-    
-      
-    
+    <![CDATA[    
     <% if (!this.node)
     {
-      this.node={name:"...",description:"...",type:"...",id:-1};
+      this.node={name:"Default-device name",description:"This is a default device",type:"...",id:-1};
     }
     
     this.environmentId=1;
@@ -146,6 +186,16 @@
         <Strong>Name: </Strong> <%=this.name  %>  <Strong>Description: </Strong><%= this.description %> 
         <% $(this.divId).link(this);%>
      </div>
+    ]]>
+</script> 
+
+ <script type="text/x-jqote-template" id="nodes_deleteDialog_tmpl"> 
+    <![CDATA[
+    <div>
+      Are you sure you want to delete this node ? this operation is permanent!<br>
+      <button>Yes</button><button>No</button>
+     </div>
+      
     ]]>
 </script> 
  

@@ -1,6 +1,7 @@
  var FilterView= Backbone.View.extend
 (
   {
+    
     initialize: function() 
     {
       this.template=pollapli.ui.templates["filter_widget_tmpl"];
@@ -8,14 +9,18 @@
       this.orderables=this.options.orderables;
       this.currentOrder="name";
       this.filterParams={};
+      //this.el=this.options.el;
       _.bindAll(this, "render");
+      
+    
 
       // $("#truc").jqotesub(pollapli.ui.templates["filter_widget_tmpl"], {orderables:["name","version","type"],filterables:["downloaded","installed",]});
       
     },
     render: function() 
     {  
-     $(this.el).jqotesub(this.template, {orderables:this.orderables,filterables:this.filterables});
+      //alert(this.el+"gfdfs"+$(this.el).attr("id"));
+      $(this.el).jqotesub(this.template, {orderables:this.orderables,filterables:this.filterables});
       return this;
     },
     order : function(e)
@@ -44,7 +49,7 @@
     filter : function(e)
     {
       var checked={};
-      $('#filterTruc input').each(function() 
+      $('#filterControl input').each(function() 
       {
         checked[$(this).attr('name')]=$(this).prop("checked") ;
       });
@@ -56,7 +61,7 @@
     {
       $(this.el).trigger('tutuEvent');
       this.filterParams={};
-      $('#filterTruc input').each(function() 
+      $('#filterControl input').each(function() 
       {
           $(this).prop("checked",false) ;
       });

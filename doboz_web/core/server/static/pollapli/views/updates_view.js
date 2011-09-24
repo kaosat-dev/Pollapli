@@ -17,32 +17,29 @@ var UpdatesView= Backbone.View.extend
    {
     initialize: function() 
     {
-      
-      
-      this.filterView=new FilterView({el: $("#truc"),orderables:["name","version","type"],filterables:["downloaded","installed",] });//,{orderables:["name","version","type"],filterables:["downloaded","installed",]});
-      this.filterView.parent=this;
 
-      //this.updateListView=new UpdatesListView({collection: this.collection, el: $("#machin") });
-      
+      //this.updateListView=new UpdatesListView({collection: this.collection, el: $("#machin") });  
       _.bindAll(this, "render");
       this.collection.bind("all", this.render,this);   
-      $(this.el).trigger('totoEvent');
     },
     renderList : function(updates)
     {
-      $("#machin").html("");
+      $("#innerContent").html("");
       updates.each(function(update)
       {
         var view = new UpdateView({model: update});
-        $("#machin").append(view.render().el);
+        $("#innerContent").append(view.render().el);
       });
       return this;
     },
     render : function()
     {
         $(this.el).html("");
-        this.el.append($("<div id='truc'></div>", {id: "#truc"}));
-        this.el.append($("<div id='machin'>dfgdfg</div", {id: "#machin"}));
+        this.el.append($("<div id='innerHeader' class='widgetHeader'></div>", {id: "#innerHeader"}));
+        this.el.append($("<div id='innerContent'>dfgdfg</div", {id: "#innerContent"}));
+        this.filterView=new FilterView({el: $("#innerHeader"),orderables:["name","version","type"],filterables:["downloaded","installed",] });//,{orderables:["name","version","type"],filterables:["downloaded","installed",]});
+        this.filterView.parent=this;
+        
         this.filterView.render();
         this.renderList(this.collection);
      

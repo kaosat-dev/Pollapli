@@ -128,16 +128,7 @@ var Updates = Backbone.Collection.extend(
      });
       return valid;
     }));
-   
- 
     result=result.value();
-
-   /* var youngest = _(stooges).chain()
-  .sortBy(function(stooge){ return stooge.age; })
-  .map(function(stooge){ return stooge.name + ' is ' + stooge.age; })
-  .first()
-  .value();
-  */
     return result 
   }
   

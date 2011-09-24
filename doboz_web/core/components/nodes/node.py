@@ -59,7 +59,6 @@ class Node(DBObject):
         self.status=NodeStatus()
         self.driver=None 
         
-        
         #################
         self.variables=[]
         self.elements=[]
@@ -396,7 +395,7 @@ class NodeManager(object):
         return self.nodes[id]
     
     
-    def update_node(self,id,name=None,description=None):
+    def update_node(self,id,name=None,description=None,*args,**kwargs):
         """Method for node update"""   
         node=self.nodes[id]
         

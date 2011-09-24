@@ -112,7 +112,8 @@ class NodeHandler(DefaultRestHandler):
         """
         r=ResponseGenerator(request,status=200,contentType="application/pollapli.node+json",resource="node",rootUri=self.rootUri)
         d=RequestParser(request,"node",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()    
-        d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).update_node(id=self.nodeId,**params),errback=r._build_response)     
+        #d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).update_node(id=self.nodeId,**params),errback=r._build_response)     
+        d.addCallbacks(callback=lambda params:self.environmentManager.get_environment(self.envId).update_node(**params),errback=r._build_response)     
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET
