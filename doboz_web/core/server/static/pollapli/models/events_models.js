@@ -79,6 +79,18 @@ var LongPollEvents = Backbone.Collection.extend(
       targetElementId=targetElement.split("_").pop();
       element="node";
     }
+    else if (eventType=="node_deleted")
+    {
+      targetElement=eventArgs[eventArgs.length-2];
+      targetElementId=targetElement.split("_").pop();
+      element="node";
+    }
+    else if (eventType=="node_updated")
+    {
+     targetElement=eventArgs[eventArgs.length-2];
+      targetElementId=targetElement.split("_").pop();
+      element="node";
+    }
     else if (eventType=="plugged_In")
     {
       targetElement=eventArgs[eventArgs.length-3];

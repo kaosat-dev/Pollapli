@@ -1,59 +1,17 @@
 var BaseCollection = Backbone.Collection.extend(
 {
-  sortByParam : function(param)
-  {
-    var result = _(this.sortBy(function(baseModel) 
-        {
-          //workeround for inverted compare (includes handling of strings)
-          if( param.indexOf("-") != -1)
-          {     
-             tmp=baseModel.get(param.substr(1));
-             if(is('String', tmp))
-             {
-               return -tmp.charCodeAt(0);
-             }
-             else
-             {
-               return -tmp
-             }
-          }
-          else
-          {
-             return baseModel.get(param);
-          }
-         
-        }));
-     return result;
-  },
-  filterByParam : function(params)
-  {
-    //need a look at the "all" underscore js method
-    var result= _(this.filter(function(baseModel)
-    {
-     valid=true;
-     _.each(params, function(value, key)
-     { 
-       console.log("baseModel: "+baseModel.get("name")+ " key: "+key +" baseModel var value: "+baseModel.get(key)+" val: "+value);
-        if(baseModel.get(key)!=value)
-        {
-          valid=false; 
-        }
-     });
-      return valid;
-    }));
-    return result;
-  },
   filterAndOrder : function(filterParams,sortParam)
   {
     var result=_(this.chain()
-    .sortBy(function(baseModel)
+    .sortBy(function(node)
     {
        //workaround for inverted compare (includes handling of strings)
           if( sortParam.indexOf("-") != -1)
           {     
-             tmp=baseModel.get(sortParam.substr(1));
+             tmp=node.get(sortParam.substr(1));
              if(is('String', tmp))
              {
+                tmp=tmp.toLowerCase();
                return -tmp.charCodeAt(0);
              }
              else
@@ -63,17 +21,25 @@ var BaseCollection = Backbone.Collection.extend(
           }
           else
           {
-             return baseModel.get(sortParam);
+             tmp=node.get(sortParam)
+             if(is('String', tmp))
+             {
+                tmp=tmp.toLowerCase();
+               return tmp.charCodeAt(0);
+             }
+             else
+             {
+               return tmp
+             }
           }
-         
     })
-    .filter(function(baseModel)
+    .filter(function(node)
     {
        valid=true;
      _.each(filterParams, function(value, key)
      { 
        
-        if(baseModel.get(key)!=value )
+        if(node.get(key)!=value )
         {
           valid=false; 
         }

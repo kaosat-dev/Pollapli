@@ -1,21 +1,25 @@
 var Node = Backbone.Model.extend(
 {
     urlRoot : pollapli.mainUrl+'rest/environments/1/nodes',
-   
-            initialize: function()
-            {  
-              
-            },
-            defaults: 
-            {
-                name: 'Default node',
-                description: 'just a node',
-            }
+    initialize: function()
+    {  
+        this.driver=new Driver({url:this.url+"/driver"});
+    },
+    defaults: 
+    {
+        name: 'Default node',
+        description: 'just a node',
+    }
 });
 var NodeCollection = Backbone.Collection.extend(
 {
   model : Node,
   url: pollapli.mainUrl+'rest/environments/1/nodes',
+  
+  initialize: function()
+  {  
+    _.bindAll(this, "justATest");  
+  },
   parse: function(response) 
   {
     return response.nodes.items;
@@ -26,66 +30,28 @@ var NodeCollection = Backbone.Collection.extend(
   },
   justATest : function(longPollEvent)
   {
-    alert("node collection got event from longpoll: "+longPollEvent.eventType+longPollEvent.targetElement+" "+longPollEvent.targetElementId+"data "+longPollEvent.data);
-    if(longPollEvent.eventType=="node_created")
+    if(longPollEvent.eventType=="node_created" || longPollEvent.eventType=="node_updated" || longPollEvent.eventType=="node_deleted")
     {
-      var found=this.detect(function(id){ node.get("id")==id})
-      //var bidule=found()
-      //this.detect (obj) -> (obj.get('product').get('id') == pid)
-      /*longPollEvent.data.id
-      truc=
-      
-       if(longPollEvent.data.id)
+      this.fetch();
+      /*try
       {
-        
+        console.log("Element id: "+longPollEvent.data.id);
+        var refId=longPollEvent.data.id;
+        var foundNode=this.detect(function(node){return node.get("id")==refId;})
+        console.log("Found item"+foundNode);
+        if(foundNode==undefined)
+        {
+          console.log("new item");
+          this.add(new Node(data));
+        }
+      }
+      catch(error)
+      {
+        console.log("error"+error);
       }*/
-      
     }
     
    
-  },
-  sortByParam : function(param)
-  {
-    var result = _(this.sortBy(function(node) 
-        {
-          //workeround for inverted compare (includes handling of strings)
-          if( param.indexOf("-") != -1)
-          {     
-             tmp=node.get(param.substr(1));
-             if(is('String', tmp))
-             {
-               return -tmp.charCodeAt(0);
-             }
-             else
-             {
-               return -tmp
-             }
-          }
-          else
-          {
-             return node.get(param);
-          }
-         
-        }));
-     return result;
-  },
-  filterByParam : function(params)
-  {
-    //need a look at the "all" underscore js method
-    var result= _(this.filter(function(node)
-    {
-     valid=true;
-     _.each(params, function(value, key)
-     { 
-       console.log("node: "+node.get("name")+ " key: "+key +" node var value: "+update.get(key)+" val: "+value);
-        if(update.get(key)!=value)
-        {
-          valid=false; 
-        }
-     });
-      return valid;
-    }));
-    return result;
   },
   filterAndOrder : function(filterParams,sortParam)
   {
@@ -98,6 +64,7 @@ var NodeCollection = Backbone.Collection.extend(
              tmp=node.get(sortParam.substr(1));
              if(is('String', tmp))
              {
+                tmp=tmp.toLowerCase();
                return -tmp.charCodeAt(0);
              }
              else
@@ -107,9 +74,17 @@ var NodeCollection = Backbone.Collection.extend(
           }
           else
           {
-             return node.get(sortParam);
+             tmp=node.get(sortParam)
+             if(is('String', tmp))
+             {
+                tmp=tmp.toLowerCase();
+               return tmp.charCodeAt(0);
+             }
+             else
+             {
+               return tmp
+             }
           }
-         
     })
     .filter(function(node)
     {

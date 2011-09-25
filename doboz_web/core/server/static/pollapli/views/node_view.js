@@ -54,16 +54,10 @@ var NodesView= Backbone.View.extend
       }
       
       this.editDialog = new NodeDialogView({el: $("#nodeDialog"),collection:this.collection}); 
-      this.tutu="kpeeeer";
-     
-      
+
       _.bindAll(this, "render","renderList");
 
       this.collection.bind("all", this.render,this);   
-     // this.collection.bind("all", this.renderList,this);   
-       
-    
-       
     },
     renderList : function(nodes)
     {  

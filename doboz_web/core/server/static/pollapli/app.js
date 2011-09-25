@@ -62,7 +62,7 @@ pollapli.loadScripts=function(callback)
     var dependencies=
     ['models/pages_models.js','routers/main_router.js','views/header_view.js','views/page_view.js','models/nodes_models.js',
     'views/filter_view.js','models/updates_models.js','views/updates_view.js','models/events_models.js','views/events_view.js',
-    'models/pages_models.js','views/node_view.js','models/nodes_models.js'
+    'models/pages_models.js','views/node_view.js','models/nodes_models.js','models/driverModel.js'
     ];  
     var onAllLoaded = function(){console.log("finished loading scripts");callback();};
     var afterFunction = _.after(dependencies.length, onAllLoaded);
