@@ -26,7 +26,7 @@ from doboz_web.core.components.automation.task import TaskManager
 class Environment(DBObject):
     HASMANY = ['nodes']
     HASMANY = ['tasks']
-    EXPOSE=["name","description","id","status","taskManager.tasks","nodeManager.nodes"]
+    EXPOSE=["name","description","id","status","_tasks","_nodes"]
     
     def __init__(self,path="/",name="home",description="Add Description here",status="active",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
@@ -34,8 +34,8 @@ class Environment(DBObject):
         self.name=name
         self.description=description
         self.status=status
-        self.nodeManager=NodeManager(self)
-        self.taskManager=TaskManager(self)
+        self._nodes=NodeManager(self)
+        self._tasks=TaskManager(self)
                  
     """
     ####################################################################################
@@ -47,8 +47,8 @@ class Environment(DBObject):
         """
         Method configuring additional elements of the current environment
         """
-        yield self.nodeManager.setup()
-        yield self.taskManager.setup()
+        yield self._nodes.setup()
+        yield self._tasks.setup()
         
         #create db if not existent else just connect to it
 #        dbPath=self.path+os.sep+self.name+"_db"
@@ -64,7 +64,7 @@ class Environment(DBObject):
         """
         Tidilly shutdown and cleanup after environment
         """
-        #self.nodeManager.tearDown()     
+        #self._nodes.tearDown()     
 
     def get_environmentInfo(self):
         return self.name
@@ -74,10 +74,10 @@ class Environment(DBObject):
         return result
 
     def __getattr__(self, attr_name):
-        if hasattr(self.nodeManager, attr_name):
-            return getattr(self.nodeManager, attr_name)
-        elif hasattr(self.taskManager, attr_name):
-            return getattr(self.taskManager, attr_name)
+        if hasattr(self._nodes, attr_name):
+            return getattr(self._nodes, attr_name)
+        elif hasattr(self._tasks, attr_name):
+            return getattr(self._tasks, attr_name)
         else:
             raise AttributeError(attr_name)
 

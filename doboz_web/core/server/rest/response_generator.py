@@ -3,7 +3,6 @@ from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.web import resource, http
 from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-from doboz_web.core.server.rest.data_formater import DataFormater
 from doboz_web.core.server.rest.data_formater   import JsonFormater
 
 
@@ -26,7 +25,7 @@ class ResponseGenerator(object):
         response=""
         callback=getattr(self.request,"clientCallback",None)
         
-        formater=JsonFormater(resource=self.resource)
+        formater=JsonFormater()
         
         if isinstance(payload, failure.Failure):
             print("Failure: error message:",payload.getErrorMessage(),"printTraceback:")
@@ -40,7 +39,7 @@ class ResponseGenerator(object):
             self.request.setResponseCode(self.status)
             self.request.setHeader("Content-Type", self.contentType)       
             try:
-                payload=formater.format(payload,self.resource,self.rootUri or self.request.path)
+                payload=formater.format(payload,self.resource)#,self.resource,self.rootUri or self.request.path)
             except Exception as inst:
                 print("error in reponse gen",str(inst))
                 traceback.print_exc(file=sys.stdout)

@@ -1,167 +1,84 @@
 import json,traceback,sys,inspect
 
-class DataFormater(object):
-    def __init__(self,resource="resource",rootUri="http://localhost"):
-        self.resource=resource
-        self.rootUri=rootUri
-        
-    def format(self,data):  
-        if self.resource.endswith('s'):
-            data[self.resource]["link"]={"rel":self.resource,"href":self.rootUri}
-            singleResource=self.resource[:-1]
-            for item in data[self.resource]["items"]:
-                if item[singleResource].get("id")is not None:
-                    item[singleResource]["link"]["href"]=self.rootUri+"/"+str(item[singleResource]["id"])
-                else:
-                    try:
-                        item[singleResource]["link"]["href"]=self.rootUri+"/"+str(item[singleResource]["name"])
-                    except:pass
-                #print("terf",item[singleResource]["link"])
-        else:
-            try:
-                data[self.resource]["link"]={"rel":self.resource,"href":self.rootUri+"/"+ str(data[self.resource]["id"])}
-            except:
-                data[self.resource]["link"]={"rel":self.resource,"href":self.rootUri}
-        return data
-
-
-class DataFormater2(object):
-    """new , more modular data formatter
-    this should be sublcassed for each class that needs its data formated into a specific format
-    @ivar resouce: The output resource type.
-    @ivar rootUri: the root adress of this resource type.
-    @ivar outputType: what format does this formatter render the resource to.
-    @ivar ignoredAttrs: a list of attributes that will NOT be included in the final representation of this resource
-    this comes into play when looping through the provide class instance's dict
-    """
-    def __init__(self,resource="resource",rootUri="http://localhost",outputType=None,ignoredAttrs=None,addedAttrs=None):
-        try:
-            self.resource=resource.lower()
-        except:
-            self.resource="resource"
-        self.rootUri=rootUri
-        self.outputType=outputType
-        self.ignoredAttrs=ignoredAttrs
-        self.addedAttrs=addedAttrs
-        
-        
-    def format(self,element):
-        pass
-    
-class JsonFormater(DataFormater2):
+class JsonFormater(object):
     """Class to dynamically format an object into a json representation  of itself"""
-    def __init__(self,resource="resource",rootUri="http://localhost"):
-        DataFormater2.__init__(self, resource, rootUri, "json")
-        self.list=list
-        self.maxRecurion=5
-        self.subObjectLinksOnly=False
-        
-    def format(self,object,resource,rootUrl="http://localhost",maxRecursion=5,subObjectLinksOnly=True):
-        return self.__format(object,resource,rootUrl,0,subObjectLinksOnly,True)
-        
-    def __format(self,object,resource,rootUrl="http://localhost",recursionLevel=0,subObjectLinksOnly=False,isRoot=False):
-        result={}
-        doIt=True
-      #  print("resource",resource,"recursionLevel",recursionLevel,"maxRecurion",self.maxRecurion)  
-        if recursionLevel > self.maxRecurion:  
-            doIt=False
-            return None
-        
-        isList=False
-        if inspect.isclass(object):
-            if issubclass(object, list):
-                isList=True
+    resourceUris={"environments":"/environments","nodes":"/nodes"}
+    
+    
+    def format(self,object,resource):
+        result = {}
+        if isinstance(object,list):
+            result[resource] = self._formatList(object,resource)
+        elif isinstance(object,dict):
+            result[resource] = self._formatDict(object,resource)
         else:
-            if isinstance(object,list):
-                isList=True
-        
-        if not isList:
-            tmpDict={}      
-            tmpDict["link"]={"href":rootUrl,"rel":resource} 
-
-            if not isinstance(object,dict) and hasattr(object,"EXPOSE") and doIt:     
-                for attrName in object.EXPOSE: 
-                    attrValue=None
-                    #if we are at a recusion level >0  
-                            
-                    if "." in attrName:
-                        main,sub=attrName.split(".")
-                        par=getattr(object,main)
-                        attrName=sub
-                        attrValue=self.__format(getattr(par,sub),attrName,tmpDict["link"]["href"]+"/"+attrName,recursionLevel+1,subObjectLinksOnly)
-                    else:
-                        tmpattrValue=getattr(object,attrName,None)
-                        if tmpattrValue is not None :   
-                            if not hasattr(tmpattrValue,"EXPOSE") and not isinstance(tmpattrValue,list):
-                                try:
-                                    json.dumps(tmpattrValue)
-                                    attrValue=tmpattrValue
-                                except Exception as inst:
-                                    print("ERROR IN formatter",inst)
-                                    attrValue=tmpattrValue.__name__
-                            else:
-                                try:                   
-                                    attrValue=self.__format(tmpattrValue,attrName,tmpDict["link"]["href"]+"/"+attrName,recursionLevel+1,subObjectLinksOnly)
-                                 
-                                except Exception as inst:pass
-                                    #print("Error",inst)
-                                    #traceback.print_exc(file=sys.stdout)
-                    if attrValue is not None:
-                        tmpDict[attrName]=attrValue
-            elif not isinstance(object,dict) and doIt:
-                pass
-                    #    print("adding ",attrName," value",attrValue,"recursionLevel",recursionLevel)
-            #print("Finished adding ",tmpDict)
-        else:
-            
+            result[resource] = self._formatObject(object,resource)
+        print("JSON result ",str(result))
+ 
+        return json.dumps(result)
+          
+    def _formatList(self,object,resource=None):
+        if resource is not None:
             singleName=resource
             pluralName=resource
-            if resource.endswith('s'):
+            if singleName.endswith('s'):
                 singleName=resource[:-1]
             else:
                 pluralName=resource+'s'
-            if not rootUrl.endswith('s'):
-                rootUrl=rootUrl+'s'
-           
-           
-           # print("singleName",singleName)     
-            tmpDict={}
-            tmpDict["link"]={"href":rootUrl,"rel":pluralName}
-            tmpDict["items"]=[]
-            
-            for item in object:      
-                link=tmpDict["link"]["href"]
-                try:
-                    subElementUrlPrefix=None
-                    if getattr(item,"id") is not None:
-                        subElementUrlPrefix=str(getattr(item,"id"))
-                    elif getattr(item,"name") is not None:
-                        subElementUrlPrefix=getattr(item,"name")
-                    if subElementUrlPrefix is not None:
-                        link=rootUrl+"/"+subElementUrlPrefix
-                except:pass
-                       
-                if hasattr(item,"EXPOSE"):                    
-                    
-                  #  print("in a list, attempting to do stuff with itme",item)
-                    newItem=None
-                    newItem=self.__format(item,singleName,link,recursionLevel,subObjectLinksOnly)
-                    tmpDict["items"].append(newItem)   
-                else:
-                    tmpDict["items"].append(item)   
-                    
-                
-                
-        if isRoot:
-            result[resource]=tmpDict  
-            finalRes=None
-            try:
-                finalRes= json.dumps(result)
-            except Exception as inst:
-                print("ERROR in data formatter",inst)
-            return finalRes
         else:
-            return tmpDict
+            singleName=""
+            pluralName=""
+#        if not rootUrl.endswith('s'):
+#            rootUrl=rootUrl+'s'       
+        tmpDict={"link":{"href":"","rel":pluralName}}      
+        tmpDict["items"]=[]
+            
+        def formatItem(item):
+            link=tmpDict["link"]["href"]
+            try:
+                subElementUrlPrefix=None
+                if getattr(item,"id") is not None:
+                    subElementUrlPrefix=str(getattr(item,"id"))
+                elif getattr(item,"name") is not None:
+                    subElementUrlPrefix=getattr(item,"name")
+                if subElementUrlPrefix is not None:
+                    link="/"+subElementUrlPrefix
+            except:pass
+            
+            if hasattr(item,"EXPOSE"):                    
+                newItem=None
+                newItem=self._formatObject(item,singleName)
+                tmpDict["items"].append(newItem)   
+            else:
+                tmpDict["items"].append(item) 
         
+        for item in object:
+            formatItem(item)
+        return tmpDict
                 
+    def _formatObject(self,object,resource=None):
+        tmpDict={"link":{"href":"","rel":resource}}     
+        
+        if not isinstance(object,dict) and hasattr(object,"EXPOSE") :     
+            for attrName in object.EXPOSE: 
+                attrValue=None
+                tmpattrValue=getattr(object,attrName,None)     
+                if tmpattrValue is not None:
+                    if attrName.startswith("_"):
+                        attrName=attrName[1:]
+                    if isinstance(tmpattrValue,dict):
+                        tmpDict[attrName]=self._formatDict(tmpattrValue)
+                    elif isinstance(tmpattrValue,list):
+                        tmpDict[attrName]=self._formatList(tmpattrValue)
+                    elif isinstance(tmpattrValue, (str, unicode,int,float)):
+                        tmpDict[attrName]=tmpattrValue
+                    else:
+                        tmpDict[attrName]={"link":{"href":"/"+attrName,"rel":attrName.lower()}} 
+        return  tmpDict
+     
+    def _formatDict(self,object,resource=None):
+        tmpDict={"link":{"href":"","rel":resource}}       
+        return  tmpDict
+
+         
             

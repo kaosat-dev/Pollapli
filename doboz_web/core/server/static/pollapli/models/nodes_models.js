@@ -3,13 +3,14 @@ var Node = Backbone.Model.extend(
     urlRoot : pollapli.mainUrl+'rest/environments/1/nodes',
     initialize: function()
     {  
-        this.driver=new Driver({url:this.url+"/driver"});
+        //this.driver=new Driver({url:this.url+"/driver"});
     },
     defaults: 
     {
         name: 'Default node',
         description: 'just a node',
     }
+  
 });
 var NodeCollection = Backbone.Collection.extend(
 {
