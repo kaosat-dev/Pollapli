@@ -16,7 +16,7 @@ from twisted.python import log,failure
 from doboz_web.core.components.automation.print_action import PrintAction
 from doboz_web.core.components.automation.action import Action
 from doboz_web.core.tools.wrapper_list import WrapperList
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.signal_system import SignalHander
 
 
 

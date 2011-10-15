@@ -7,7 +7,7 @@ from twisted.internet import protocol
 
 from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
 #from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.signal_system import SignalHander
 
 
 #from doboz_web.dependencies.SCons.Environment import *

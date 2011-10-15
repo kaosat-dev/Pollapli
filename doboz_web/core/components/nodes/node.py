@@ -20,7 +20,7 @@ from doboz_web.core.tools.vector import Vector
 from doboz_web.core.components.nodes.node_elements import NodeComponent,GenericNodeElement,Tool,Variable,Actor,Sensor
 from doboz_web.core.tools.wrapper_list import WrapperList
 from doboz_web.exceptions import UnknownNodeType,NodeNotFound
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.signal_system import SignalHander
 #from doboz_web.core.components.nodes.hardware.reprap.reprap_capability import ReprapCapability
 
  

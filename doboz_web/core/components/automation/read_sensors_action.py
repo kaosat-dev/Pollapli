@@ -8,7 +8,7 @@ from twisted.python import log,failure
 
 
 from doboz_web import idoboz_web
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.signal_system import SignalHander
 from doboz_web.core.components.automation.task import ActionStatus
 
 class ReadSensorsAction(DBObject): 

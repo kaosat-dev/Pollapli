@@ -15,8 +15,8 @@ from twistar.dbconfig.base import InteractionBase
 
 from doboz_web.exceptions import UnknownUpdate
 from doboz_web.core.tools.wrapper_list import WrapperList
-from doboz_web.core.file_manager import FileManager
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.file_manager import FileManager
+from doboz_web.core.tools.signal_system import SignalHander
 from doboz_web.core.tools import checksum_tools
 
 

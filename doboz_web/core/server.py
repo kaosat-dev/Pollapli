@@ -11,17 +11,17 @@ from twisted.internet import reactor, defer
 
 
 from doboz_web.core.components.environments.environment import EnvironmentManager,Environment
-from doboz_web.core.server.rest.handlers.environment_handlers import EnvironmentsHandler
-from doboz_web.core.server.rest.handlers.driver_handlers import DriverTypesHandler
-from doboz_web.core.server.rest.handlers.config_handlers import ConfigHandler
-from doboz_web.core.server.rest.exception_converter import ExceptionConverter
+from doboz_web.core.interface.rest.handlers.environment_handlers import EnvironmentsHandler
+from doboz_web.core.interface.rest.handlers.driver_handlers import DriverTypesHandler
+from doboz_web.core.interface.rest.handlers.config_handlers import ConfigHandler
+from doboz_web.core.interface.rest.exception_converter import ExceptionConverter
 from doboz_web.exceptions import *
-from doboz_web.core.file_manager import FileManager
+from doboz_web.core.tools.file_manager import FileManager
 from doboz_web.core.components.updates.update_manager import UpdateManager
 from doboz_web.core.components.drivers.driver import DriverManager
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.signal_system import SignalHander
 from doboz_web.core.tools import checksum_tools
-from doboz_web.core.server.rest.data_formater   import JsonFormater
+from doboz_web.core.interface.rest.data_formater   import JsonFormater
 from doboz_web.core.components.autocompile.compile_upload import  SconsProcessProtocol
 #from doboz_web.dependencies.usb import core  
 #from doboz_web.dependencies import usb
@@ -32,7 +32,6 @@ from twisted.python import log
 class MainServer():
     def __init__(self,port,rootPath,filePath,dataPath):
         #app = Application("PollapliServer")
-
         self.port=port
         self.rootPath=rootPath
         self.filePath=filePath

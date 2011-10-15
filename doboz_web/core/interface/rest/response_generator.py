@@ -2,8 +2,8 @@ import json, sys, traceback,logging
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.web import resource, http
-from doboz_web.core.server.rest.exception_converter import ExceptionConverter
-from doboz_web.core.server.rest.data_formater   import JsonFormater
+from doboz_web.core.interface.rest.exception_converter import ExceptionConverter
+from doboz_web.core.interface.rest.data_formater   import JsonFormater
 
 
 class ResponseGenerator(object):

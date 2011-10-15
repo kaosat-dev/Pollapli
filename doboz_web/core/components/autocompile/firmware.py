@@ -12,7 +12,7 @@ from twisted.internet.protocol import Protocol
 
 from doboz_web.exceptions import UnknownDriver,NoDriverSet,DeviceIdMismatch,DeviceNotConnected
 from doboz_web import idoboz_web
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.signal_system import SignalHander
 from doboz_web.core.components.updates.update_manager import UpdateManager
 
 class Firmware(object):

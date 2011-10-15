@@ -66,19 +66,10 @@ def configure_all():
     servertype = Config.get("WebServer", "server")
     port = Config.getint("WebServer", "port")
   
-    
-    #server.chosenServer = servertype
-    #server.chosenPort = port
     dataPath=os.path.join(rootPath,"data")
-    filePath=os.path.join(rootPath,"core","server","static")
-#    server.printFilesPath=os.path.join(server.rootPath,"files","machine","printFiles")
-#    server.scanFilesPath=os.path.join(server.rootPath,"files","machine","scanFiles")
-#    if not os.path.exists(server.printFilesPath):
-#        os.makedirs(server.printFilesPath)
-#    if not os.path.exists(server.scanFilesPath):
-#        os.makedirs(server.scanFilesPath)
+    filePath=os.path.join(rootPath,"core","presentation","static")
+
         
-    
     """"""""""""""""""""""""""""""""""""
     """Twisted server setup"""
     
@@ -91,7 +82,7 @@ def configure_all():
     reactor.install()
         
     
-    from doboz_web.core.server.server import MainServer
+    from doboz_web.core.server import MainServer
     server=MainServer(port,rootPath,filePath,dataPath)
     
     """

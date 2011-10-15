@@ -7,10 +7,10 @@ from twistar.dbobject import DBObject
 from twistar.dbconfig.base import InteractionBase
 from twisted.python import log,failure
 
-from doboz_web.core.file_manager import FileManager
+from doboz_web.core.tools.file_manager import FileManager
 from doboz_web.exceptions import InvalidFile
 from doboz_web import idoboz_web
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.signal_system import SignalHander
 from doboz_web.core.tools.gcode_parser import GCodeParser
 #from doboz_web.core.components.automation.task import ActionStatus
 

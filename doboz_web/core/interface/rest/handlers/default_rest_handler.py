@@ -8,8 +8,8 @@ from twisted.web.server import NOT_DONE_YET
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 
-from doboz_web.core.server.rest.request_parser import RequestParser
-from doboz_web.core.server.rest.response_generator import ResponseGenerator
+from doboz_web.core.interface.rest.request_parser import RequestParser
+from doboz_web.core.interface.rest.response_generator import ResponseGenerator
 
 class DefaultRestHandler(Resource):
     isLeaf=False

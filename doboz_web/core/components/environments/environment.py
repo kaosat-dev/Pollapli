@@ -18,7 +18,7 @@ from doboz_web.core.components.automation.task import Task
 from doboz_web.core.components.automation.print_action import PrintAction
 from doboz_web.core.components.automation.action import Action
 from doboz_web.core.tools.wrapper_list import WrapperList
-from doboz_web.core.signal_system import SignalHander
+from doboz_web.core.tools.signal_system import SignalHander
 from doboz_web.core.components.drivers.driver import Driver
 from doboz_web.core.components.nodes.node import NodeManager
 from doboz_web.core.components.automation.task import TaskManager
