@@ -51,7 +51,7 @@ def configure_all():
     webcamDriver = Config.get("WebCam", "driver")
     #server.webcamsEnabled = useWebcam
 #    if useWebcam:
-#         from doboz_web.core.components.connectors.webcam.gstreamer_cam import GStreamerCam
+#         from doboz_web.core.logic.components.connectors.webcam.gstreamer_cam import GStreamerCam
 #         webcamNode = WebcamNode()
 #         webcamNode.filePath = os.path.join(rootPath, "core", "print_server", "files", "static", "img", "test")
 #         webcamConnector = GStreamerCam(driver=webcamDriver)

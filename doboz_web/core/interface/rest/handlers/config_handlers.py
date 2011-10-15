@@ -15,8 +15,8 @@ from doboz_web.core.interface.rest.handlers.default_rest_handler import DefaultR
 from doboz_web.core.interface.rest.request_parser import RequestParser
 from doboz_web.core.interface.rest.response_generator import ResponseGenerator
 from doboz_web.core.interface.rest.handlers.file_handlers import FilesHandler
-from doboz_web.core.components.updates.update_manager import UpdateManager
-from doboz_web.core.tools.signal_system import SignalHander
+from doboz_web.core.logic.components.updates.update_manager import UpdateManager
+from doboz_web.core.logic.tools.signal_system import SignalHander
 
 class ConfigHandler(DefaultRestHandler):
     isLeaf=False

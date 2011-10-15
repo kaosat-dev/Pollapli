@@ -14,7 +14,7 @@ from twisted.internet.task import deferLater
 from doboz_web.core.interface.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.interface.rest.request_parser import RequestParser
 from doboz_web.core.interface.rest.response_generator import ResponseGenerator
-from doboz_web.core.tools.file_manager import FileManager
+from doboz_web.core.logic.tools.file_manager import FileManager
 
 class FilesHandler(DefaultRestHandler):
     """

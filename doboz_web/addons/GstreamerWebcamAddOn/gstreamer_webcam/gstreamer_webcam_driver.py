@@ -6,8 +6,8 @@ from zope.interface import classProvides
 from twisted.python import log,failure
 from twisted.internet import reactor, defer
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
-from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
-from doboz_web.core.tools.file_manager import FileManager
+from doboz_web.core.logic.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
+from doboz_web.core.logic.tools.file_manager import FileManager
 
 from threading import Event, Thread
 import gobject

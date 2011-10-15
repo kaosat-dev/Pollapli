@@ -1,7 +1,0 @@
-setup.py
-VirtualDeviceAddOn.egg-info/PKG-INFO
-VirtualDeviceAddOn.egg-info/SOURCES.txt
-VirtualDeviceAddOn.egg-info/dependency_links.txt
-VirtualDeviceAddOn.egg-info/top_level.txt
-virtualDevice/__init__.py
-virtualDevice/virtual_device_driver.py

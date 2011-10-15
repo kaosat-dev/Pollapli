@@ -2,7 +2,7 @@ from zope.interface import implements
 from twisted.plugin import IPlugin
 from doboz_web import idoboz_web 
 from zope.interface import classProvides
-from doboz_web.core.components.connectors.driver import Driver
+from doboz_web.core.logic.components.connectors.driver import Driver
 
 class ThingyDriver(Driver):
     classProvides(IPlugin, idoboz_web.IDriver)

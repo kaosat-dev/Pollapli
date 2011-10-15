@@ -7,9 +7,9 @@ from twisted.internet import reactor, defer
 import uuid
 import logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
-from doboz_web.core.components.drivers.driver import Driver,DriverManager,CommandQueueLogic,EndPoint
-from doboz_web.core.components.drivers.protocols import BaseTextSerialProtocol
-from doboz_web.core.components.drivers.serial_hardware_handler import SerialHardwareHandler
+from doboz_web.core.logic.components.drivers.driver import Driver,DriverManager,CommandQueueLogic,EndPoint
+from doboz_web.core.logic.components.drivers.protocols import BaseTextSerialProtocol
+from doboz_web.core.logic.components.drivers.serial_hardware_handler import SerialHardwareHandler
 
 
 class ArduinoExampleProtocol(BaseTextSerialProtocol):

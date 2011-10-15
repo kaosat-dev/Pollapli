@@ -9,7 +9,7 @@ from twisted.internet.task import deferLater
 from doboz_web.core.interface.rest.handlers.default_rest_handler import DefaultRestHandler
 from doboz_web.core.interface.rest.request_parser import RequestParser
 from doboz_web.core.interface.rest.response_generator import ResponseGenerator
-from doboz_web.core.components.drivers.driver import DriverManager
+from doboz_web.core.logic.components.drivers.driver import DriverManager
 
 
 class DriverTypesHandler(DefaultRestHandler):

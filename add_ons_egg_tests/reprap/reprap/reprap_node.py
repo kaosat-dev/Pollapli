@@ -3,7 +3,7 @@ from twisted.plugin import IPlugin
 from doboz_web import idoboz_web 
 from zope.interface import classProvides
 from twisted.python import log,failure
-from doboz_web.core.components.nodes.node import Node
+from doboz_web.core.logic.components.nodes.node import Node
 
 
 class ReprapNode(Node):

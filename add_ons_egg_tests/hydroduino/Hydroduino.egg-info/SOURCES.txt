@@ -1,7 +1,0 @@
-setup.py
-Hydroduino.egg-info/PKG-INFO
-Hydroduino.egg-info/SOURCES.txt
-Hydroduino.egg-info/dependency_links.txt
-Hydroduino.egg-info/top_level.txt
-hydroduino/__init__.py
-hydroduino/hydroduino_driver.py

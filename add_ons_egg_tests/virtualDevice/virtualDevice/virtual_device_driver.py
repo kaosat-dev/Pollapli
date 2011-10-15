@@ -7,8 +7,8 @@ from twisted.internet import reactor, defer
 import uuid
 import logging
 from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
-from doboz_web.core.components.drivers.driver import BaseProtocol,Driver,DriverManager,CommandQueueLogic
-from doboz_web.core.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
+from doboz_web.core.logic.components.drivers.driver import BaseProtocol,Driver,DriverManager,CommandQueueLogic
+from doboz_web.core.logic.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
 
 
 class VirtualDeviceProtocol(BaseProtocol):
