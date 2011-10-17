@@ -9,7 +9,7 @@ from twisted.python.log import PythonLoggingObserver
 class FileManager(object):
     rootDir=None
     corePath=None
-    
+    rootPath = None
     @classmethod
     def getRootDir(cls):
         return FileManager.rootDir

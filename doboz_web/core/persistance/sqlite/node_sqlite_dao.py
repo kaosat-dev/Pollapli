@@ -1,14 +1,13 @@
-import abc
+from doboz_web.core.persistance.dao_base.node_dao import NodeDao
+from doboz_web.core.logic.components.nodes.node import Node
 
-class NodeDao(object):
-    __metaclass__ = abc.ABCMeta
+
+class NodeSqliteDao(NodeDao):
     
-    @abc.abstractmethod
     def load_node(self,*args,**kwargs):
         """Retrieve data from node object."""
         return
     
-    @abc.abstractmethod
     def save_node(self, node):
         """Save the node object ."""
         return

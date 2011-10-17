@@ -23,6 +23,24 @@ from doboz_web.core.logic.components.drivers.driver import Driver
 from doboz_web.core.logic.components.nodes.node import NodeManager
 from doboz_web.core.logic.components.automation.task import TaskManager
 
+
+class Environment2(DBObject):
+    
+    def __init__(self,path="/",name="home",description="Add Description here",status="active",*args,**kwargs):
+        self.path=path
+        self.name=name
+        self.description=description
+        self.status=status
+       # self._nodes=NodeManager(self)
+       # self._tasks=TaskManager(self)
+    def __eq__(self, other):
+        return self.name == other.name and self.description == other.description and self.status == other.status
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    def __str__(self):
+        return "%s %s %s" %(self.name,self.description,self.status)
+
 class Environment(DBObject):
     HASMANY = ['nodes']
     HASMANY = ['tasks']

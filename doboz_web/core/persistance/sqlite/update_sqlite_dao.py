@@ -10,9 +10,9 @@ from twistar.dbconfig.base import InteractionBase
 from doboz_web.core.persistance.dao_base.update_dao import UpdateDao
 from doboz_web.core.logic.components.updates.update_manager import Update
 
-class UpdateSqliteDao(UpdateDao,DBObject):
+class UpdateSqliteDao(UpdateDao):
     def __init__(self,*args,**kwargs):
-        DBObject.__init__(self,**kwargs)
+        pass
          
     def load_update(self,*args,**kwargs):
         """Retrieve data from update object."""
