@@ -1,7 +1,7 @@
 from twisted.trial import unittest
 from doboz_web.run import *
 from doboz_web.core.logic.components.environment import EnvironmentManager
- 
+
 class EnvironmentTest(unittest.TestCase):
     def setUp(self):
         configure_all() 

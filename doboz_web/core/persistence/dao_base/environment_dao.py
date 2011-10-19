@@ -9,7 +9,7 @@ class EnvironmentDao(object):
         return
     
     @abc.abstractmethod
-    def load_environment(self,*args,**kwargs):
+    def load_environments(self,*args,**kwargs):
         """Retrieve multiple environment objects."""
         return
     

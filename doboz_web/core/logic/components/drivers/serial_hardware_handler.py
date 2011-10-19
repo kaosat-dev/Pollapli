@@ -4,7 +4,7 @@ from twisted.internet.protocol import Protocol, Factory
 """necessary workaround for win32 serial port bugs in twisted"""
 import re, sys, itertools,time, logging,glob
 if sys.platform == "win32":
-    from doboz_web.core.patches._win32serialport import SerialPort
+    from doboz_web.core.logic.patches._win32serialport import SerialPort
 else:
     from twisted.internet.serialport import SerialPort
     

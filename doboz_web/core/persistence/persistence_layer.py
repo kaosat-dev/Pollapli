@@ -1,17 +1,18 @@
 import os
 from twisted.enterprise import adbapi 
 from doboz_web.core.logic.tools.file_manager import FileManager
-from doboz_web.core.persistance.sqlite.update_sqlite_dao import UpdateSqliteDao
-from doboz_web.core.persistance.sqlite.environment_sqlite_dao import EnvironmentSqliteDao
-from doboz_web.core.persistance.sqlite.node_sqlite_dao import NodeSqliteDao
+from doboz_web.core.persistence.sqlite.update_sqlite_dao import UpdateSqliteDao
+from doboz_web.core.persistence.sqlite.environment_sqlite_dao import EnvironmentSqliteDao
+from doboz_web.core.persistence.sqlite.device_sqlite_dao import DeviceSqliteDao
 
-class PersistanceLayer(object):
+#TODO: add "persistence strategy" at this level, to define , what goes where (different dbs)
+class PersistenceLayer(object):
     def __init__(self):
         print (FileManager.rootPath)
         self._dbpool = adbapi.ConnectionPool("sqlite3", os.path.join(FileManager.rootPath,'pollapli.db'))
         self._updateDao=UpdateSqliteDao(dbPool = self._dbpool)
         self._environmentDao=EnvironmentSqliteDao(dbPool = self._dbpool)
-        self._nodeDao=NodeSqliteDao(dbPool = self._dbpool)
+        self._nodeDao=DeviceSqliteDao(dbPool = self._dbpool)
         
         
     def __getattr__(self, attr_name):

@@ -6,7 +6,6 @@ from zope.interface import Interface, Attribute
 from twisted.plugin import IPlugin
 
 
-
 class INode(Interface):
     """
     Abstract Representation of a physical device

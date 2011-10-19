@@ -39,6 +39,20 @@ class NodeStatus(object):
     def _toDict(self):
         return {"status":{"active":self.isActive}}
   
+class Device(object):
+    """
+    Base class for all Device: a Device is a software abstraction for a physical device such as a webcam, reprap , arduino etc
+    """
+    def __init__(self,name="base_device",description="base device",*args,**kwargs):
+        self.name=name
+        self.description=description
+        self.status = "inactive"
+        self.driver=None 
+        
+    def __eq__(self, other):
+        return self.name == other.name and self.description == other.description and self.status == other.status
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class Node(DBObject):
     """

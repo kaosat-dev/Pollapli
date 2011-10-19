@@ -1,9 +1,9 @@
 from twisted.enterprise import adbapi 
 from twisted.internet import reactor, defer
-from doboz_web.core.persistance.dao_base.environment_dao import EnvironmentDao
+from doboz_web.core.persistence.dao_base.environment_dao import EnvironmentDao
 from doboz_web.core.logic.components.environments.environment import Environment2
 
-
+#TODO: make these more generic (not the interface, the implementation)
 class EnvironmentSqliteDao(EnvironmentDao):
     def __init__(self,dbPool):
         self._dbPool=dbPool
@@ -28,5 +28,18 @@ class EnvironmentSqliteDao(EnvironmentDao):
     @defer.inlineCallbacks 
     def save_environment(self, environment):
         """Save the environment object ."""
-        result = yield self._dbPool.runQuery('''INSERT into environments VALUES(1,?,?,?)''', (environment.name,environment.description,environment.status))
-        defer.returnValue(True)
+        if hasattr(environment,"_id"):
+            #print ("updating environment with id %s, called %s" %(str(environment._id),environment.name))
+            yield self._dbPool.runQuery('''UPDATE environments SET name = ? ,description = ?, status= ? WHERE id = ? ''', (environment.name,environment.description,environment.status,environment._id))
+        else:
+            def txnExec(txn):
+                txn.execute('''INSERT into environments VALUES(null,?,?,?)''', (environment.name,environment.description,environment.status))
+                result = txn.fetchall()
+                txn.execute("SELECT last_insert_rowid()")
+                result = txn.fetchall()
+                environment._id = result[0][0]
+                        
+            yield self._dbPool.runInteraction(txnExec)
+            defer.returnValue(True)
+        
+        
