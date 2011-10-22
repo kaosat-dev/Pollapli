@@ -7,19 +7,8 @@ from doboz_web.core.logic.components.updates.update_manager import Update2
 
 class UpdateSqliteDaoTests(unittest.TestCase):
     
-    @defer.inlineCallbacks
     def setUp(self):
         self._dbpool = adbapi.ConnectionPool("sqlite3",'pollapli.db',check_same_thread=False)
-        yield self._dbpool.runQuery('''CREATE TABLE updates(
-             id INTEGER PRIMARY KEY,
-             type TEXT NOT NULL DEFAULT "update",
-             name TEXT,
-             description TEXT,
-             version TEXT,
-             tags TEXT,
-             downloadUrl TEXT,
-             enabled TEXT NOT NULL DEFAULT "False"
-             )''')
         self._updateSqliteDao = UpdateSqliteDao(self._dbpool)
         
     @defer.inlineCallbacks
@@ -92,19 +81,18 @@ class UpdateSqliteDaoTests(unittest.TestCase):
             
     @defer.inlineCallbacks 
     def _insert_mockupdate(self):
+        yield self._updateSqliteDao._createTable()
         yield self._dbpool.runQuery('''
         INSERT into updates VALUES(null,"addon","TestUpdate","A test description","0.0.2","a tag, anothertag","http://test.test/addon","True")''')
     
     @defer.inlineCallbacks 
     def _insert_multiple_mockupdates(self):
+        yield self._updateSqliteDao._createTable()
         yield self._dbpool.runQuery('''
         INSERT into updates VALUES(null,"update","TestUpdate","A test description","0.0.2","a tag, anothertag","http://test.test/update","True")''')
         yield self._dbpool.runQuery('''
         INSERT into updates VALUES(null,"addon","TestUpdate2","A test description too","0.1.2","anothertag","http://test.test/addon","False")''')
-        defer.returnValue(None)
-        exp = input
-        obs = self._updateSqliteDao.load_update(id == 1)
-        self.assertEquals(obs,exp)
+        
 
 
   

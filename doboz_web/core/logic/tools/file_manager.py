@@ -10,6 +10,7 @@ class FileManager(object):
     rootDir=None
     corePath=None
     rootPath = None
+    uploadPath = None
     @classmethod
     def getRootDir(cls):
         return FileManager.rootDir

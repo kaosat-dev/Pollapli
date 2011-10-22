@@ -337,7 +337,6 @@ class NodeManager(object):
     @defer.inlineCallbacks    
     def setup(self):
        
-        
         @defer.inlineCallbacks
         def addNode(nodes):
             for node in nodes:

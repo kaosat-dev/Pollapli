@@ -3,15 +3,26 @@ from twisted.trial import unittest
 from twisted.enterprise import adbapi 
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
-from doboz_web.core.persistence.sqlite.device_sqlite_dao import DeviceSqliteDao
+from doboz_web.core.persistence.sqlite.sqlite_dao_manager import SqliteDaoManager
 from doboz_web.core.logic.components.nodes.node import Device
+from doboz_web.core.logic.components.updates.update_manager import Update2
+from doboz_web.core.logic.components.environments.environment import Environment2
 
 
-class DeviceSqliteDaoTests(unittest.TestCase):    
+
+
+class SqliteDaoManagerTest(unittest.TestCase):    
     
+    @defer.inlineCallbacks
     def setUp(self):
         self._dbpool = adbapi.ConnectionPool("sqlite3",'pollapli.db',check_same_thread=False)
-        self._deviceSqliteDao=DeviceSqliteDao(self._dbpool)
+        yield self._dbpool.runQuery('''CREATE TABLE devices(
+             id INTEGER PRIMARY KEY,
+             name TEXT,
+             description TEXT,
+             status TEXT NOT NULL DEFAULT "inactive"
+             )''')
+        self._sqliteDaoManager=SqliteDaoManager()
         
     @defer.inlineCallbacks
     def tearDown(self):
@@ -86,14 +97,12 @@ class DeviceSqliteDaoTests(unittest.TestCase):
         
     @defer.inlineCallbacks 
     def _insert_mockdevice(self):
-        yield self._deviceSqliteDao._createTable()
         yield self._dbpool.runQuery('''
         INSERT into devices VALUES(null,"TestDevice","A test description load","active")''')
         defer.returnValue(None)
         
     @defer.inlineCallbacks
     def _insert_multiple_mockdevices(self):
-        yield self._deviceSqliteDao._createTable()
         yield self._dbpool.runQuery('''
         INSERT into devices VALUES(null,"TestDeviceOne","A test description","inactive")''')
         yield self._dbpool.runQuery('''
