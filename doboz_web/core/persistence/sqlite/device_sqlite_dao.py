@@ -8,56 +8,18 @@ class DeviceSqliteDao(DeviceDao):
     def __init__(self,dbPool):
         self._dbPool=dbPool
         self._tableCreated = False
-        
-    @defer.inlineCallbacks
-    def _createTable(self):    
-        if not self._tableCreated:
-            try:
-                
-                def txnExec(txn):
-                        txn.execute('''SELECT name FROM devices LIMIT 1''')
-                yield self._dbPool.runInteraction(txnExec)
-                #result = yield self._dbPool.runQuery('''SELECT name FROM devices LIMIT 1''')
-                
-            except Exception as inst:
-                print("error",inst)  
-                try:
-                    def txnExec2(txn):
-                            txn.execute('''CREATE TABLE devices (
-                                 id INTEGER PRIMARY KEY,
-                                 name TEXT,
-                                 description TEXT,
-                                 status TEXT NOT NULL DEFAULT "inactive"
-                                 )''')
-                            self._tableCreated = True
-                       
-                      
-                    yield self._dbPool.runInteraction(txnExec2)
-                    
-#                    result = yield self._dbPool.runQuery('''CREATE TABLE devices (
-#                                 id INTEGER PRIMARY KEY,
-#                                 name TEXT,
-#                                 description TEXT,
-#                                 status TEXT NOT NULL DEFAULT "inactive"
-#                                 )''')
-                    
-                    
-                except Exception as inst:
-                    print("error2",inst)  
-
                     
     def _get_last_insertId(self, txn):
         txn.execute("SELECT last_insert_rowid()")
         result = txn.fetchall()
         return result[0][0]
-                
     
     def _execute_txn(self, txn, query, *args,**kwargs):
         if not self._tableCreated:
             try:
                 txn.execute('''SELECT name FROM devices LIMIT 1''')
             except Exception as inst:
-                print("error in load device first step",inst)
+                #print("error in load device first step",inst)
                 try:
                     txn.execute('''CREATE TABLE devices (
                     id INTEGER PRIMARY KEY,
@@ -67,37 +29,47 @@ class DeviceSqliteDao(DeviceDao):
                     self._tableCreated = True
                 except Exception as inst:
                     print("error in load device second step",inst) 
-
+                    
         return txn.execute(query, *args,**kwargs)
     
-    def _select(self,txn,query=None,args=None):
-        self._execute_txn(txn, query,args)
+    def _select(self,txn,query=None,*args):
+        self._execute_txn(txn, query,*args)
         return txn.fetchall()
     
-    def select(self,query=None,args=None):  
-        query = query or '''SELECT name,description,status FROM devices WHERE id = ?'''
+    def _insert(self,txn,query=None,*args):
+        self._execute_txn(txn,query,*args)
+        return self._get_last_insertId(txn)
+    
+    def _update(self,txn,query=None,*args):
+        self._execute_txn(txn, query,*args)
+        return None
+    
+    def select(self,tableName=None, id=None,query=None,order=None,*args):  
+        if id is not None:
+            query = query or '''SELECT name,description,status FROM devices WHERE id = ?'''
+            args= id
+        else:
+            query = query or '''SELECT name,description,status FROM devices '''
+       
+        if order is not None:
+            query = query + " ORDER BY %s" %(str(order))
         args = args
         return self._dbPool.runInteraction(self._select,query,args)
-    
-    def _insert(self,txn,query=None,args=None):
-        self._execute_txn(txn, query,args)
-        return self._get_last_insertId(txn)
        
-    
-    def insert(self,query=None,args=None):  
+    def insert(self,tableName=None, query=None, args=None):  
         query = query or '''INSERT into devices VALUES(null,?,?,?)''' 
         args = args
         return self._dbPool.runInteraction(self._insert,query,args)
     
-    def update(self,query=None,args=None):  
+    def update(self,tableName=None,query=None,args=None):  
         query = query or '''UPDATE devices SET name = ? ,description = ?, status= ? WHERE id = ? ''' 
         args = args
-        return self._dbPool.runInteraction(self._insert,query,args)
+        return self._dbPool.runInteraction(self._update,query,args)
     
     @defer.inlineCallbacks
     def load_device(self,id = -1, *args,**kwargs):
         """Retrieve data from device object."""
-        rows =  yield self.select(args = str(id))       
+        rows =  yield self.select(id = str(id))       
         result=None
         if len(rows)>0:
             name,description,status = rows[0]
@@ -106,40 +78,12 @@ class DeviceSqliteDao(DeviceDao):
         
     @defer.inlineCallbacks
     def save_device(self, device):
-        """Save the device object ."""
-            
+        """Save the device object ."""    
         if hasattr(device,"_id"):
-            #print ("updating device with id %s, called %s" %(str(device._id),device.name))
-            yield self._dbPool.runQuery('''UPDATE devices SET name = ? ,description = ?, status= ? WHERE id = ? ''', (device.name,device.description,device.status,device._id))
+            yield self.update(args = (device.name,device.description,device.status,device._id))
         else:
-            device._id = yield self.insert(args = (device.name,device.description,device.status))    
-            print(device._id)
-#            def txnExec(txn):
-#                if not self._tableCreated:
-#                    try:
-#                        txn.execute('''SELECT name FROM devices LIMIT 1''')
-#                    except Exception as inst:
-#                        print("error in load device first step in save",inst)
-#                        try:
-#                            txn.execute('''CREATE TABLE devices (
-#                                             id INTEGER PRIMARY KEY,
-#                                             name TEXT,
-#                                             description TEXT,
-#                                             status TEXT NOT NULL DEFAULT "inactive"
-#                                             )''')
-#                            self._tableCreated = True
-#                        except Exception as inst:
-#                            print("error in load device second step in save",inst)
-#                
-#                txn.execute('''INSERT into devices VALUES(null,?,?,?)''', (device.name,device.description,device.status))
-#                result = txn.fetchall()
-#                txn.execute("SELECT last_insert_rowid()")
-#                result = txn.fetchall()
-#                device._id = result[0][0]
-                        
-#            yield self._dbPool.runInteraction(txnExec)
-            defer.returnValue(True)
-    
+            device._id = yield self.insert(args = (device.name,device.description,device.status))                            
+            
     @defer.inlineCallbacks
     def save_devices(self,lDevices):
         for device in lDevices:
@@ -148,10 +92,9 @@ class DeviceSqliteDao(DeviceDao):
     @defer.inlineCallbacks
     def load_devices(self,*args,**kwargs):
         """Save the device object ."""
-        yield self._createTable()
         lDevices = []
-        result = yield self._dbPool.runQuery("SELECT name,description,status FROM devices ORDER by id")
-        for row in result:
+        rows = yield self.select(order = "id")
+        for row in rows:
             name,description,status = row
             lDevices.append(Device(name = name,description=description,status=status))
         defer.returnValue(lDevices)
