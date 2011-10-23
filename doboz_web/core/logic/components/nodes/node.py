@@ -48,6 +48,7 @@ class Device(object):
         self.description=description
         self.status = "inactive"
         self.driver=None 
+        self._parent = None
         
     def __eq__(self, other):
         return self.name == other.name and self.description == other.description and self.status == other.status

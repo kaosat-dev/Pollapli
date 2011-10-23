@@ -31,8 +31,8 @@ class Environment2(DBObject):
         self.name=name
         self.description=description
         self.status=status
-        self._nodes=NodeManager(self)
-        self._tasks=TaskManager(self)
+        self._parent = None
+       
     def __eq__(self, other):
         return self.name == other.name and self.description == other.description and self.status == other.status
     def __ne__(self, other):
