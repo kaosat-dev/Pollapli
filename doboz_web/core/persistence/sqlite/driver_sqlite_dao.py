@@ -1,10 +1,10 @@
 from twisted.internet import reactor, defer
 from twisted.python.failure import Failure
-from doboz_web.core.persistence.dao_base.device_dao import DeviceDao
+from doboz_web.core.persistence.dao_base.driver_dao import DriverDao
 from doboz_web.core.logic.components.nodes.node import Device
 
 
-class DeviceSqliteDao(DeviceDao):
+class DriverSqliteDao(DriverDao):
     def __init__(self,dbPool):
         self._dbPool=dbPool
         self._tableCreated = False
@@ -17,18 +17,18 @@ class DeviceSqliteDao(DeviceDao):
     def _execute_txn(self, txn, query, *args,**kwargs):
         if not self._tableCreated:
             try:
-                txn.execute('''SELECT name FROM devices LIMIT 1''')
+                txn.execute('''SELECT name FROM drivers LIMIT 1''')
             except Exception as inst:
-                #print("error in load device first step",inst)
+                #print("error in load driver first step",inst)
                 try:
-                    txn.execute('''CREATE TABLE devices (
+                    txn.execute('''CREATE TABLE drivers (
                     id INTEGER PRIMARY KEY,
                     name TEXT,
                     description TEXT,
                     status TEXT NOT NULL DEFAULT "inactive")''')
                     self._tableCreated = True
                 except Exception as inst:
-                    print("error in load device second step",inst) 
+                    print("error in load driver second step",inst) 
                     
         return txn.execute(query, *args,**kwargs)
     
@@ -46,10 +46,10 @@ class DeviceSqliteDao(DeviceDao):
     
     def select(self,tableName=None, id=None,query=None,order=None,*args):  
         if id is not None:
-            query = query or '''SELECT name,description,status FROM devices WHERE id = ?'''
+            query = query or '''SELECT name,description,status FROM drivers WHERE id = ?'''
             args= id
         else:
-            query = query or '''SELECT name,description,status FROM devices '''
+            query = query or '''SELECT name,description,status FROM drivers '''
        
         if order is not None:
             query = query + " ORDER BY %s" %(str(order))
@@ -57,18 +57,18 @@ class DeviceSqliteDao(DeviceDao):
         return self._dbPool.runInteraction(self._select,query,args)
        
     def insert(self,tableName=None, query=None, args=None):  
-        query = query or '''INSERT into devices VALUES(null,?,?,?)''' 
+        query = query or '''INSERT into drivers VALUES(null,?,?,?)''' 
         args = args
         return self._dbPool.runInteraction(self._insert,query,args)
     
     def update(self,tableName=None,query=None,args=None):  
-        query = query or '''UPDATE devices SET name = ? ,description = ?, status= ? WHERE id = ? ''' 
+        query = query or '''UPDATE drivers SET name = ? ,description = ?, status= ? WHERE id = ? ''' 
         args = args
         return self._dbPool.runInteraction(self._update,query,args)
     
     @defer.inlineCallbacks
-    def load_device(self,id = None, *args,**kwargs):
-        """Retrieve data from device object."""
+    def load_driver(self,id = None, *args,**kwargs):
+        """Retrieve data from driver object."""
         rows =  yield self.select(id = str(id))       
         result=None
         if len(rows)>0:
@@ -77,21 +77,21 @@ class DeviceSqliteDao(DeviceDao):
         defer.returnValue(result)
         
     @defer.inlineCallbacks
-    def save_device(self, device):
-        """Save the device object ."""    
-        if hasattr(device,"_id"):
-            yield self.update(args = (device.name,device.description,device.status,device._id))
+    def save_driver(self, driver):
+        """Save the driver object ."""    
+        if hasattr(driver,"_id"):
+            yield self.update(args = (driver.name,driver.description,driver.status,driver._id))
         else:
-            device._id = yield self.insert(args = (device.name,device.description,device.status))                            
+            driver._id = yield self.insert(args = (driver.name,driver.description,driver.status))                            
             
     @defer.inlineCallbacks
-    def save_devices(self,lDevices):
-        for device in lDevices:
-            yield self.save_device(device)
+    def save_drivers(self,lDevices):
+        for driver in lDevices:
+            yield self.save_driver(driver)
     
     @defer.inlineCallbacks
-    def load_devices(self,*args,**kwargs):
-        """Save the device object ."""
+    def load_drivers(self,*args,**kwargs):
+        """Save the driver object ."""
         lDevices = []
         rows = yield self.select(order = "id")
         for row in rows:

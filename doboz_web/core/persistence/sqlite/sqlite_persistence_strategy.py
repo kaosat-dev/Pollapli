@@ -26,7 +26,7 @@ class ClassAndFieldFetcher(DbStoreNameFetcher):
         try:
             while not currentObj.__class__.__name__ == self._className: 
                 currentObj = currentObj._parent
-        except Exception: pass
+        except Exception : pass
             
         dbName = getattr(currentObj,self._fieldName,None)
         print("dbName",dbName)

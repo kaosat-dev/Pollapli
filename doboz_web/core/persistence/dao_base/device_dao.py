@@ -4,7 +4,7 @@ class DeviceDao(object):
     __metaclass__ = abc.ABCMeta
     
     @abc.abstractmethod
-    def load_device(self,id= -1, *args,**kwargs):
+    def load_device(self,id = None, *args,**kwargs):
         """Retrieve data for device object."""
         return
     

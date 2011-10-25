@@ -14,24 +14,21 @@ class SqliteDaoManager(object):
     """Main manager for sqlite daos"""
     def __init__(self):
         self._persistenceStrategy = SqlitePersistenceStrategy()
-        self._dbpool = adbapi.ConnectionPool("sqlite3", os.path.join(FileManager.rootPath,'pollapli.db'))
-        
         self._updateDao = UpdateSqliteDao(dbPool = self._persistenceStrategy.get_store("Update"))
         
-        
         self._environmentDao = EnvironmentSqliteDao(dbPool = self._persistenceStrategy.get_store("Environment"))
-        self._deviceDao = DeviceSqliteDao(dbPool = self._persistenceStrategy.get_store("Device"))
-        self._taskDao = TaskSqliteDao(dbPool = self._persistenceStrategy.get_store("Task"))
+        #self._deviceDao = DeviceSqliteDao(dbPool = self._persistenceStrategy.get_store("Device"))
+        #self._taskDao = TaskSqliteDao(dbPool = self._persistenceStrategy.get_store("Task"))
         
     def __getattr__(self, attr_name):
         if hasattr(self._updateDao, attr_name):
             return getattr(self._updateDao, attr_name)
         elif hasattr(self._environmentDao, attr_name):
             return getattr(self._environmentDao, attr_name)
-        elif hasattr(self._deviceDao, attr_name):
-            return getattr(self._deviceDao, attr_name)
-        elif hasattr(self._taskDao, attr_name):
-            return getattr(self._taskDao, attr_name)
+#        elif hasattr(self._deviceDao, attr_name):
+#            return getattr(self._deviceDao, attr_name)
+#        elif hasattr(self._taskDao, attr_name):
+#            return getattr(self._taskDao, attr_name)
         else:
             raise AttributeError(attr_name)
     

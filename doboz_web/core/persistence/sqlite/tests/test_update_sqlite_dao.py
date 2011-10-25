@@ -21,12 +21,9 @@ class UpdateSqliteDaoTests(unittest.TestCase):
         input = Update2(type="update",name="TestUpdate ",description="test description",version="0.0.1",downloadUrl="http://test.com/"\
                    ,tags=["test","alsotest"],enabled=False)
         yield self._updateSqliteDao.save_update(input)
-        
-        result = yield self._dbpool.runQuery('''SELECT type, name,description,version,tags,downloadUrl,enabled FROM updates WHERE id =  1''')
-        type, name, description, version, tags, downloadUrl, enabled = result[0]
-        
+                
         exp = input
-        obs = Update2(type=type,name=name,description=description,version=version, tags = tags, downloadUrl = downloadUrl, enabled = enabled)
+        obs = yield self._updateSqliteDao.load_update(id = 1)
         self.assertEquals(obs,exp)
         
     @defer.inlineCallbacks
@@ -37,10 +34,8 @@ class UpdateSqliteDaoTests(unittest.TestCase):
         input.name="TestEnvironmentChanged"
         yield self._updateSqliteDao.save_update(input)
         
-        result = yield self._dbpool.runQuery('''SELECT type, name,description,version,tags,downloadUrl,enabled FROM updates WHERE id =  1''')
-        type, name, description, version, tags, downloadUrl, enabled = result[0]
         exp=input
-        obs = Update2(type=type,name=name,description=description,version=version, tags = tags, downloadUrl = downloadUrl, enabled = enabled)
+        obs = yield self._updateSqliteDao.load_update(id = 1)
         self.assertEquals(obs,exp)
         
     @defer.inlineCallbacks
@@ -49,51 +44,30 @@ class UpdateSqliteDaoTests(unittest.TestCase):
         Update2(type = "update", name="TestUpdate",description="A test description", version="0.0.2",tags=["a tag", "anothertag"],downloadUrl="http://test.test/addon",enabled = True)
         ,Update2(type = "addon", name="TestUpdate2",description="A test description too", version="0.1.2",tags=["anothertag"],downloadUrl="http://test.test/addon",enabled = False)
         ]
-        
         yield self._updateSqliteDao.save_updates(input)
         
-        expLUpdates=input
-        obsLUpdates=[]
-        rows = yield self._dbpool.runQuery('''SELECT type, name,description,version,tags,downloadUrl,enabled FROM updates''')
-        for row in rows:
-            type, name, description, version, tags, downloadUrl, enabled = row
-            obsLUpdates.append(Update2(type=type,name=name,description=description,version=version, tags = tags, downloadUrl = downloadUrl, enabled = enabled))
-        
+        expLUpdates = input
+        obsLUpdates = yield self._updateSqliteDao.load_updates()
         self.assertEquals(obsLUpdates,expLUpdates)
         
     @defer.inlineCallbacks
     def test_load_updatebyid(self):    
-        yield self._insert_mockupdate()
+        input = Update2(type = "update", name="TestUpdate",description="A test description", version="0.0.2",tags=["a tag", "anothertag"],downloadUrl="http://test.test/addon",enabled = True)
+        yield self._updateSqliteDao.save_update(input)
+        
+        exp = input
         obs = yield self._updateSqliteDao.load_update(id = 1)
-        exp = Update2(type = "addon", name="TestUpdate",description="A test description", version="0.0.2",tags=["a tag", "anothertag"],downloadUrl="http://test.test/addon",enabled = True)
         self.assertEquals(obs,exp)
         
     @defer.inlineCallbacks
     def test_load_updates(self):
-        yield self._insert_multiple_mockupdates()
         input = [
         Update2(type = "update", name="TestUpdate",description="A test description", version="0.0.2",tags=["a tag", "anothertag"],downloadUrl="http://test.test/addon",enabled = True)
         ,Update2(type = "addon", name="TestUpdate2",description="A test description too", version="0.1.2",tags=["anothertag"],downloadUrl="http://test.test/addon",enabled = False)
         ]
+        yield self._updateSqliteDao.save_updates(input)
         exp = input
         obs = yield self._updateSqliteDao.load_updates()
         self.assertEquals(obs,exp)
             
-    @defer.inlineCallbacks 
-    def _insert_mockupdate(self):
-        yield self._updateSqliteDao._createTable()
-        yield self._dbpool.runQuery('''
-        INSERT into updates VALUES(null,"addon","TestUpdate","A test description","0.0.2","a tag, anothertag","http://test.test/addon","True")''')
-    
-    @defer.inlineCallbacks 
-    def _insert_multiple_mockupdates(self):
-        yield self._updateSqliteDao._createTable()
-        yield self._dbpool.runQuery('''
-        INSERT into updates VALUES(null,"update","TestUpdate","A test description","0.0.2","a tag, anothertag","http://test.test/update","True")''')
-        yield self._dbpool.runQuery('''
-        INSERT into updates VALUES(null,"addon","TestUpdate2","A test description too","0.1.2","anothertag","http://test.test/addon","False")''')
-        
-
-
-  
     

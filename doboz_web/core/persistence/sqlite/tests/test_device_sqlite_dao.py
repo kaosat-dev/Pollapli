@@ -53,8 +53,8 @@ class DeviceSqliteDaoTests(unittest.TestCase):
         input = Device(name = "TestDevice",description = "A test description load",status = "active")
         yield self._deviceSqliteDao.save_device(input)
         
+        exp = input
         obs = yield self._deviceSqliteDao.load_device(id = 1)
-        exp = Device(name = "TestDevice",description = "A test description load",status = "active")
         self.assertEquals(obs,exp)
         
     @defer.inlineCallbacks
