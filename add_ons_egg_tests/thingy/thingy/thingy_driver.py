@@ -1,11 +1,11 @@
 from zope.interface import implements
 from twisted.plugin import IPlugin
-from doboz_web import idoboz_web 
+from pollapli import ipollapli 
 from zope.interface import classProvides
-from doboz_web.core.logic.components.connectors.driver import Driver
+from pollapli.core.logic.components.connectors.driver import Driver
 
 class ThingyDriver(Driver):
-    classProvides(IPlugin, idoboz_web.IDriver)
+    classProvides(IPlugin, ipollapli.IDriver)
     """Driver class: intermediary element that formats commands according to a spec before they get sent to the connector"""
     def __init__(self,type="reprap",speed=115200,seperator="\n",bufferSize=8):
         Driver.__init__(self,type,speed,seperator,bufferSize)

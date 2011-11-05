@@ -8,6 +8,6 @@ Contents:
 
 
 
-.. automodule:: doboz_web.core.tools
+.. automodule:: pollapli.core.tools
  :members:
  :show-inheritance:

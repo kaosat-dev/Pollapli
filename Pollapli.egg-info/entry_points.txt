@@ -1,0 +1,3 @@
+[console_scripts]
+dobozweb = Pollapli.run:configure_all
+

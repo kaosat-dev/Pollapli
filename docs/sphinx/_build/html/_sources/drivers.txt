@@ -16,7 +16,7 @@ Contents:
    :maxdepth: 2
 
 
-.. automodule:: doboz_web.core.components.drivers
+.. automodule:: pollapli.core.components.drivers
  :members:
  :show-inheritance:
  

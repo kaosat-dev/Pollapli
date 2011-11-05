@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='Doboz_Web',
+    name='Pollapli',
     version='0.32',
     description='Web based remote monitoring and control for Repraps (3d printers) and other variants',
     author='Mark "ckaos" Moissette',
@@ -18,7 +18,7 @@ setup(
     ], 
     packages = find_packages(),
     entry_points = {
-        'console_scripts': ['dobozweb = doboz_web.run:configure_all']
+        'console_scripts': ['dobozweb = Pollapli.run:configure_all']
     },
     install_requires=[
         'pyparsing','pySerial'

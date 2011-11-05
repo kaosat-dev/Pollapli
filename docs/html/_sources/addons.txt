@@ -16,7 +16,7 @@ are in effect groups of plugins + additional data.
 
 
 
-.. automodule:: doboz_web.core.components.addons
+.. automodule:: pollapli.core.components.addons
  :members:
  :show-inheritance:
 

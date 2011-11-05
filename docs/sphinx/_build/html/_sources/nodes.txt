@@ -10,7 +10,7 @@ Contents:
 Nodes are one of the most crucial elements of Pollapli : for the most part they are software abstractions of physical
 devices (Reprap, Arduino , etc).
 
-.. automodule:: doboz_web.core.components.nodes
+.. automodule:: pollapli.core.components.nodes
  :members:
  :show-inheritance:
 
@@ -18,13 +18,13 @@ devices (Reprap, Arduino , etc).
 -------------
  Hardware
 -------------
-.. automodule:: doboz_web.core.components.nodes.hardware
+.. automodule:: pollapli.core.components.nodes.hardware
  :members:
  :show-inheritance:
  
 -------------
  Software
 -------------
-.. automodule:: doboz_web.core.components.nodes.software
+.. automodule:: pollapli.core.components.nodes.software
  :members:
  :show-inheritance:

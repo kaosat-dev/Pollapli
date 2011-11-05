@@ -3,9 +3,9 @@ dependencies/*
 develop-eggs/*
 parts/*
 eggs/*
-Doboz_Web.egg-info/*
+Pollapli.egg-info/*
 .settings/*
-doboz_web/core/print_server/files/machine/*
+Pollapli/core/print_server/files/machine/*
 dummy_run.py
 *.pyc
 *.pyo

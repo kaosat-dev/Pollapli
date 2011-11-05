@@ -1,7 +1,7 @@
 Environments
 =====================================
  
-Environments are the base elements of Doboz_web.
+Environments are the base elements of pollapli.
 
 ========================
 General Environment manipulation

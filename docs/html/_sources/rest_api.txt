@@ -18,7 +18,7 @@ Contents:
 Handlers
 --------
 
-.. automodule:: doboz_web.core.server.rest.handlers
+.. automodule:: pollapli.core.server.rest.handlers
 	:members:
 	:show-inheritance:
 

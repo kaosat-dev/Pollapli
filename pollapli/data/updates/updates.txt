@@ -1,0 +1,59 @@
+{
+    "updates": [
+ {
+            "type": "addon",
+            "name": "Hydroduino",
+            "version": "0.0.1",
+            "description": "Hydroduino is an add to manager your hydroponics garden(s), aquariums and more",
+            "tags": [
+                "gardening",
+                "hydroduino"
+            ],
+            "img": "hydroduino.png",
+            "file": "Hydroduino-0.0.1-py2.6.egg",
+            "fileHash": "80e157c0f10baef206ee2de03fae7449"
+        },
+        {
+            "type": "addon",
+            "name": "Virtual device add on",
+            "version": "0.0.2",
+            "description": "this adds a virtual device driver, emulating basic arduino like connection etc . This is mostly for debugging some aspects of the driver system , but could be expanded upon",
+            "tags": [
+                "core",
+                "general"
+            ],
+            "img": "virtual_device.jpg",
+            "file": "VirtualDeviceAddOn-0.0.1-py2.6.egg",
+            "fileHash": "80e157c0f10baef206ee2de03fae7449"
+        },
+        {
+            "type": "addon",
+            "name": "pollapli",
+            "version": "1.7.1",
+            "description": "This is the doboz-web project, a system for remote monitoring and control of Reprap/Repstrap/Makerbots/3dprinters current Features very few dependencies: server 100% python ,can be run with as little as the project's source code , Python 2.6 and pyserial \n\n * lightweight: the current version comes at just about 2 MB \n\n* easy to set up : static file server for the interface as well as reprap control all in one",
+            "tags": [
+                "reprap",
+                "repstap",
+                "makerbot",
+                "3d printer"
+            ],
+            "img": "pollapli.png",
+            "file": "ReprapAddOn-0.0.1-py2.6.egg",
+            "fileHash": "cb0414dbdf294362c3ef7cc71c15985es"
+        },
+        {
+            "type": "addon",
+            "name": "Arduino Example",
+            "version": "0.0.4",
+            "description": "demo addon , for handling a basic arduio type device",
+            "tags": [
+                "arduino",
+                "demo",
+                "example"
+            ],
+            "img": "arduino_example.png",
+            "file": "ArduinoExampleAddOn-0.0.1-py2.6.egg",
+            "fileHash": "50f3085bfc3422bade2709f2b389bfb9"
+        }
+    ]
+}

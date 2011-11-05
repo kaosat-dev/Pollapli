@@ -9,6 +9,6 @@ Contents:
 
 Environments are the "holding bag" which contain all the other elements .
 
-.. automodule:: doboz_web.core.components.environments
+.. automodule:: pollapli.core.components.environments
  :members:
  :show-inheritance:

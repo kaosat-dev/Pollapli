@@ -11,7 +11,7 @@ Contents:
    :maxdepth: 2
 
 
-.. automodule:: doboz_web.core.components.connectors
+.. automodule:: pollapli.core.components.connectors
  :members:
  :show-inheritance:
  

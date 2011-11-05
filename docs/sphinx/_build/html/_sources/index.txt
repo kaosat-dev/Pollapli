@@ -57,7 +57,7 @@ Contents:
 
 Main addOns / subprojects
 =========================
-* doboz_web : reprap control and managment
+* pollapli : reprap control and managment
 * hydroduino : remote monitoring and  control of (hydroponic) gardens/ aquariums etc 
 
 

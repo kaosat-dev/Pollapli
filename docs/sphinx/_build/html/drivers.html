@@ -68,32 +68,32 @@ access point for all its subelements (other systems and components talk to then 
 <ul class="simple">
 </ul>
 </div>
-<span class="target" id="module-doboz_web.core.components.drivers"></span><div class="section" id="module-doboz_web.core.components.drivers.driver">
-<span id="driver"></span><h2>Driver<a class="headerlink" href="#module-doboz_web.core.components.drivers.driver" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-pollapli.core.components.drivers"></span><div class="section" id="module-pollapli.core.components.drivers.driver">
+<span id="driver"></span><h2>Driver<a class="headerlink" href="#module-pollapli.core.components.drivers.driver" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="doboz_web.core.components.drivers.driver.Command">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.drivers.driver.</tt><tt class="descname">Command</tt><big>(</big><em>special=False</em>, <em>twoStep=False</em>, <em>answerRequired=False</em>, <em>request=None</em>, <em>answer=None</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Command" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.Command">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.drivers.driver.</tt><tt class="descname">Command</tt><big>(</big><em>special=False</em>, <em>twoStep=False</em>, <em>answerRequired=False</em>, <em>request=None</em>, <em>answer=None</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.Command" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Base command class, encapsulate all request and answer commands, also has a &#8216;special&#8217; flag for commands that do no participate in normal flow of gcodes : i
 ie for example , regular poling of temperatures for display (the &#8220;OK&#8221; from those commands MUST not affect the line by line sending/answering of gcodes)</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="doboz_web.core.components.drivers.driver.CommandQueueLogic">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.drivers.driver.</tt><tt class="descname">CommandQueueLogic</tt><big>(</big><em>driver</em>, <em>bufferSize=8</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.CommandQueueLogic" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.CommandQueueLogic">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.drivers.driver.</tt><tt class="descname">CommandQueueLogic</tt><big>(</big><em>driver</em>, <em>bufferSize=8</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.CommandQueueLogic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Implements a command queue system for drivers</p>
 <dl class="method">
-<dt id="doboz_web.core.components.drivers.driver.CommandQueueLogic.send_next_command">
-<tt class="descname">send_next_command</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.CommandQueueLogic.send_next_command" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.CommandQueueLogic.send_next_command">
+<tt class="descname">send_next_command</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.CommandQueueLogic.send_next_command" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns next avalailable command in command queue</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="doboz_web.core.components.drivers.driver.Driver">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.drivers.driver.</tt><tt class="descname">Driver</tt><big>(</big><em>driverType=None</em>, <em>hardwareHandler=None</em>, <em>hardwareHandlerType=None</em>, <em>logicHandler=None</em>, <em>logicHandlerType=None</em>, <em>options={}</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.Driver">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.drivers.driver.</tt><tt class="descname">Driver</tt><big>(</big><em>driverType=None</em>, <em>hardwareHandler=None</em>, <em>hardwareHandlerType=None</em>, <em>logicHandler=None</em>, <em>logicHandlerType=None</em>, <em>options={}</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.Driver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">twistar.dbobject.DBObject</span></tt></p>
 <dl class="docutils">
 <dt>Driver class: higher level handler of device connection that formats outgoing and incoming commands</dt>
@@ -102,36 +102,36 @@ It actually mimics the way system device drivers work in a way.
 You can think of the events beeing sent out by the driver (dataRecieved etc) as interupts of sorts</dd>
 </dl>
 <dl class="method">
-<dt id="doboz_web.core.components.drivers.driver.Driver.connect">
-<tt class="descname">connect</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.connect" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.Driver.connect">
+<tt class="descname">connect</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.Driver.connect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="doboz_web.core.components.drivers.driver.Driver.deviceId">
-<tt class="descname">deviceId</tt><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.deviceId" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.Driver.deviceId">
+<tt class="descname">deviceId</tt><a class="headerlink" href="#pollapli.core.components.drivers.driver.Driver.deviceId" title="Permalink to this definition">¶</a></dt>
 <dd><p>will be needed to identify a specific device, as the system does not work base on ports</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.drivers.driver.Driver.disconnect">
-<tt class="descname">disconnect</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.disconnect" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.Driver.disconnect">
+<tt class="descname">disconnect</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.Driver.disconnect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.drivers.driver.Driver.send_command">
-<tt class="descname">send_command</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.send_command" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.Driver.send_command">
+<tt class="descname">send_command</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.Driver.send_command" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.drivers.driver.Driver.set_handlers">
-<tt class="descname">set_handlers</tt><big>(</big><em>hardwareHandler=None</em>, <em>logicHandler=None</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.Driver.set_handlers" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.Driver.set_handlers">
+<tt class="descname">set_handlers</tt><big>(</big><em>hardwareHandler=None</em>, <em>logicHandler=None</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.Driver.set_handlers" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="doboz_web.core.components.drivers.driver.DriverFactory">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.drivers.driver.</tt><tt class="descname">DriverFactory</tt><a class="headerlink" href="#doboz_web.core.components.drivers.driver.DriverFactory" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.DriverFactory">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.drivers.driver.</tt><tt class="descname">DriverFactory</tt><a class="headerlink" href="#pollapli.core.components.drivers.driver.DriverFactory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>The driver factory assembles a Driver object (the one whose instances are actually stored in db)
 from two objects :</p>
@@ -145,13 +145,13 @@ from two objects :</p>
 <p>This solve a whole lot of problems at once, since the subobjects will be essentially viewed as one, thanks
 to the getattr method</p>
 <dl class="classmethod">
-<dt id="doboz_web.core.components.drivers.driver.DriverFactory.create">
-<em class="property">classmethod </em><tt class="descname">create</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.DriverFactory.create" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.DriverFactory.create">
+<em class="property">classmethod </em><tt class="descname">create</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.DriverFactory.create" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="classmethod">
-<dt id="doboz_web.core.components.drivers.driver.DriverFactory.load">
-<em class="property">classmethod </em><tt class="descname">load</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.drivers.driver.DriverFactory.load" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.drivers.driver.DriverFactory.load">
+<em class="property">classmethod </em><tt class="descname">load</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.drivers.driver.DriverFactory.load" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -174,7 +174,7 @@ to the getattr method</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Drivers</a><ul>
-<li><a class="reference internal" href="#module-doboz_web.core.components.drivers.driver">Driver</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.drivers.driver">Driver</a></li>
 <li><a class="reference internal" href="#serial">Serial</a></li>
 <li><a class="reference internal" href="#webcam">Webcam</a></li>
 </ul>

@@ -1,3 +1,3 @@
-from doboz_web.run import *
+from pollapli.run import *
 
 configure_all()

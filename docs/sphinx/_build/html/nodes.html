@@ -62,53 +62,53 @@
 </div>
 <p>Nodes are one of the most crucial elements of Pollapli : for the most part they are software abstractions of physical
 devices (Reprap, Arduino , etc).</p>
-<span class="target" id="module-doboz_web.core.components.nodes"></span><div class="section" id="module-doboz_web.core.components.nodes.node">
-<span id="node"></span><h2>Node<a class="headerlink" href="#module-doboz_web.core.components.nodes.node" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-pollapli.core.components.nodes"></span><div class="section" id="module-pollapli.core.components.nodes.node">
+<span id="node"></span><h2>Node<a class="headerlink" href="#module-pollapli.core.components.nodes.node" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-node"></span><dl class="class">
-<dt id="doboz_web.core.components.nodes.node.Node">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.nodes.node.</tt><tt class="descname">Node</tt><big>(</big><em>name='node'</em>, <em>description='base node'</em>, <em>type='node'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.nodes.node.</tt><tt class="descname">Node</tt><big>(</big><em>name='node'</em>, <em>description='base node'</em>, <em>type='node'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">twistar.dbobject.DBObject</span></tt></p>
 <p>Base class for all nodes: a hardware node is a software component handling either a physical device such as a webcam, reprap , arduino etc
 or some software node (pachube etc)</p>
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.add_component">
-<tt class="descname">add_component</tt><big>(</big><em>component</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.add_component" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.add_component">
+<tt class="descname">add_component</tt><big>(</big><em>component</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.add_component" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="doboz_web.core.components.nodes.node.Node.components">
-<tt class="descname">components</tt><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.components" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.components">
+<tt class="descname">components</tt><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.components" title="Permalink to this definition">¶</a></dt>
 <dd><p>For Uptime calculation</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.connect">
-<tt class="descname">connect</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.connect" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.connect">
+<tt class="descname">connect</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.connect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.delete_driver">
-<tt class="descname">delete_driver</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.delete_driver" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.delete_driver">
+<tt class="descname">delete_driver</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.delete_driver" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.disconnect">
-<tt class="descname">disconnect</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.disconnect" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.disconnect">
+<tt class="descname">disconnect</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.disconnect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.get_driver">
-<tt class="descname">get_driver</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.get_driver" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.get_driver">
+<tt class="descname">get_driver</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.get_driver" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.remove_component">
-<tt class="descname">remove_component</tt><big>(</big><em>component</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.remove_component" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.remove_component">
+<tt class="descname">remove_component</tt><big>(</big><em>component</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.remove_component" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.set_driver">
-<tt class="descname">set_driver</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.set_driver" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.set_driver">
+<tt class="descname">set_driver</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.set_driver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to set this node&#8217;s connector 
 Params:
 returns : a driver instance
@@ -116,43 +116,43 @@ connector</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.setup">
-<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.setup" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.setup">
+<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.setup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.start">
-<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.start" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>start this node</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="doboz_web.core.components.nodes.node.Node.startTime">
-<tt class="descname">startTime</tt><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.startTime" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.startTime">
+<tt class="descname">startTime</tt><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.startTime" title="Permalink to this definition">¶</a></dt>
 <dd><p>this is to ensure no &#8216;asynch clash&#8217; occurs when replacing the current driver</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node.Node.stop">
-<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node.Node.stop" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node.Node.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node.Node.stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>stop this node</p>
 </dd></dl>
 
 </dd></dl>
 
 </div>
-<div class="section" id="module-doboz_web.core.components.nodes.node_manager">
-<span id="node-manager"></span><h2>Node manager<a class="headerlink" href="#module-doboz_web.core.components.nodes.node_manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pollapli.core.components.nodes.node_manager">
+<span id="node-manager"></span><h2>Node manager<a class="headerlink" href="#module-pollapli.core.components.nodes.node_manager" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-node_manager"></span><dl class="class">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.nodes.node_manager.</tt><tt class="descname">NodeManager</tt><big>(</big><em>parentEnv</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.nodes.node_manager.</tt><tt class="descname">NodeManager</tt><big>(</big><em>parentEnv</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Class for managing nodes: works as a container, a handler
 and a central managment point for the list of avalailable nodes
 (for future plugin based system)</p>
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.add_node">
-<tt class="descname">add_node</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.add_node" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.add_node">
+<tt class="descname">add_node</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.add_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a new node to the list of nodes of the current environment
 Params:
 name: the name of the node
@@ -164,14 +164,14 @@ Driver: the driver to use for this node&#8217;s connector</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.clear_nodes">
-<tt class="descname">clear_nodes</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.clear_nodes" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.clear_nodes">
+<tt class="descname">clear_nodes</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.clear_nodes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes &amp; deletes ALL the nodes, should be used with care</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.delete_node">
-<tt class="descname">delete_node</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.delete_node" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.delete_node">
+<tt class="descname">delete_node</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.delete_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove a node : this needs a whole set of checks, 
 as it would delete an node completely 
 Params:
@@ -179,21 +179,21 @@ id: the id of the node</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.get_node">
-<tt class="descname">get_node</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.get_node" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.get_node">
+<tt class="descname">get_node</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.get_node" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.get_nodes">
-<tt class="descname">get_nodes</tt><big>(</big><em>filter=None</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.get_nodes" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.get_nodes">
+<tt class="descname">get_nodes</tt><big>(</big><em>filter=None</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.get_nodes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the list of nodes, filtered by  the filter param
 the filter is a dictionary of list, with each key beeing an attribute
 to check, and the values in the list , values of that param to check against</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.set_driver">
-<tt class="descname">set_driver</tt><big>(</big><em>nodeId</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.set_driver" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.set_driver">
+<tt class="descname">set_driver</tt><big>(</big><em>nodeId</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.set_driver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to set a nodes connector&#8217;s driver 
 Params:
 nodeId: the id of the node
@@ -202,103 +202,103 @@ connector</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.setup">
-<tt class="descname">setup</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.setup" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.setup">
+<tt class="descname">setup</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.setup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.start_node">
-<tt class="descname">start_node</tt><big>(</big><em>nodeId</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.start_node" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.start_node">
+<tt class="descname">start_node</tt><big>(</big><em>nodeId</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.start_node" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.stop_node">
-<tt class="descname">stop_node</tt><big>(</big><em>nodeId</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.stop_node" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.stop_node">
+<tt class="descname">stop_node</tt><big>(</big><em>nodeId</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.stop_node" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.node_manager.NodeManager.update_node">
-<tt class="descname">update_node</tt><big>(</big><em>id</em>, <em>name</em>, <em>description</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.node_manager.NodeManager.update_node" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.node_manager.NodeManager.update_node">
+<tt class="descname">update_node</tt><big>(</big><em>id</em>, <em>name</em>, <em>description</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.node_manager.NodeManager.update_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for node update</p>
 </dd></dl>
 
 </dd></dl>
 
 </div>
-<div class="section" id="module-doboz_web.core.components.nodes.hardware">
-<span id="hardware"></span><h2>Hardware<a class="headerlink" href="#module-doboz_web.core.components.nodes.hardware" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="module-doboz_web.core.components.nodes.hardware.hardware_node_capability">
-<span id="hardware-node"></span><h3>Hardware Node<a class="headerlink" href="#module-doboz_web.core.components.nodes.hardware.hardware_node_capability" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-pollapli.core.components.nodes.hardware">
+<span id="hardware"></span><h2>Hardware<a class="headerlink" href="#module-pollapli.core.components.nodes.hardware" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pollapli.core.components.nodes.hardware.hardware_node_capability">
+<span id="hardware-node"></span><h3>Hardware Node<a class="headerlink" href="#module-pollapli.core.components.nodes.hardware.hardware_node_capability" title="Permalink to this headline">¶</a></h3>
 <span class="target" id="module-hardware_node_capability"></span><dl class="class">
-<dt id="doboz_web.core.components.nodes.hardware.hardware_node_capability.HardwareNodeCapability">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.nodes.hardware.hardware_node_capability.</tt><tt class="descname">HardwareNodeCapability</tt><big>(</big><em>name='HardwareNode'</em>, <em>description='hardware node'</em>, <em>type='hardwarenode'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.hardware_node_capability.HardwareNodeCapability" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.hardware_node_capability.HardwareNodeCapability">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.nodes.hardware.hardware_node_capability.</tt><tt class="descname">HardwareNodeCapability</tt><big>(</big><em>name='HardwareNode'</em>, <em>description='hardware node'</em>, <em>type='hardwarenode'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.hardware_node_capability.HardwareNodeCapability" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Base class for all hardware nodes: a hardware node is a software component handling a physical device such as a webcam, reprap , arduino etc</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-doboz_web.core.components.nodes.hardware.reprap.reprap_capability">
-<span id="reprap-node"></span><h3>Reprap Node<a class="headerlink" href="#module-doboz_web.core.components.nodes.hardware.reprap.reprap_capability" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-pollapli.core.components.nodes.hardware.reprap.reprap_capability">
+<span id="reprap-node"></span><h3>Reprap Node<a class="headerlink" href="#module-pollapli.core.components.nodes.hardware.reprap.reprap_capability" title="Permalink to this headline">¶</a></h3>
 <span class="target" id="module-reprap_node"></span><dl class="class">
-<dt id="doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.nodes.hardware.reprap.reprap_capability.</tt><tt class="descname">ReprapCapability</tt><big>(</big><em>info='mk'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.nodes.hardware.reprap.reprap_capability.</tt><tt class="descname">ReprapCapability</tt><big>(</big><em>info='mk'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">twistar.dbobject.DBObject</span></tt></p>
 <p>A reprap node : hardware node  in the case of a reprap: endstops, temperature sensors, steppers, heaters</p>
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.sendText">
-<tt class="descname">sendText</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.sendText" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.sendText">
+<tt class="descname">sendText</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.sendText" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simple function to send text over serial</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.set_paths">
-<tt class="descname">set_paths</tt><big>(</big><em>rootPath</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.set_paths" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.set_paths">
+<tt class="descname">set_paths</tt><big>(</big><em>rootPath</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.set_paths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configure paths</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.start">
-<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.start" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start the whole system</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.startPause">
-<tt class="descname">startPause</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.startPause" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.startPause">
+<tt class="descname">startPause</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.startPause" title="Permalink to this definition">¶</a></dt>
 <dd><p>Switches between active and inactive mode.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.stop">
-<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.stop" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapCapability.stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stops the current task and shuts down</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapManagerEvents">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.nodes.hardware.reprap.reprap_capability.</tt><tt class="descname">ReprapManagerEvents</tt><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.reprap.reprap_capability.ReprapManagerEvents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="tools.html#doboz_web.core.tools.event_sys.Events" title="doboz_web.core.tools.event_sys.Events"><tt class="xref py py-class docutils literal"><span class="pre">doboz_web.core.tools.event_sys.Events</span></tt></a></p>
+<dt id="pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapManagerEvents">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.nodes.hardware.reprap.reprap_capability.</tt><tt class="descname">ReprapManagerEvents</tt><a class="headerlink" href="#pollapli.core.components.nodes.hardware.reprap.reprap_capability.ReprapManagerEvents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="tools.html#pollapli.core.tools.event_sys.Events" title="pollapli.core.tools.event_sys.Events"><tt class="xref py py-class docutils literal"><span class="pre">pollapli.core.tools.event_sys.Events</span></tt></a></p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-doboz_web.core.components.nodes.hardware.webcam.webcam_node">
-<span id="webcam-node"></span><h3>Webcam Node<a class="headerlink" href="#module-doboz_web.core.components.nodes.hardware.webcam.webcam_node" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-pollapli.core.components.nodes.hardware.webcam.webcam_node">
+<span id="webcam-node"></span><h3>Webcam Node<a class="headerlink" href="#module-pollapli.core.components.nodes.hardware.webcam.webcam_node" title="Permalink to this headline">¶</a></h3>
 <span class="target" id="module-webcam_node"></span><dl class="class">
-<dt id="doboz_web.core.components.nodes.hardware.webcam.webcam_node.WebcamNode">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.nodes.hardware.webcam.webcam_node.</tt><tt class="descname">WebcamNode</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.webcam.webcam_node.WebcamNode" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.webcam.webcam_node.WebcamNode">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.nodes.hardware.webcam.webcam_node.</tt><tt class="descname">WebcamNode</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.webcam.webcam_node.WebcamNode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">twistar.dbobject.DBObject</span></tt></p>
 <p>webcam Node class</p>
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.hardware.webcam.webcam_node.WebcamNode.set_connector">
-<tt class="descname">set_connector</tt><big>(</big><em>connector</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.webcam.webcam_node.WebcamNode.set_connector" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.webcam.webcam_node.WebcamNode.set_connector">
+<tt class="descname">set_connector</tt><big>(</big><em>connector</em><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.webcam.webcam_node.WebcamNode.set_connector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets what connector to use</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.nodes.hardware.webcam.webcam_node.WebcamNode.start">
-<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.nodes.hardware.webcam.webcam_node.WebcamNode.start" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.nodes.hardware.webcam.webcam_node.WebcamNode.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.nodes.hardware.webcam.webcam_node.WebcamNode.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets up the capture process</p>
 </dd></dl>
 
@@ -306,8 +306,8 @@ connector</p>
 
 </div>
 </div>
-<div class="section" id="module-doboz_web.core.components.nodes.software">
-<span id="software"></span><h2>Software<a class="headerlink" href="#module-doboz_web.core.components.nodes.software" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pollapli.core.components.nodes.software">
+<span id="software"></span><h2>Software<a class="headerlink" href="#module-pollapli.core.components.nodes.software" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -320,15 +320,15 @@ connector</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Nodes</a><ul>
-<li><a class="reference internal" href="#module-doboz_web.core.components.nodes.node">Node</a></li>
-<li><a class="reference internal" href="#module-doboz_web.core.components.nodes.node_manager">Node manager</a></li>
-<li><a class="reference internal" href="#module-doboz_web.core.components.nodes.hardware">Hardware</a><ul>
-<li><a class="reference internal" href="#module-doboz_web.core.components.nodes.hardware.hardware_node_capability">Hardware Node</a></li>
-<li><a class="reference internal" href="#module-doboz_web.core.components.nodes.hardware.reprap.reprap_capability">Reprap Node</a></li>
-<li><a class="reference internal" href="#module-doboz_web.core.components.nodes.hardware.webcam.webcam_node">Webcam Node</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.nodes.node">Node</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.nodes.node_manager">Node manager</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.nodes.hardware">Hardware</a><ul>
+<li><a class="reference internal" href="#module-pollapli.core.components.nodes.hardware.hardware_node_capability">Hardware Node</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.nodes.hardware.reprap.reprap_capability">Reprap Node</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.nodes.hardware.webcam.webcam_node">Webcam Node</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-doboz_web.core.components.nodes.software">Software</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.nodes.software">Software</a></li>
 </ul>
 </li>
 </ul>

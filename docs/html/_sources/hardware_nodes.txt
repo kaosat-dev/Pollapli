@@ -9,6 +9,6 @@ Contents:
 
 sdfsdfsd
 
-.. automodule:: doboz_web.core.components.nodes
+.. automodule:: pollapli.core.components.nodes
  :members:
  :show-inheritance:

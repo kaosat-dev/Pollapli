@@ -61,15 +61,15 @@
 </ul>
 </div>
 <p>Environments are the &#8220;holding bag&#8221; which contain all the other elements .</p>
-<span class="target" id="module-doboz_web.core.components.environments"></span><div class="section" id="module-doboz_web.core.components.environments.environment">
-<span id="environment"></span><h2>Environment<a class="headerlink" href="#module-doboz_web.core.components.environments.environment" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-pollapli.core.components.environments"></span><div class="section" id="module-pollapli.core.components.environments.environment">
+<span id="environment"></span><h2>Environment<a class="headerlink" href="#module-pollapli.core.components.environments.environment" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-environment"></span><dl class="class">
-<dt id="doboz_web.core.components.environments.environment.Environment">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.environments.environment.</tt><tt class="descname">Environment</tt><big>(</big><em>path='/'</em>, <em>name='home'</em>, <em>description='Add Description here'</em>, <em>status='active'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.environments.environment.</tt><tt class="descname">Environment</tt><big>(</big><em>path='/'</em>, <em>name='home'</em>, <em>description='Add Description here'</em>, <em>status='active'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">twistar.dbobject.DBObject</span></tt></p>
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.add_actor">
-<tt class="descname">add_actor</tt><big>(</big><em>title</em>, <em>description</em>, <em>type</em>, <em>mode</em>, <em>params</em>, <em>node</em>, <em>port</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.add_actor" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.add_actor">
+<tt class="descname">add_actor</tt><big>(</big><em>title</em>, <em>description</em>, <em>type</em>, <em>mode</em>, <em>params</em>, <em>node</em>, <em>port</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.add_actor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add an actor to this environement, via its node manager (passthrough function)
 Params:
 title:the name of the actor
@@ -80,8 +80,8 @@ Node: its parent node id</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.add_sensor">
-<tt class="descname">add_sensor</tt><big>(</big><em>node</em>, <em>params</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.add_sensor" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.add_sensor">
+<tt class="descname">add_sensor</tt><big>(</big><em>node</em>, <em>params</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.add_sensor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a sensor to this environement, via its node manager (passthrough function)
 Params:
 title:the name of the sensor
@@ -92,13 +92,13 @@ port: its pin/port (might be too arduino specific</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.add_sensorSchedule">
-<tt class="descname">add_sensorSchedule</tt><big>(</big><em>target</em>, <em>targetParams</em>, <em>startTime</em>, <em>function</em>, <em>functionparams</em>, <em>interval</em>, <em>name</em>, <em>description</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.add_sensorSchedule" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.add_sensorSchedule">
+<tt class="descname">add_sensorSchedule</tt><big>(</big><em>target</em>, <em>targetParams</em>, <em>startTime</em>, <em>function</em>, <em>functionparams</em>, <em>interval</em>, <em>name</em>, <em>description</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.add_sensorSchedule" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.add_sensorType">
-<tt class="descname">add_sensorType</tt><big>(</big><em>title</em>, <em>description</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.add_sensorType" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.add_sensorType">
+<tt class="descname">add_sensorType</tt><big>(</big><em>title</em>, <em>description</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.add_sensorType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a sensor type to this environement : might be usefull to make this a passthrough method too , to have for example a dictionarry
 inside the node mgr which maps sensorType ids to their names or whatver
 Params:
@@ -107,102 +107,102 @@ Desciption: short description of sensor type</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.get_environmentInfo">
-<tt class="descname">get_environmentInfo</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.get_environmentInfo" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.get_environmentInfo">
+<tt class="descname">get_environmentInfo</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.get_environmentInfo" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.get_sensorData">
-<tt class="descname">get_sensorData</tt><big>(</big><em>nodeId</em>, <em>sensorId</em>, <em>startDate</em>, <em>endDate</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.get_sensorData" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.get_sensorData">
+<tt class="descname">get_sensorData</tt><big>(</big><em>nodeId</em>, <em>sensorId</em>, <em>startDate</em>, <em>endDate</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.get_sensorData" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.remove_actor">
-<tt class="descname">remove_actor</tt><big>(</big><em>actorId</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.remove_actor" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.remove_actor">
+<tt class="descname">remove_actor</tt><big>(</big><em>actorId</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.remove_actor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove a actor from this environement , via its node manager (passthrough function)
 Params:actorId : the id of the actor we want removed</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.remove_node">
-<tt class="descname">remove_node</tt><big>(</big><em>nodeId</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.remove_node" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.remove_node">
+<tt class="descname">remove_node</tt><big>(</big><em>nodeId</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.remove_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove a hardware node from this environement , via its node manager (passthrough function)
 Params:nodeId : the id of the node we want removed</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.remove_sensor">
-<tt class="descname">remove_sensor</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.remove_sensor" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.remove_sensor">
+<tt class="descname">remove_sensor</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.remove_sensor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove a sensor from this environement , via its node manager (passthrough function)
 Params:sensorId : the id of the sensor we want removed</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.remove_sensorType">
-<tt class="descname">remove_sensorType</tt><big>(</big><em>title</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.remove_sensorType" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.remove_sensorType">
+<tt class="descname">remove_sensorType</tt><big>(</big><em>title</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.remove_sensorType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove a sensor from this environement , via its node manager (passthrough function)
 Params:sensorId : the id of the node we want removed</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.remove_task">
-<tt class="descname">remove_task</tt><big>(</big><em>title</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.remove_task" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.remove_task">
+<tt class="descname">remove_task</tt><big>(</big><em>title</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.remove_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes a task from the database as well as the scheduler</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.retrieve_data">
-<tt class="descname">retrieve_data</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.retrieve_data" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.retrieve_data">
+<tt class="descname">retrieve_data</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.retrieve_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Enqueue/call a data retrieval command on one sensor: this should NOT be blocking, but asynch</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.set_connectorToNode">
-<tt class="descname">set_connectorToNode</tt><big>(</big><em>nodeName</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.set_connectorToNode" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.set_connectorToNode">
+<tt class="descname">set_connectorToNode</tt><big>(</big><em>nodeName</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.set_connectorToNode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set a node&#8217;s connector</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.set_portDependency">
-<tt class="descname">set_portDependency</tt><big>(</big><em>port</em>, <em>parentPort</em>, <em>threshold</em>, <em>compareType</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.set_portDependency" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.set_portDependency">
+<tt class="descname">set_portDependency</tt><big>(</big><em>port</em>, <em>parentPort</em>, <em>threshold</em>, <em>compareType</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.set_portDependency" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.set_trigger">
-<tt class="descname">set_trigger</tt><big>(</big><em>slave</em>, <em>master</em>, <em>threshold</em>, <em>compareType</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.set_trigger" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.set_trigger">
+<tt class="descname">set_trigger</tt><big>(</big><em>slave</em>, <em>master</em>, <em>threshold</em>, <em>compareType</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.set_trigger" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.setup">
-<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.setup" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.setup">
+<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.setup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to instanciate the whole environment from disk (db)
 This is usually called at first start or after a server restart</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.tearDown">
-<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.tearDown" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.tearDown">
+<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.tearDown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tidilly shutdown and cleanup after environment</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment.Environment.update">
-<tt class="descname">update</tt><big>(</big><em>name</em>, <em>description</em>, <em>status</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment.Environment.update" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment.Environment.update">
+<tt class="descname">update</tt><big>(</big><em>name</em>, <em>description</em>, <em>status</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment.Environment.update" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 </div>
-<div class="section" id="module-doboz_web.core.components.environments.environment_manager">
-<span id="environment-manager"></span><h2>Environment Manager<a class="headerlink" href="#module-doboz_web.core.components.environments.environment_manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pollapli.core.components.environments.environment_manager">
+<span id="environment-manager"></span><h2>Environment Manager<a class="headerlink" href="#module-pollapli.core.components.environments.environment_manager" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-environment_manager"></span><dl class="class">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager">
-<em class="property">class </em><tt class="descclassname">doboz_web.core.components.environments.environment_manager.</tt><tt class="descname">EnvironmentManager</tt><big>(</big><em>envPath</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager">
+<em class="property">class </em><tt class="descclassname">pollapli.core.components.environments.environment_manager.</tt><tt class="descname">EnvironmentManager</tt><big>(</big><em>envPath</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Class acting as a central access point for all the functionality of environments</p>
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.add_environment">
-<tt class="descname">add_environment</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.add_environment" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.add_environment">
+<tt class="descname">add_environment</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.add_environment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add an environment to the list of managed environements : 
 Automatically creates a new folder and launches the new environement auto creation
 Params:
@@ -212,32 +212,32 @@ status: either frozen or live : whether the environment is active or not</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.clear_environments">
-<tt class="descname">clear_environments</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.clear_environments" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.clear_environments">
+<tt class="descname">clear_environments</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.clear_environments" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes &amp; deletes ALL the environments, should be used with care</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.force_id">
-<tt class="descname">force_id</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.force_id" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.force_id">
+<tt class="descname">force_id</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.force_id" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.get_environment">
-<tt class="descname">get_environment</tt><big>(</big><em>envId</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.get_environment" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.get_environment">
+<tt class="descname">get_environment</tt><big>(</big><em>envId</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.get_environment" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.get_environments">
-<tt class="descname">get_environments</tt><big>(</big><em>filter=None</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.get_environments" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.get_environments">
+<tt class="descname">get_environments</tt><big>(</big><em>filter=None</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.get_environments" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the list of environments, filtered by  the filter param
 the filter is a dictionary of list, with each key beeing an attribute
 to check, and the values in the list , values of that param to check against</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.remove_environment">
-<tt class="descname">remove_environment</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.remove_environment" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.remove_environment">
+<tt class="descname">remove_environment</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.remove_environment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove an environment : this needs a whole set of checks, 
 as it would delete an environment completely (very dangerous)
 Params:
@@ -245,20 +245,20 @@ name: the name of the environment</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.setup">
-<tt class="descname">setup</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.setup" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.setup">
+<tt class="descname">setup</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.setup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.stop">
-<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.stop" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shuts down the environment manager and everything associated with it : ie EVERYTHING !!
 Should not be called in most cases</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="doboz_web.core.components.environments.environment_manager.EnvironmentManager.update_environment">
-<tt class="descname">update_environment</tt><big>(</big><em>id</em>, <em>name</em>, <em>description</em>, <em>status</em><big>)</big><a class="headerlink" href="#doboz_web.core.components.environments.environment_manager.EnvironmentManager.update_environment" title="Permalink to this definition">¶</a></dt>
+<dt id="pollapli.core.components.environments.environment_manager.EnvironmentManager.update_environment">
+<tt class="descname">update_environment</tt><big>(</big><em>id</em>, <em>name</em>, <em>description</em>, <em>status</em><big>)</big><a class="headerlink" href="#pollapli.core.components.environments.environment_manager.EnvironmentManager.update_environment" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -275,8 +275,8 @@ Should not be called in most cases</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Environments</a><ul>
-<li><a class="reference internal" href="#module-doboz_web.core.components.environments.environment">Environment</a></li>
-<li><a class="reference internal" href="#module-doboz_web.core.components.environments.environment_manager">Environment Manager</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.environments.environment">Environment</a></li>
+<li><a class="reference internal" href="#module-pollapli.core.components.environments.environment_manager">Environment Manager</a></li>
 </ul>
 </li>
 </ul>

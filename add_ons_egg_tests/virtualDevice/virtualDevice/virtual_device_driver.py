@@ -1,14 +1,14 @@
 from zope.interface import implements
 from twisted.plugin import IPlugin
-from doboz_web import idoboz_web 
+from pollapli import ipollapli 
 from zope.interface import classProvides
 from twisted.python import log,failure
 from twisted.internet import reactor, defer
 import uuid
 import logging
-from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
-from doboz_web.core.logic.components.drivers.driver import BaseProtocol,Driver,DriverManager,CommandQueueLogic
-from doboz_web.core.logic.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
+from pollapli.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
+from pollapli.core.logic.components.drivers.driver import BaseProtocol,Driver,DriverManager,CommandQueueLogic
+from pollapli.core.logic.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
 
 
 class VirtualDeviceProtocol(BaseProtocol):
@@ -130,7 +130,7 @@ class VirtualDeviceProtocol(BaseProtocol):
           
         
 class VirtualDeviceHardwareHandler(object):
-    classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
+    classProvides(IPlugin, ipollapli.IDriverHardwareHandler)
     
     blockedPorts=[]
     avalailablePorts=[]
@@ -249,7 +249,7 @@ class VirtualDevice(object):
 
 class VirtualDeviceDriver(Driver):
     """Class defining the components of the driver for a basic arduino,using attached firmware """
-    classProvides(IPlugin, idoboz_web.IDriver) 
+    classProvides(IPlugin, ipollapli.IDriver) 
     TABLENAME="drivers"   
     def __init__(self,driverType="Virtual",deviceType="Virtual",deviceId="",connectionType="virtual",options={},*args,**kwargs):
         """

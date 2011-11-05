@@ -14,7 +14,7 @@
 import sys, os
 
 sys.path.insert(0,"D:\\data\\projects\\Doboz\\")
-sys.path.insert(0,"D:\\data\\projects\\Doboz\\doboz_web")
+sys.path.insert(0,"D:\\data\\projects\\Doboz\\pollapli")
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

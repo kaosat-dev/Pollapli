@@ -1,0 +1,16 @@
+Metadata-Version: 1.0
+Name: Doboz-Web
+Version: 0.32
+Summary: Web based remote monitoring and control for Repraps (3d printers) and other variants
+Home-page: http://github.com/kaosat-dev/Doboz
+Author: Mark "ckaos" Moissette
+Author-email: kaosat.dev@gmail.com
+License: GPL
+Description: UNKNOWN
+Keywords: web remote control remote monitoring reprap repstrap
+Platform: UNKNOWN
+Classifier: Development Status :: 1 - Planning
+Classifier: Topic :: Utilities
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 2.6

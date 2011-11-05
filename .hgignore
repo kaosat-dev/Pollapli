@@ -5,7 +5,7 @@ parts/*
 eggs/*
 dependencies/*
 builds/*
-Doboz_Web.egg-info/*
+pollapli.egg-info/*
 .settings/*
 *.pyc
 *.pyo
@@ -17,7 +17,7 @@ dropin.cache
 
 
 syntax: regexp
-^doboz_web/data/environments/home$
-^doboz_web/data/environments/home/home\.db$
-^doboz_web/data/uploads$
-^doboz_web/data/printFiles$
+^pollapli/data/environments/home$
+^pollapli/data/environments/home/home\.db$
+^pollapli/data/uploads$
+^pollapli/data/printFiles$

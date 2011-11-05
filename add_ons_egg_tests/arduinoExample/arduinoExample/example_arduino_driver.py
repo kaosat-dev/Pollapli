@@ -1,13 +1,13 @@
 from zope.interface import implements
 from twisted.plugin import IPlugin
-from doboz_web import idoboz_web 
+from pollapli import ipollapli 
 from zope.interface import classProvides
 from twisted.python import log,failure
 from twisted.internet import reactor, defer
 import uuid,logging
-from doboz_web.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
-from doboz_web.core.logic.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
-from doboz_web.core.logic.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
+from pollapli.exceptions import DeviceHandshakeMismatch,DeviceIdMismatch
+from pollapli.core.logic.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
+from pollapli.core.logic.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
 
 
 class ArduinoExampleProtocol(BaseSerialProtocol):
@@ -113,14 +113,14 @@ class ArduinoExampleProtocol(BaseSerialProtocol):
         BaseSerialProtocol.connectionLost(self,reason)
         
 class ArduinoExampleHardwareHandler(SerialHardwareHandler):
-    classProvides(IPlugin, idoboz_web.IDriverHardwareHandler)
+    classProvides(IPlugin, ipollapli.IDriverHardwareHandler)
     def __init__(self,*args,**kwargs):
         SerialHardwareHandler.__init__(self,protocol=ArduinoExampleProtocol(*args,**kwargs),*args,**kwargs)
 
 
 class ArduinoExampleDriver(Driver):
     """Class defining the components of the driver for a basic arduino,using attached firmware """
-    classProvides(IPlugin, idoboz_web.IDriver) 
+    classProvides(IPlugin, ipollapli.IDriver) 
     TABLENAME="drivers"   
     def __init__(self,driverType="ArduinoExample",deviceType="Arduino",deviceId="",connectionType="serial",options={},*args,**kwargs):
         """
