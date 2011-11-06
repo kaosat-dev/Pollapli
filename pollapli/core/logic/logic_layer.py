@@ -7,7 +7,7 @@ class LogicLayer(object):
         self._persistenceLayer = persistenceLayer
         self._environmentManager = EnvironmentManager(self._persistenceLayer)
         #self._driverManager = DriverManager()
-    
+        
     @defer.inlineCallbacks
     def setup(self):
         yield self._environmentManager.setup()
@@ -18,9 +18,26 @@ class LogicLayer(object):
         else:
             raise AttributeError(attr_name)
         
+    @defer.inlineCallbacks
+    def add_task(self,environmentId,*args,**kwargs):
+        env = self._environmentManager.get_environment(environmentId, *args, **kwargs)
+        task = yield env.add_task(*args,**kwargs)
+        defer.returnValue(task)
+    
+    @defer.inlineCallbacks
+    def get_tasks(self, environmentId = None, *args, **kwargs):
+        env = self._environmentManager.get_environment(environmentId, *args, **kwargs)
+        tasks = yield env.get_tasks(*args, **kwargs)
+        defer.returnValue(tasks)
+     
+    @defer.inlineCallbacks   
+    def add_device(self,environmentId,*args,**kwargs):
+        env = self._environmentManager.get_environment(environmentId)
+        device = yield env.add_device(*args,**kwargs)
+        defer.returnValue(device)
         
-    def add_task(self,envId,*args,**kwargs):
-        self._environmentManager.get_environment(envId).add_task(*args,**kwargs)
-        
-    def add_device(self,envId,*args,**kwargs):
-        self._environmentManager.get_environment(envId).add_device(*args,**kwargs)
+    @defer.inlineCallbacks
+    def get_devices(self, environmentId = None, *args, **kwargs):
+        env = self._environmentManager.get_environment(environmentId, *args, **kwargs)
+        devices = yield env.get_devices(*args, **kwargs)
+        defer.returnValue(devices)

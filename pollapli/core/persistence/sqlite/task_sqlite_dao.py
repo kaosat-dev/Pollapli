@@ -1,82 +1,140 @@
-from twisted.internet import reactor, defer,task
+import uuid,logging
+from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-from twisted.web import client
 from pollapli.core.persistence.dao_base.task_dao import TaskDao
+from pollapli.core.logic.components.tasks.task import Task
+from pollapli.exceptions import TaskNotFound
+
 
 class TaskSqliteDao(TaskDao):
-    def __init__(self,dbPool):
-        self._dbPool = dbPool
+    def __init__(self,dbPool=None,persistenceStrategy=None):
+        self._dbPool=dbPool
+        #self._persistenceStrategy = persistenceStrategy
         self._tableCreated = False
-                  
-    @defer.inlineCallbacks
-    def _createTable(self):
-        if not self._tableCreated:
-            try:
-                yield self._dbPool.runQuery('''SELECT name FROM devices LIMIT 1''')
-            except Exception as inst:
-                pass#print("error",inst)
-                try:
-                    yield self._dbPool.runQuery('''CREATE TABLE updates(
-             id INTEGER PRIMARY KEY,
-             type TEXT NOT NULL DEFAULT "update",
-             name TEXT,
-             description TEXT,
-             version TEXT,
-             tags TEXT,
-             downloadUrl TEXT,
-             enabled TEXT NOT NULL DEFAULT "False"
-             )''')
-                    self._tableCreated = True
-                except Exception as inst2:
-                    print("error2",inst2)
+                    
+    def _get_last_insertId(self, txn):
+        txn.execute("SELECT last_insert_rowid()")
+        result = txn.fetchall()
+        return result[0][0]
     
+    def _execute_txn(self, txn, query, *args,**kwargs):
+        #if not self._tableCreated:
+            try:
+                txn.execute('''SELECT name FROM tasks ''')
+            except Exception as inst:
+                log.msg("error in load task first step",inst, logLevel=logging.CRITICAL)
+                try:
+                    txn.execute('''CREATE TABLE tasks (
+                    id INTEGER PRIMARY KEY,
+                    uid INTEGER ,
+                    name TEXT,
+                    description TEXT,
+                    status TEXT NOT NULL DEFAULT "inactive",
+                    environment_uid INTEGER 
+                    )''')
+                    self._tableCreated = True
+                except Exception as inst:
+                    log.msg("error in load task second step",inst, logLevel=logging.CRITICAL)
+                   
+            return txn.execute(query, *args,**kwargs)
+    
+    def _select(self,txn,query=None,*args):
+        self._execute_txn(txn, query,*args)
+        return txn.fetchall()
+    
+    def _insert(self,txn,query=None,*args):
+        self._execute_txn(txn,query,*args)
+        return self._get_last_insertId(txn)
+    
+    def _update(self,txn,query=None,*args):
+        self._execute_txn(txn, query,*args)
+        return None
+    
+    def select(self, tableName=None, id=None, environmentId=None, query=None, order=None, *args,**kwargs):  
+        if id is not None:
+            query = query or '''SELECT uid,name,description,status FROM tasks WHERE uid = ?'''
+            args= [id]
+        elif environmentId is not None:
+            query = query or '''SELECT uid,name,description,status FROM tasks WHERE environment_uid = ?'''
+            args= [environmentId]
+        else:
+            query = query or '''SELECT uid,name,description,status FROM tasks '''
+       
+        if order is not None:
+            query = query + " ORDER BY %s" %(str(order))
+        
+        return self._dbPool.runInteraction(self._select,query,args)
+       
+    def insert(self,tableName=None, query=None, args=None):  
+        query = query or '''INSERT into tasks VALUES(null,?,?,?,?,?)''' 
+        args = args
+        return self._dbPool.runInteraction(self._insert,query,args)
+    
+    def update(self,tableName=None,query=None,args=None):  
+        query = query or '''UPDATE tasks SET name = ? ,description = ?, status = ?, environment_uid = ? WHERE id = ? ''' 
+        args = args
+        return self._dbPool.runInteraction(self._update,query,args)
+    
+    def delete(self,id=None,tableName=None,query=None,args=None):  
+        args=[id]
+        query = query or '''DELETE FROM tasks WHERE id = ? '''
+        return self._dbPool.runInteraction(self._execute_txn,query,args)
+    
+    @defer.inlineCallbacks
+    def load_task(self,id = None, environmentId = None ,*args,**kwargs):
+        """Retrieve data from task object."""
+        if id is not None: 
+            rows =  yield self.select(id = str(id)) 
+        elif environmentId is not None:
+            rows =  yield self.select(environmentId = str(environmentId))       
+        result=None
+        if len(rows)>0:
+            id,name,description,status = rows[0]
+            result = Task(name = name,description=description,status=status)
+            result._id = uuid.UUID(id)
+        else:
+            raise TaskNotFound()
+        defer.returnValue(result)
+    
+    @defer.inlineCallbacks
+    def load_tasks(self, environmentId = None ,*args,**kwargs):
+        """Save the task object ."""
+        lTasks = []
+        if environmentId is not None:
+            rows = yield self.select(environmentId = str(environmentId), order = "id")
+        else:
+            rows = yield self.select(order = "id")
+        for row in rows:
+            id,name,description,status = row
+            task = Task(name = name,description=description,status=status)
+            task._id = uuid.UUID(id)
+            lTasks.append(task)
+        defer.returnValue(lTasks)
         
     @defer.inlineCallbacks
-    def load_update(self,id = -1, *args,**kwargs):
-        yield self._createTable()
-        """Retrieve data from update object."""
-        rows = yield self._dbPool.runQuery("SELECT type, name, description, version, tags, downloadUrl, enabled FROM updates WHERE id = ?", str(id))
-        type, name, description, version, tags, downloadUrl, enabled = rows[0]
-        defer.returnValue( Update2(type = type, name = name, description = description,version = version, tags = tags.split(","), downloadUrl = downloadUrl, enabled = enabled))
-    
-    @defer.inlineCallbacks
-    def load_updates(self,*args,**kwargs):
-        """Retrieve all update objects."""
-        yield self._createTable()
-        lUpdates = []
-        result = yield self._dbPool.runQuery("SELECT type, name, description, version, tags, downloadUrl, enabled  FROM updates ORDER by id")
-        for row in result:
-            type, name, description, version, tags, downloadUrl, enabled = row
-            lUpdates.append(Update2(type = type, name = name, description = description,version = version, tags = tags.split(","), downloadUrl = downloadUrl, enabled = enabled))
-        defer.returnValue(lUpdates)
-    
-    @defer.inlineCallbacks
-    def save_update(self, update):
-        yield self._createTable()
-        """Save the update object ."""
-        if hasattr(update,"_id"):
-            #print ("updating update with id %s, called %s" %(str(update._id),update.name))
-            yield self._dbPool.runQuery('''UPDATE updates SET type = ?, name = ? ,description = ?, version = ?, tags = ? , downloadUrl = ?, enabled = ? WHERE id = ? ''', \
-                                        (update.type,update.name,update.description,update.version,",".join(update.tags),update.downloadUrl,update.enabled,update._id))
+    def save_task(self, task):
+        """Save the task object ."""  
+        parentEnvironment = task._parent 
+        parentUId = None
+        if parentEnvironment is not None:
+            parentUId = parentEnvironment._id
+            
+        if hasattr(task,"_dbId"):
+            yield self.update(args = (task._name,task._description,task._status,str(parentUId),task._dbId))
         else:
-            def txnExec(txn):
-                txn.execute('''INSERT into updates VALUES(null,?,?,?,?,?,?,?)''', (update.type,update.name,update.description,\
-                                                                                   update.version,",".join(update.tags),update.downloadUrl,update.enabled))
-                result = txn.fetchall()
-                txn.execute("SELECT last_insert_rowid()")
-                result = txn.fetchall()
-                update._id = result[0][0]
-                        
-            yield self._dbPool.runInteraction(txnExec)
-            defer.returnValue(True)
+            task._dbId = yield self.insert(args = (str(task._id),task._name,task._description,task._status,str(parentUId)))                            
             
     @defer.inlineCallbacks
-    def save_updates(self, lUpdates):
-        yield self._createTable()
-        for update in lUpdates:
-            yield self.save_update(update)
-        
-    
-   
-    
+    def save_tasks(self,lTasks):
+        for task in lTasks:
+            yield self.save_task(task)
+            
+    @defer.inlineCallbacks 
+    def delete_task(self, task):
+        """Delete a task object ."""
+        if hasattr(task,"_dbId"):
+            yield self.delete(task._dbId)
+            delattr(task,"_dbId")
+        else:
+            raise TaskNotFound()

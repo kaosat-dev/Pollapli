@@ -13,13 +13,14 @@ from pollapli.core.logic.tools.file_manager import FileManager
 
 class SqliteDaoManager(object):
     """Main manager for sqlite daos"""
-    def __init__(self):
+    def __init__(self, pathManager = None):
+        self._pathManager = pathManager
         self._persistenceStrategy = SqlitePersistenceStrategy()
         self._dbPool = adbapi.ConnectionPool("sqlite3","pollapli.db",check_same_thread=False)
         self._updateDao = UpdateSqliteDao(dbPool = self._dbPool,persistenceStrategy = self._persistenceStrategy)
         self._environmentDao = EnvironmentSqliteDao(dbPool = self._dbPool, persistenceStrategy = self._persistenceStrategy)
         self._deviceDao = DeviceSqliteDao(dbPool = self._dbPool, persistenceStrategy = self._persistenceStrategy)
-        #self._taskDao = TaskSqliteDao(dbPool = self._persistenceStrategy.get_store("Task"))
+        self._taskDao = TaskSqliteDao(dbPool = self._dbPool)
         
     def __getattr__(self, attr_name):
         if hasattr(self._updateDao, attr_name):
@@ -28,8 +29,8 @@ class SqliteDaoManager(object):
             return getattr(self._environmentDao, attr_name)
         elif hasattr(self._deviceDao, attr_name):
             return getattr(self._deviceDao, attr_name)
-#        elif hasattr(self._taskDao, attr_name):
-#            return getattr(self._taskDao, attr_name)
+        elif hasattr(self._taskDao, attr_name):
+            return getattr(self._taskDao, attr_name)
         else:
             raise AttributeError(attr_name)
     

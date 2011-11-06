@@ -5,7 +5,6 @@
 import os, random, logging,imp,inspect, time, datetime, shutil, imp
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
-
 from pollapli.exceptions import EnvironmentAlreadyExists,EnvironmentNotFound
 from pollapli.core.logic.tools.signal_system import SignalHander
 from pollapli.core.logic.components.environments.environment import Environment
@@ -15,7 +14,7 @@ class EnvironmentManager(object):
     """
     Class acting as a central access point for all the functionality of environments
     """
-    def __init__(self,persistenceLayer=None):
+    def __init__(self,persistenceLayer = None):
         self._persistenceLayer = persistenceLayer
         self.logger=log.PythonLoggingObserver("dobozweb.core.components.environments.environmentManager")
         self.signalChannel="environment_manager"
@@ -36,7 +35,7 @@ class EnvironmentManager(object):
             self._environments[environment._id] = environment
             environment._persistenceLayer = self._persistenceLayer
             yield environment.setup()
-        log.msg("Environment manager setup correctly", system="environement manager", logLevel=logging.CRITICAL)
+        log.msg("Environment manager setup correctly", system="environement manager", logLevel=logging.INFO)
     
     def teardown(self):
         """
@@ -90,20 +89,20 @@ class EnvironmentManager(object):
             else:
                 return envsList
             
-        d.addCallback(_get_envs,sorted(self._environments.values()))
+        d.addCallback(_get_envs,self._environments.values())
         reactor.callLater(0,d.callback,filter)
         return d
     
     
-    def get_environment(self,id):   
+    def get_environment(self,id, *args, **kwargs):   
         if not id in self._environments.keys():
             raise EnvironmentNotFound() 
             #defer.fail(EnvironmentNotFound())
         else:
             #raise EnvironmentNotFound() 
-            defer.succeed(self._environments[id])
+            #defer.succeed(self._environments[id])
            
-            #return self._environments[id]
+            return self._environments[id]
     
     def update_environment(self,id,name,description,status):
         self._environments[id].update(name,description,status)
@@ -120,12 +119,9 @@ class EnvironmentManager(object):
         try:
             environment = self._environments[id]
             yield self._persistenceLayer.delete_environment(environment)
-            #envPath=os.path.join(FileManager.dataPath,environment._name)
             #self.environments[envName].teardown()
             del self._environments[id]
-#            if os.path.isdir(envPath): 
-#                shutil.rmtree(envPath)
-#                log.msg("Removed environment ",environment._name, system="environment manager",logLevel=logging.CRITICAL)
+            log.msg("Removed environment ",environment._name, system="environment manager",logLevel=logging.CRITICAL)
         except:
             raise Exception("Failed to delete environment")
         

@@ -49,11 +49,10 @@ class Environment(BaseComponent):
         Method configuring additional elements of the current environment
         """
         yield self._devices.setup()
-        #yield self._tasks.setup()
+        yield self._tasks.setup()
         log.msg("Environment ",self._name ,"with id", self._id," setup correctly", logLevel=logging.CRITICAL, system="environment")
 
     def teardown(self):
         """
         Tidilly shutdown and cleanup after environment
         """
-  

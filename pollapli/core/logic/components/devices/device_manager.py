@@ -26,7 +26,7 @@ class DeviceManager(object):
     def setup(self):
         if self._persistenceLayer is None:
             self._persistenceLayer = self._parentEnvironment._persistenceLayer        
-        devices = yield self._persistenceLayer.load_devices()
+        devices = yield self._persistenceLayer.load_devices(environmentId = self._parentEnvironment._id)
         for device in devices:
             device._parent = self._parentEnvironment
             device._persistenceLayer = self._persistenceLayer
@@ -54,7 +54,7 @@ class DeviceManager(object):
         Driver: the driver to use for this device's connector
         """
             
-        device = Device(parent= self._parentEnvironment,name=name,description=description,type=type)
+        device = Device(parent= self._parentEnvironment, name=name, description=description, type=type)
         yield self._persistenceLayer.save_device(device)
         self._devices[device._id]=device
         log.msg("Added  device ",name, logLevel=logging.CRITICAL)
@@ -66,7 +66,7 @@ class DeviceManager(object):
             raise DeviceNotFound()
         return self._devices[id]
           
-    def get_devices(self,filter=None):
+    def get_devices(self, filter = None, *args, **kwargs):
         """
         Returns the list of devices, filtered by  the filter param
         the filter is a dictionary of list, with each key beeing an attribute

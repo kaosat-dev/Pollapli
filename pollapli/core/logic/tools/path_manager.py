@@ -6,51 +6,40 @@ from twisted.web import resource, http
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 
-class _FileManager(object):
+class PathManager(object):
     
     def __init__(self):
-        self.corePath = None
-        self.rootPath = None  
-        self.dataPath = None
-        self.uploadPath = None
+        self.corePath = ""
         
-        
-    @classmethod
-    def getRootDir(cls):
-        return FileManager.rootDir
+        self.rootPath = ""  
+        self.dataPath = ""
+        self.uploadPath = ""
+        self.tmpPath = ""
+        self.addOnPath = ""
     
-    @classmethod
-    def setRootDir(cls,rootDir):
-        FileManager.rootDir=rootDir
-        
-    @classmethod
-    def list_files(cls,path=None):
+    def list_files(self,path=None):
         result=[]
-        for file in os.listdir(cls.uploadPath):
-            file=os.path.join(cls.uploadPath,file)           
+        for file in os.listdir(self.uploadPath):
+            file=os.path.join(self.uploadPath,file)           
          #   print("file:name:",os.path.basename(file) ," size",os.path.getsize(file),"modDate",os.path.getmtime(file),"created",os.path.getctime(file))
             result.append({"name":os.path.basename(file),"size":os.path.getsize(file),"created":os.path.getctime(file),"modified":os.path.getmtime(file)})
         return result
     
-    @classmethod
-    def delete_files(cls,path=None):
+    def delete_files(self,path=None):
        # d=defer.Deferred()     
        def _delete_files():
-            
-            for file in os.listdir(cls.uploadPath):
-                filePath=os.path.join(cls.uploadPath,file) 
+            for file in os.listdir(self.uploadPath):
+                filePath=os.path.join(self.uploadPath,file) 
                 os.remove(filePath)
             log.msg("FileManager removed all uploaded files sucessfully")
        # d.addCallback(_delete_files)
        # return d
        _delete_files()
     
-    @classmethod
-    def delete_file(cls,filename=None):
-        #d=defer.Deferred()     
-                
+    def delete_file(self,filename=None):
+        #d=defer.Deferred()                 
         def _delete_file(*args,**kwargs):
-            filePath=os.path.join(cls.uploadPath,filename)
+            filePath=os.path.join(self.uploadPath,filename)
             if os.path.exists(filePath):
                 os.remove(filePath)
             log.msg("FileManager removed uploaded file",filename, "sucessfully")
@@ -64,4 +53,3 @@ class _FileManager(object):
 #            self.logger.critical("Deleted file: %s",fileName)
 
 
-FileManager = _FileManager() 

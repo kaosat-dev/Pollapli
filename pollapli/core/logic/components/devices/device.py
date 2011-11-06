@@ -54,12 +54,13 @@ class Device(BaseComponent):
         
     def __eq__(self, other):
         return self._id == other._id and self._name == other._name and self._description == other._description and self._status == other._status
+    
     def __ne__(self, other):
         return not self.__eq__(other)
     
     @defer.inlineCallbacks
     def setup(self):
-        self.driver=yield DriverManager.load(parentDevice=self)
-        self.signalChannelPrefix="environment_"+str(self._parent._id)+".node_"+str(self._id)
+        #self.driver = yield DriverManager.load(parentDevice=self)
+        self.signalChannelPrefix = "environment_"+str(self._parent._id)+".node_"+str(self._id)
         log.msg("Device with id",self._id, "setup successfully",system="Device", logLevel=logging.CRITICAL)
         

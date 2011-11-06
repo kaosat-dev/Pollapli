@@ -15,15 +15,15 @@ class TaskManager(object):
         self.signalChannelPrefix = "environment_"+str(self._parentEnvironment._id)
     
     @defer.inlineCallbacks
-    def setup(self):    
+    def setup(self):            
         if self._persistenceLayer is None:
             self._persistenceLayer = self._parentEnvironment._persistenceLayer        
-        tasks = yield self._persistenceLayer.load_tasks()
+        tasks = yield self._persistenceLayer.load_tasks(environmentId = self._parentEnvironment._id)
         for task in tasks:
             task._parent = self._parentEnvironment
             task._persistenceLayer = self._persistenceLayer
             self._tasks[task._id] = task
-            #yield device.setup()   
+            #yield task.setup()   
         
     def send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+"."
@@ -35,19 +35,19 @@ class TaskManager(object):
     """
  
     @defer.inlineCallbacks
-    def add_task(self,name="task",description="",params={},*args,**kwargs):
+    def add_task(self,name="Default Task",description="Default task description",status = "inactive",params={},*args,**kwargs):
         """
         Add a new task to the list of task of the current environment
         Params:
         name: the name of the task
         Desciption: short description of task
         """
-        task = yield Task(name = name,description = description)
-        yield task.setup()
-        self._persistenceLayer.save_task(task)
-        
-        self.signalHandler.send_message("task.created",self,task)
+        task = Task(parent= self._parentEnvironment, name = name, description = description, status = status)
+        #yield task.setup()
+        self._tasks[task._id] = task
+        yield self._persistenceLayer.save_task(task)
         log.msg("Added task named:",name ," description:",description,"with id",task._id, system="task manager", logLevel=logging.CRITICAL)         
+        self.signalHandler.send_message("task.created",self,task)
         defer.returnValue(task)
     
     def get_task(self,id):

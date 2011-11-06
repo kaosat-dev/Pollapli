@@ -1,9 +1,9 @@
+import uuid
 from twisted.internet import reactor, defer,task
 from twisted.python import log,failure
-from twisted.python.log import PythonLoggingObserver
-from twisted.web import client
 from pollapli.core.persistence.dao_base.update_dao import UpdateDao
 from pollapli.core.logic.components.updates.update import Update
+from pollapli.exceptions import UpdateNotFound
 
 class UpdateSqliteDao(UpdateDao):
     def __init__(self,dbPool=None, persistenceStrategy =None):
@@ -25,6 +25,7 @@ class UpdateSqliteDao(UpdateDao):
                 try:
                     txn.execute('''CREATE TABLE updates(
                      id INTEGER PRIMARY KEY,
+                     uid INTEGER,
                      type TEXT NOT NULL DEFAULT "update",
                      name TEXT,
                      description TEXT,
@@ -53,18 +54,17 @@ class UpdateSqliteDao(UpdateDao):
     
     def select(self,tableName=None, id=None,query=None,order=None,*args):  
         if id is not None:
-            query = query or '''SELECT type, name, description, version, tags, downloadUrl, enabled FROM updates WHERE id = ?'''
-            args= id
+            query = query or '''SELECT uid,type,name,description,version,tags,downloadUrl,enabled FROM updates WHERE uid = ?'''
+            args= [id]
         else:
-            query = query or '''SELECT type, name, description, version, tags, downloadUrl, enabled FROM updates '''
-       
+            query = query or '''SELECT uid,type,name,description,version,tags,downloadUrl,enabled FROM updates '''
         if order is not None:
             query = query + " ORDER BY %s" %(str(order))
         args = args
         return self._dbPool.runInteraction(self._select,query,args)
        
     def insert(self,tableName=None, query=None, args=None):  
-        query = query or '''INSERT into updates VALUES(null,?,?,?,?,?,?,?)''' 
+        query = query or '''INSERT into updates VALUES(null,?,?,?,?,?,?,?,?)''' 
         args = args
         return self._dbPool.runInteraction(self._insert,query,args)
     
@@ -74,13 +74,16 @@ class UpdateSqliteDao(UpdateDao):
         return self._dbPool.runInteraction(self._update,query,args)
     
     @defer.inlineCallbacks
-    def load_update(self,id = -1, *args,**kwargs):
+    def load_update(self,id = None, *args,**kwargs):
         """Retrieve data from update object."""
         rows = yield self.select(id = str(id))   
         result=None
         if len(rows)>0:    
-            type, name, description, version, tags, downloadUrl, enabled = rows[0]
+            id, type, name, description, version, tags, downloadUrl, enabled = rows[0]
             result =  Update(type = type, name = name, description = description,version = version, tags = tags.split(","), downloadUrl = downloadUrl, enabled = enabled)
+            result._id = uuid.UUID(id)
+        else:
+            raise UpdateNotFound()
         defer.returnValue(result)
         
     @defer.inlineCallbacks
@@ -89,17 +92,20 @@ class UpdateSqliteDao(UpdateDao):
         lUpdates = []
         rows = yield self.select(order = "id")
         for row in rows:
-            type, name, description, version, tags, downloadUrl, enabled = row
-            lUpdates.append(Update(type = type, name = name, description = description,version = version, tags = tags.split(","), downloadUrl = downloadUrl, enabled = enabled))
+            id, type, name, description, version, tags, downloadUrl, enabled = row
+            update =Update(type = type, name = name, description = description,version = version, tags = tags.split(","), downloadUrl = downloadUrl, enabled = enabled)
+            update._id = uuid.UUID(id)
+            lUpdates.append(update)     
         defer.returnValue(lUpdates)
     
     @defer.inlineCallbacks
     def save_update(self, update):
         """Save the update object ."""
-        if hasattr(update,"_id"):
-            yield self.update(args = (update.type,update.name,update.description,update.version,",".join(update.tags),update.downloadUrl,update.enabled,update._id))
+           
+        if hasattr(update,"_dbId"):
+            yield self.update(args = (update.type,update.name,update.description,update.version,",".join(update.tags),update.downloadUrl,update.enabled,update._dbId))
         else:
-            update._id = yield self.insert(args = (update.type,update.name,update.description,update.version,",".join(update.tags),update.downloadUrl,update.enabled))              
+            update._dbId = yield self.insert(args = (str(update._id),update.type,update.name,update.description,update.version,",".join(update.tags),update.downloadUrl,update.enabled))              
          
     @defer.inlineCallbacks
     def save_updates(self, lUpdates):

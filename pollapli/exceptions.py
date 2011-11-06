@@ -1,13 +1,13 @@
 import exceptions
 
 class EnvironmentAlreadyExists(Exception):
-  pass
+    pass
 
 class EnvironmentNotFound(Exception):
     pass
 
 class UnknownDeviceType(Exception):
-  pass
+    pass
 
 class DeviceNotFound(Exception):
     pass
@@ -31,8 +31,9 @@ class TaskNotFound(Exception):
     pass
 class UnknownTask(Exception):
     pass
-
 class UnknownUpdate(Exception):
+    pass
+class UpdateNotFound(Exception):
     pass
 
 class InvalidFile(Exception):
