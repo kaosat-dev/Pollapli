@@ -5,16 +5,31 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 
 class Schedule(object):
-    def __init__(self):
-        self._seconds=seconds
-        self._minutes=minutes
-        self._hours=hours
-        self._months=months
+    def __init__(self,seconds=0,minutes=0,hours=0,months=0,doms=0,dows=0,cronLine=None,*args,**kwargs):
+        if cronLine is not None:
+            self.parse_cronLine(cronLine)
+        else:
+            self.seconds=seconds
+            self.minutes=minutes
+            self.hours=hours
+            self.months=months
+            self.dows=dows# days of the week
+            self.doms=doms# days of the month
         
-        self._hods=hods# hours of the day
-        self._dows=dows# days of the week
-        self._doms=doms# days of the month
+    def parse_cronLine(self,cronLine):
+        pass
     
+    def __eq__(self,other):
+        if not isinstance(other,Schedule):
+            return False
+        return self.seconds == other.seconds and self.minutes == other.minutes and self.hours == other.hours \
+    and self.months == other.months and self.dows == other.dows and self.doms == other.doms
+    
+    def get_next_instance(self):
+        pass
+    
+    def get_delay_for_next(self):
+        pass
     
 class ScheduledCall(object):
     def __init__(self,callback,startTime,repeatTime=None):  

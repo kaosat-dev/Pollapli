@@ -14,8 +14,8 @@ from twisted.internet.protocol import Protocol
 
 from pollapli.exceptions import UnknownDriver,NoDriverSet,DeviceIdMismatch,DeviceNotConnected
 from pollapli import ipollapli
-from pollapli.core.logic.tools.signal_system import SignalHander
-from pollapli.core.logic.components.updates.update_manager import UpdateManager
+
+#from pollapli.core.logic.components.updates.update_manager import UpdateManager
 
 
 
@@ -78,7 +78,7 @@ class Driver(DBObject):
         self.deviceId=None
         """will be needed to identify a specific device, as the system does not work base on ports"""
      
-        self.signalHandler=None 
+        self._signalDispatcher=None 
         self.signalChannelPrefix=""
         self.signalChannel=""
         
@@ -109,7 +109,7 @@ class Driver(DBObject):
         configSteps[1]=["_handle_deviceHandshake","_handle_deviceIdInit","some_other_method"]
         
         #just a test
-        self.signalHandler=SignalHander("driver_manager")
+        self._signalDispatcher=SignalHander("driver_manager")
         
         """for exposing capabilites"""
         self.endpoints=[]
@@ -135,7 +135,7 @@ class Driver(DBObject):
         env= (yield node.environment.get())
         self.signalChannelPrefix="environment_"+str(env.id)+".node_"+str(node.id)
 
-        self.signalHandler.add_handler(handler=self.send_command,signal="addCommand")
+        self._signalDispatcher.add_handler(handler=self.send_command,signal="addCommand")
         log.msg("Driver of type",self.driverType ,"setup sucessfully",system="Driver",logLevel=logging.INFO)
         
     def bind(self,port,setId=True):
@@ -185,11 +185,11 @@ class Driver(DBObject):
         self.isConnected=False
         self.isPluggedIn=False
         self.send_signal("plugged_Out",port)
-        #self.signalHandler.send_message("pluggedOut",{"data":port})
+        #self._signalDispatcher.send_message("pluggedOut",{"data":port})
     
     def send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+".driver."
-        self.signalHandler.send_message(prefix+signal,self,data)
+        self._signalDispatcher.send_message(prefix+signal,self,data)
     
     def send_command(self,data,sender=None,callback=None,*args,**kwargs):
        # print("going to send command",data,"from",sender)

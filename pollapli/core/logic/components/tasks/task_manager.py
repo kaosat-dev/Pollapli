@@ -1,9 +1,9 @@
 import logging
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
-from pollapli.core.logic.tools.signal_system import SignalHander
 from pollapli.core.logic.components.tasks.task import Task
 from pollapli.exceptions import TaskNotFound
+from pollapli.core.logic.tools.signal_system import SignalDispatcher
 
 class TaskManager(object):    
     def __init__(self, parentEnvironment):
@@ -11,7 +11,7 @@ class TaskManager(object):
         self._persistenceLayer = parentEnvironment._persistenceLayer
         self._tasks = {}
         self.signalChannel = "task_manager"
-        self.signalHandler = SignalHander(self.signalChannel)
+        self._signalDispatcher = SignalDispatcher(self.signalChannel)
         self.signalChannelPrefix = "environment_"+str(self._parentEnvironment._id)
     
     @defer.inlineCallbacks
@@ -27,7 +27,7 @@ class TaskManager(object):
         
     def send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+"."
-        self.signalHandler.send_message(prefix+signal,self,data)
+        self._signalDispatcher.send_message(prefix+signal,self,data)
     
     """
     ####################################################################################
@@ -47,7 +47,7 @@ class TaskManager(object):
         self._tasks[task._id] = task
         yield self._persistenceLayer.save_task(task)
         log.msg("Added task named:",name ," description:",description,"with id",task._id, system="task manager", logLevel=logging.CRITICAL)         
-        self.signalHandler.send_message("task.created",self,task)
+        self._signalDispatcher.send_message("task.created",self,task)
         defer.returnValue(task)
     
     def get_task(self,id):

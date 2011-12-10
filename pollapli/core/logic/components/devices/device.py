@@ -10,10 +10,10 @@ from twisted.plugin import getPlugins
 
 from pollapli import ipollapli
 from pollapli.exceptions import UnknownDriver,NoDriverSet
-from pollapli.core.logic.components.updates.update_manager import UpdateManager
+#from pollapli.core.logic.components.updates.update_manager import UpdateManager
 from pollapli.core.logic.components.drivers.driver import Driver,DriverManager
 from pollapli.exceptions import UnknownDeviceType,DeviceNotFound
-from pollapli.core.logic.tools.signal_system import SignalHander
+from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.core.logic.components.base_component import BaseComponent
 
 class DeviceStatus(object):
@@ -49,8 +49,8 @@ class Device(BaseComponent):
         """this is for internal comms handling"""
         self.signalChannelPrefix=str(self._id)
         self.signalChannel="node"+self.signalChannelPrefix+"."+self._name
-        self.signalHandler=SignalHander(self.signalChannel)
-        #self.signalHandler.add_handler(handler=self.variable_get,signal="get")
+        self._signalDispatcher=SignalDispatcher(self.signalChannel)
+        #self._signalDispatcher.add_handler(handler=self.variable_get,signal="get")
         
     def __eq__(self, other):
         return self._id == other._id and self._name == other._name and self._description == other._description and self._status == other._status

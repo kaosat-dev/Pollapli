@@ -1,16 +1,16 @@
 #TODO: clearly define what needs to be kept in memory and what needs to be persisted
-#typically,only installed updates should be kept, hence some attribs are useless
-#TODO: review equality of updates
+#typically,only installed packages should be kept, hence some attribs are useless
+#TODO: review equality of packages
 
 import uuid
 from pkg_resources import parse_version
 from pollapli.core.logic.components.base_component import BaseComponent
 
 
-class Update(BaseComponent):
-    """update class: for all type of updates (standard update or addon)
-    Contains all needed info for handling of updates"""
-    def __init__(self,parent=None, type="update", name="Default Update", description="Default Update", version="0.0.0",downloadUrl="",img="",tags=[],installPath="",downloaded=False,installed=False,enabled=False,file=None,fileHash=None,*args,**kwargs):
+class Package(BaseComponent):
+    """package class: for all type of software packages (updates or addons)
+    Contains all needed info on a given piece of software"""
+    def __init__(self,parent=None, type="addon", name="Default Package", description="Default Package", version="0.0.0",downloadUrl="",img="",tags=[],installPath="",downloaded=False,installed=False,enabled=False,file=None,fileHash=None,targetId=None,fromVersion=None,toVersion=None,*args,**kwargs):
         BaseComponent.__init__(self, parent)
         self.type = type
         self.name = name
@@ -26,8 +26,17 @@ class Update(BaseComponent):
         self.enabled = enabled
         self.installPath = installPath
         
+        if targetId is not None:
+            self.targetId = uuid.UUID(targetId)
+        self.fromVersion=fromVersion
+        self.toVersion=toVersion
+        
     def __eq__(self, other):
-        return self.type == other.type and self.name == other.name and self.version == other.version 
+        if self.type == "addon":
+            return self.type == other.type and self.name == other.name and self.version == other.version 
+        elif self.type == "update":
+            return self.type == other.type and self.name == other.name and self.targetId == other.targetId\
+        and self.fromVersion == other.fromVersion and self.toVersion == other.toVersion
     
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -59,18 +68,26 @@ class Update(BaseComponent):
         return cmp(parse_version(a),parse_version(b))
     
     @classmethod
-    def from_dict(self, updateDict):
+    def from_dict(self, packageDict):
         """factory method: creates an Update instance from a dict"""
-        update = Update()
-        for key,value in updateDict.items():
+        package = Package()
+        for key,value in packageDict.items():
             if key == "id":
-                update._id = uuid.UUID(value)
+                package._id = uuid.UUID(value)
+            elif key == "targetId":
+                package.targetId = uuid.UUID(value)
 #            elif key == "tags":
-#                update.tags = value.split(",")
+#                package.tags = value.split(",")
             else:
-                setattr(update,key,value)  
-        return update
+                setattr(package,key,value)  
+        return package
     
     def send_signal(self,signal="",data=None):
-        self.parentManager.send_signal("update_"+str(self.id)+"."+signal,data)
+        self.parentManager.send_signal("package_"+str(self.id)+"."+signal,data)
     
+    
+#class AddOn(Package):
+#    def __init__(self):
+#        pass
+#    
+#class Update(Package):

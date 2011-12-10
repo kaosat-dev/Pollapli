@@ -31,9 +31,9 @@ class TaskNotFound(Exception):
     pass
 class UnknownTask(Exception):
     pass
-class UnknownUpdate(Exception):
+class UnknownPackage(Exception):
     pass
-class UpdateNotFound(Exception):
+class PackageNotFound(Exception):
     pass
 
 class InvalidFile(Exception):

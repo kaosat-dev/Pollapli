@@ -5,7 +5,7 @@ from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from pollapli.core.persistence.persistence_layer import PersistenceLayer
 from pollapli.core.logic.components.devices.device import Device
-from pollapli.core.logic.components.updates.update import Update
+from pollapli.core.logic.components.packages.package import Package
 from pollapli.core.logic.components.environments.environment import Environment
 from pollapli.exceptions import DeviceNotFound,EnvironmentNotFound, TaskNotFound
 from pollapli.core.logic.components.tasks.task import Task
@@ -248,12 +248,12 @@ class PersistenceLayerTest(unittest.TestCase):
     
     """
     ####################################################################################
-    The following are the Update related tests
+    The following are the Package related tests
     """
     
     @defer.inlineCallbacks
     def test_save_and_load_update(self):
-        input = Update(type ="update", name="TestUpdate",description = "A test description",)
+        input = Package(type ="update", name="TestPackage",description = "A test description",)
         yield self._persistenceLayer.save_update(input)
         exp = input 
         obs = yield self._persistenceLayer.load_update(id = input._id)
@@ -262,8 +262,8 @@ class PersistenceLayerTest(unittest.TestCase):
     @defer.inlineCallbacks
     def test_save_and_load_updates(self):
         input =[]
-        input.append(Update(name="TestUpdateOne",description = "A test description"))
-        input.append(Update(name="TestUpdateTwo",description = "Another test description",status="active"))
+        input.append(Package(name="TestPackageOne",description = "A test description"))
+        input.append(Package(name="TestPackageTwo",description = "Another test description",status="active"))
        
         yield self._persistenceLayer.save_updates(input)
         exp = input 
@@ -272,9 +272,9 @@ class PersistenceLayerTest(unittest.TestCase):
      
     @defer.inlineCallbacks
     def test_update_update(self):
-        input = Update(name="TestUpdate",description = "A test description")
+        input = Package(name="TestPackage",description = "A test description")
         yield self._persistenceLayer.save_update(input)
-        input.name = "TestUpdateModified"
+        input.name = "TestPackageModified"
         yield self._persistenceLayer.save_update(input)
     
         exp = input

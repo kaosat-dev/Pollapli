@@ -2,8 +2,8 @@ import uuid
 from twisted.internet import reactor, defer,task
 from twisted.python import log,failure
 from pollapli.core.persistence.dao_base.update_dao import UpdateDao
-from pollapli.core.logic.components.updates.update import Update
-from pollapli.exceptions import UpdateNotFound
+from pollapli.core.logic.components.packages.package import Package
+from pollapli.exceptions import PackageNotFound
 
 class UpdateSqliteDao(UpdateDao):
     def __init__(self,dbPool=None, persistenceStrategy =None):

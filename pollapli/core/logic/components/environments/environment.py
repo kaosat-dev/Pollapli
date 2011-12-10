@@ -11,7 +11,7 @@ from pollapli.exceptions import EnvironmentAlreadyExists,EnvironmentNotFound
 from pollapli.core.logic.components.base_component import BaseComponent
 from pollapli.core.logic.components.devices.device_manager import DeviceManager
 from pollapli.core.logic.components.tasks.task_manager import TaskManager
-from pollapli.core.logic.tools.signal_system import SignalHander
+from pollapli.core.logic.tools.signal_system import SignalDispatcher
 
 class Environment(BaseComponent):
     def __init__(self,parent = None, persistenceLayer= None, name="home",description="Add Description here",status="active",*args,**kwargs):

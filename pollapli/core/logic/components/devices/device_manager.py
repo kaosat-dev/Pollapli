@@ -1,7 +1,7 @@
 import logging
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
-from pollapli.core.logic.tools.signal_system import SignalHander
+from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.core.logic.components.devices.device import Device
 from pollapli.exceptions import UnknownDeviceType,DeviceNotFound
 
@@ -19,7 +19,7 @@ class DeviceManager(object):
         self._persistenceLayer = parentEnvironment._persistenceLayer
         self._devices = {}
         self.signalChannel = "device_manager"
-        self.signalHandler = SignalHander(self.signalChannel)
+        self._signalDispatcher = SignalDispatcher(self.signalChannel)
         self.signalChannelPrefix = "environment_"+str(self._parentEnvironment._id)
      
     @defer.inlineCallbacks    
@@ -35,7 +35,7 @@ class DeviceManager(object):
     
     def send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+"."
-        self.signalHandler.send_message(prefix+signal,self,data)    
+        self._signalDispatcher.send_message(prefix+signal,self,data)    
     
     """
     ####################################################################################
