@@ -125,9 +125,9 @@ class EnvironmentSqliteDao(EnvironmentDao):
     def save_environment(self, environment):
         """Save the environment object ."""
         if hasattr(environment,"_dbId"):
-            yield self.update(args = (environment._name,environment._description,environment._status,environment._dbId))
+            yield self.update(args = (environment.name,environment.description,environment._status,environment._dbId))
         else:
-            environment._dbId = yield self.insert(args = (str(environment._id), environment._name, environment._description,environment._status))   
+            environment._dbId = yield self.insert(args = (str(environment._id), environment.name, environment.description,environment._status))   
     
     @defer.inlineCallbacks 
     def save_environments(self, lEnvironment):

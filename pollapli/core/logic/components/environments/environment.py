@@ -17,20 +17,20 @@ class Environment(BaseComponent):
     def __init__(self,parent = None, persistenceLayer= None, name="home",description="Add Description here",status="active",*args,**kwargs):
         BaseComponent.__init__(self, parent)
         self._persistenceLayer = persistenceLayer
-        self._name=name
-        self._description=description
+        self.name=name
+        self.description=description
         self._status=status
         self._devices=DeviceManager(self)
         self._tasks=TaskManager(self)
         
     def __eq__(self, other):
-        return self._id == other._id and self._name == other._name and self._description == other._description and self._status == other._status
+        return self._id == other._id and self.name == other.name and self.description == other.description and self._status == other._status
     
     def __ne__(self, other):
         return not self.__eq__(other)
     
     def __str__(self):
-        return "%s %s %s" %(self._name,self._description,self._status)
+        return "%s %s %s" %(self.name,self.description,self._status)
     
     def __getattr__(self, attr_name):
         if hasattr(self._devices, attr_name):
@@ -50,7 +50,7 @@ class Environment(BaseComponent):
         """
         yield self._devices.setup()
         yield self._tasks.setup()
-        log.msg("Environment ",self._name ,"with id", self._id," setup correctly", logLevel=logging.CRITICAL, system="environment")
+        log.msg("Environment ",self.name ,"with id", self._id," setup correctly", logLevel=logging.CRITICAL, system="environment")
 
     def teardown(self):
         """

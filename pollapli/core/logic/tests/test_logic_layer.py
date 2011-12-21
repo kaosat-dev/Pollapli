@@ -6,7 +6,6 @@ from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
 from pollapli.core.logic.logic_layer import LogicLayer
 from pollapli.core.logic.components.devices.device import Device
-from pollapli.core.logic.components.updates.update import Update
 from pollapli.core.logic.components.environments.environment import Environment
 from pollapli.exceptions import EnvironmentNotFound
 from pollapli.core.persistence.persistence_layer import PersistenceLayer
@@ -30,8 +29,8 @@ class LogicLayerTest(unittest.TestCase):
     def test_add_environment(self):
         exp = Environment(name="Test Environment", description="A test Environment", status="active")
         obs =  yield self._logicLayer.add_environment(name="Test Environment", description="A test Environment", status="active")
-        self.assertEquals(obs._name, exp._name)
-        self.assertEquals(obs._description,exp._description)
+        self.assertEquals(obs.name, exp.name)
+        self.assertEquals(obs.description,exp.description)
         self.assertEquals(obs._status,exp._status)
           
         yield self._persistenceLayer.delete_environment(obs)        
@@ -49,8 +48,8 @@ class LogicLayerTest(unittest.TestCase):
         
         lExpEnvs = [environment,environment2]
         lObsEnvs = yield self._logicLayer.get_environments()
-        lObsEnvs = sorted(lObsEnvs,key=lambda environment: environment._name)
-        lExpEnvs = sorted(lExpEnvs,key=lambda environment: environment._name)
+        lObsEnvs = sorted(lObsEnvs,key=lambda environment: environment.name)
+        lExpEnvs = sorted(lExpEnvs,key=lambda environment: environment.name)
         self.assertEquals(lObsEnvs,lExpEnvs)
         
         yield self._persistenceLayer.delete_environments([environment,environment2])         
@@ -73,8 +72,8 @@ class LogicLayerTest(unittest.TestCase):
         
         lExpDevices = [device,device2]
         lObsDevices = yield self._logicLayer.get_devices(environmentId = environment._id)
-        lExpDevices = sorted(lExpDevices,key=lambda device: device._name)
-        lObsDevices = sorted(lObsDevices,key=lambda device: device._name)
+        lExpDevices = sorted(lExpDevices,key=lambda device: device.name)
+        lObsDevices = sorted(lObsDevices,key=lambda device: device.name)
         self.assertEquals(lObsDevices,lExpDevices)
         
         lExpDevices = [device3]
@@ -119,8 +118,8 @@ class LogicLayerTest(unittest.TestCase):
         
         lExpTasks = [task,task2]
         lObsTasks = yield self._logicLayer.get_tasks(environmentId = environment._id)
-        lExpTasks = sorted(lExpTasks,key=lambda task: task._name)
-        lObsTasks = sorted(lObsTasks,key=lambda task: task._name)
+        lExpTasks = sorted(lExpTasks,key=lambda task: task.name)
+        lObsTasks = sorted(lObsTasks,key=lambda task: task.name)
         self.assertEquals(lObsTasks, lExpTasks)
         
         lExpTasks = [task3]
@@ -146,14 +145,14 @@ class LogicLayerTest(unittest.TestCase):
         
         lExpTasksEnv1 = [task,task2]
         lObsTasksEnv1 = yield self._logicLayer.get_tasks(environmentId = environment._id)
-        lExpTasksEnv1 = sorted(lExpTasksEnv1,key=lambda task: task._name)
-        lObsTasksEnv1 = sorted(lObsTasksEnv1,key=lambda task: task._name)
+        lExpTasksEnv1 = sorted(lExpTasksEnv1,key=lambda task: task.name)
+        lObsTasksEnv1 = sorted(lObsTasksEnv1,key=lambda task: task.name)
         self.assertEquals(lObsTasksEnv1, lExpTasksEnv1)
         
         lExpTasksEnv2 = [task3]
         lObsTasksEnv2 = yield self._logicLayer.get_tasks(environmentId = environment2._id)
-        lExpTasksEnv2 = sorted(lExpTasksEnv2,key=lambda task: task._name)
-        lObsTasksEnv2 = sorted(lObsTasksEnv2,key=lambda task: task._name)
+        lExpTasksEnv2 = sorted(lExpTasksEnv2,key=lambda task: task.name)
+        lObsTasksEnv2 = sorted(lObsTasksEnv2,key=lambda task: task.name)
         self.assertEquals(lObsTasksEnv2, lExpTasksEnv2)
         
         yield self._persistenceLayer.delete_environments([environment,environment2]) 
@@ -175,14 +174,14 @@ class LogicLayerTest(unittest.TestCase):
         
         lExpDevicesEnv1 = [device,device2]
         lObsDevicesEnv1 = yield self._logicLayer.get_devices(environmentId = environment._id)
-        lExpDevicesEnv1 = sorted(lExpDevicesEnv1,key=lambda device: device._name)
-        lObsDevicesEnv1 = sorted(lObsDevicesEnv1,key=lambda device: device._name)
+        lExpDevicesEnv1 = sorted(lExpDevicesEnv1,key=lambda device: device.name)
+        lObsDevicesEnv1 = sorted(lObsDevicesEnv1,key=lambda device: device.name)
         self.assertEquals(lObsDevicesEnv1, lExpDevicesEnv1)
         
         lExpDevicesEnv2 = [device3]
         lObsDevicesEnv2 = yield self._logicLayer.get_devices(environmentId = environment2._id)
-        lExpDevicesEnv2 = sorted(lExpDevicesEnv2,key=lambda device: device._name)
-        lObsDevicesEnv2 = sorted(lObsDevicesEnv2,key=lambda device: device._name)
+        lExpDevicesEnv2 = sorted(lExpDevicesEnv2,key=lambda device: device.name)
+        lObsDevicesEnv2 = sorted(lObsDevicesEnv2,key=lambda device: device.name)
         self.assertEquals(lObsDevicesEnv2, lExpDevicesEnv2)
         
         yield self._persistenceLayer.delete_environments([environment,environment2]) 
@@ -210,32 +209,32 @@ class LogicLayerTest(unittest.TestCase):
         
         lExpEnvs = [environment,environment2]
         lObsEnvs = yield self._logicLayer.get_environments()
-        lObsEnvs = sorted(lObsEnvs,key=lambda environment: environment._name)
-        lExpEnvs = sorted(lExpEnvs,key=lambda environment: environment._name)
+        lObsEnvs = sorted(lObsEnvs,key=lambda environment: environment.name)
+        lExpEnvs = sorted(lExpEnvs,key=lambda environment: environment.name)
         self.assertEquals(lObsEnvs,lExpEnvs)
         
         lExpTasksEnv1 = [task,task2]
         lObsTasksEnv1 = yield self._logicLayer.get_tasks(environmentId = environment._id)
-        lExpTasksEnv1 = sorted(lExpTasksEnv1,key=lambda task: task._name)
-        lObsTasksEnv1 = sorted(lObsTasksEnv1,key=lambda task: task._name)
+        lExpTasksEnv1 = sorted(lExpTasksEnv1,key=lambda task: task.name)
+        lObsTasksEnv1 = sorted(lObsTasksEnv1,key=lambda task: task.name)
         self.assertEquals(lObsTasksEnv1, lExpTasksEnv1)
         
         lExpTasksEnv2 = [task3,task4]
         lObsTasksEnv2 = yield self._logicLayer.get_tasks(environmentId = environment2._id)
-        lExpTasksEnv2 = sorted(lExpTasksEnv2,key=lambda task: task._name)
-        lObsTasksEnv2 = sorted(lObsTasksEnv2,key=lambda task: task._name)
+        lExpTasksEnv2 = sorted(lExpTasksEnv2,key=lambda task: task.name)
+        lObsTasksEnv2 = sorted(lObsTasksEnv2,key=lambda task: task.name)
         self.assertEquals(lObsTasksEnv2, lExpTasksEnv2)
         
         lExpDevicesEnv1 = [device]
         lObsDevicesEnv1 = yield self._logicLayer.get_devices(environmentId = environment._id)
-        lExpDevicesEnv1 = sorted(lExpDevicesEnv1,key=lambda device: device._name)
-        lObsDevicesEnv1 = sorted(lObsDevicesEnv1,key=lambda device: device._name)
+        lExpDevicesEnv1 = sorted(lExpDevicesEnv1,key=lambda device: device.name)
+        lObsDevicesEnv1 = sorted(lObsDevicesEnv1,key=lambda device: device.name)
         self.assertEquals(lObsDevicesEnv1, lExpDevicesEnv1)
         
         lExpDevicesEnv2 = [device2,device3]
         lObsDevicesEnv2 = yield self._logicLayer.get_devices(environmentId = environment2._id)
-        lExpDevicesEnv2 = sorted(lExpDevicesEnv2,key=lambda device: device._name)
-        lObsDevicesEnv2 = sorted(lObsDevicesEnv2,key=lambda device: device._name)
+        lExpDevicesEnv2 = sorted(lExpDevicesEnv2,key=lambda device: device.name)
+        lObsDevicesEnv2 = sorted(lObsDevicesEnv2,key=lambda device: device.name)
         self.assertEquals(lObsDevicesEnv2, lExpDevicesEnv2)
         
         yield self._persistenceLayer.delete_environments([environment,environment2]) 

@@ -33,7 +33,7 @@ class DeviceManager(object):
             self._devices[device._id] = device
             #yield device.setup()
     
-    def send_signal(self,signal="",data=None):
+    def send_signal(self, signal="", data=None):
         prefix=self.signalChannelPrefix+"."
         self._signalDispatcher.send_message(prefix+signal,self,data)    
     
@@ -116,7 +116,7 @@ class DeviceManager(object):
         yield self._persistenceLayer.delete_device(device) 
         del self._devices[id]
         self.send_signal("device_deleted", device)
-        log.msg("Removed device ",device._name,logLevel=logging.CRITICAL)
+        log.msg("Removed device ",device.name,logLevel=logging.CRITICAL)
         defer.succeed(True)
     
     @defer.inlineCallbacks

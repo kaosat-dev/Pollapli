@@ -121,9 +121,9 @@ class TaskSqliteDao(TaskDao):
             parentUId = parentEnvironment._id
             
         if hasattr(task,"_dbId"):
-            yield self.update(args = (task._name,task._description,task._status,str(parentUId),task._dbId))
+            yield self.update(args = (task.name,task.description,task._status,str(parentUId),task._dbId))
         else:
-            task._dbId = yield self.insert(args = (str(task._id),task._name,task._description,task._status,str(parentUId)))                            
+            task._dbId = yield self.insert(args = (str(task._id),task.name,task.description,task._status,str(parentUId)))                            
             
     @defer.inlineCallbacks
     def save_tasks(self,lTasks):

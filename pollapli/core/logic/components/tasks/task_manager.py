@@ -95,7 +95,7 @@ class TaskManager(object):
         yield self._persistenceLayer.delete_task(task) 
         del self._tasks[id]
         self.send_signal("task_deleted", task)
-        log.msg("Removed task ",task._name,logLevel=logging.CRITICAL)      
+        log.msg("Removed task ",task.name,logLevel=logging.CRITICAL)      
        
     @defer.inlineCallbacks
     def clear_tasks(self,forceStop=False):
@@ -105,4 +105,13 @@ class TaskManager(object):
         for device in self._tasks.values():
                 yield self.remove_task(device.id)  
         self.send_signal("devices_cleared", self._tasks)   
-        
+       
+    """
+    ####################################################################################
+    The following are the methods for the more detailed manipulation of tasks
+    """ 
+    def add_conditionToTask(self, id, condition):
+        pass
+    
+    def add_actionToTask(self, id, action):
+        pass

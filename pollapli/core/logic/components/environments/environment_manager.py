@@ -6,9 +6,8 @@ import os, random, logging,imp,inspect, time, datetime, shutil, imp
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from pollapli.exceptions import EnvironmentAlreadyExists,EnvironmentNotFound
-from pollapli.core.logic.tools.signal_system import SignalHander
+from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.core.logic.components.environments.environment import Environment
-import pollapli.core.logic.tools.file_manager
 
 class EnvironmentManager(object):
     """
@@ -16,10 +15,10 @@ class EnvironmentManager(object):
     """
     def __init__(self,persistenceLayer = None):
         self._persistenceLayer = persistenceLayer
-        self.logger=log.PythonLoggingObserver("dobozweb.core.components.environments.environmentManager")
-        self.signalChannel="environment_manager"
-        self.signalHandler=SignalHander(self.signalChannel)
+        self._logger=log.PythonLoggingObserver("dobozweb.core.components.environments.environmentManager")
         self._environments = {}
+        self.signalChannel="environment_manager"
+        self._signalDispatcher = SignalDispatcher(self.signalChannel)
         
     def __getattr__(self, attr_name):
         for env in self._environments.values():
@@ -44,6 +43,9 @@ class EnvironmentManager(object):
         """
         pass
         
+    def send_signal(self, signal="", data=None):
+        prefix=self.signalChannel+"."
+        self._signalDispatcher.send_message(prefix+signal,self,data)    
     """
     ####################################################################################
     The following are the "CRUD" (Create, read, update,delete) methods for the general handling of environements
@@ -59,13 +61,13 @@ class EnvironmentManager(object):
         status: either frozen or live : whether the environment is active or not
         """
         for environment in self._environments.values():
-            if environment._name == name:
+            if environment.name == name:
                 raise EnvironmentAlreadyExists()
         environment = Environment(persistenceLayer=self._persistenceLayer, name=name,description=description,status=status)
         yield self._persistenceLayer.save_environment(environment)
         self._environments[environment._id] = environment
         
-        self.signalHandler.send_message("environment.created",self,environment)
+        self.send_signal("environment.created",environment)
         log.msg("Added environment named:",name ," description:",description,"with id",environment._id, system="environment manager", logLevel=logging.CRITICAL)         
         defer.returnValue(environment)
 
@@ -97,15 +99,15 @@ class EnvironmentManager(object):
     def get_environment(self,id, *args, **kwargs):   
         if not id in self._environments.keys():
             raise EnvironmentNotFound() 
-            #defer.fail(EnvironmentNotFound())
         else:
             #raise EnvironmentNotFound() 
             #defer.succeed(self._environments[id])
-           
             return self._environments[id]
     
     def update_environment(self,id,name,description,status):
-        self._environments[id].update(name,description,status)
+        environment = self._environments[id]
+        environment.update(name,description,status)
+        self.send_signal("environment_updated", environment)
         #return self.environments[id].update(name,description,status)
     
     @defer.inlineCallbacks
@@ -121,9 +123,10 @@ class EnvironmentManager(object):
             yield self._persistenceLayer.delete_environment(environment)
             #self.environments[envName].teardown()
             del self._environments[id]
-            log.msg("Removed environment ",environment._name, system="environment manager",logLevel=logging.CRITICAL)
-        except:
-            raise Exception("Failed to delete environment")
+            self.send_signal("environment_deleted", environment)
+            log.msg("Removed environment ",environment.name, system="environment manager",logLevel=logging.CRITICAL)
+        except Exception as inst:
+            raise Exception("Failed to delete environment because of error %s" %str(inst))
         
 #        d = defer.Deferred()
 #        def remove(id,envs):
@@ -151,7 +154,8 @@ class EnvironmentManager(object):
         Removes & deletes ALL the environments, should be used with care
         """
         for envId in self._environments.keys():
-            yield self.remove_environment(id = envId)        
+            yield self.remove_environment(id = envId)    
+        self.send_signal("environments_cleared", self._environments)       
     """
     ####################################################################################
     Helper Methods    

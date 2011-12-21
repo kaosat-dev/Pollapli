@@ -127,7 +127,7 @@ class PackageManager(object):
                 raise Exception("only addons can be removed")
             packages[id].delete()
             del packages[id]
-            log.msg("Removed addOn ",package._name,"with id ",id,logLevel=logging.CRITICAL)
+            log.msg("Removed addOn ",package.name,"with id ",id,logLevel=logging.CRITICAL)
         d.addCallback(remove,self._installedPackages)
         reactor.callLater(0,d.callback,id)
         return d

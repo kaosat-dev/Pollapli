@@ -22,7 +22,7 @@ class PersistenceLayer(object):
         if self._pathManager is None:
                 raise EnvironmentNotFound("Path manager not set, cannot delete environment files")
             
-        environmentPath = os.path.join(self._pathManager.dataPath,environment._name)
+        environmentPath = os.path.join(self._pathManager.dataPath,environment.name)
         if not os.path.exists(environmentPath):
             os.makedirs(environmentPath)
         yield self._daoManager.save_environment(environment,*args,**kwargs)
@@ -32,7 +32,7 @@ class PersistenceLayer(object):
         if self._pathManager is None:
                 raise EnvironmentNotFound("Path manager not set, cannot delete environment files")
         for environment in lEnvironment:    
-            environmentPath = os.path.join(self._pathManager.dataPath,environment._name)
+            environmentPath = os.path.join(self._pathManager.dataPath,environment.name)
             if not os.path.exists(environmentPath):
                 os.makedirs(environmentPath)
         yield self._daoManager.save_environments(lEnvironment)
@@ -44,7 +44,7 @@ class PersistenceLayer(object):
             raise EnvironmentNotFound("Path manager not set, cannot delete environment files")
         
         yield self._daoManager.delete_environment(environment)
-        environmentPath = os.path.join(self._pathManager.dataPath,environment._name)
+        environmentPath = os.path.join(self._pathManager.dataPath,environment.name)
         if os.path.exists(environmentPath) and os.path.isdir(environmentPath):
             shutil.rmtree(environmentPath)
             
@@ -54,6 +54,6 @@ class PersistenceLayer(object):
             raise EnvironmentNotFound("Path manager not set, cannot delete environment files")
         for environment in lEnvironment:    
             yield self._daoManager.delete_environment(environment)
-            environmentPath = os.path.join(self._pathManager.dataPath,environment._name)
+            environmentPath = os.path.join(self._pathManager.dataPath,environment.name)
             if os.path.exists(environmentPath) and os.path.isdir(environmentPath):
                 shutil.rmtree(environmentPath)

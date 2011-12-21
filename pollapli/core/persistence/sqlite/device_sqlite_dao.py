@@ -120,9 +120,9 @@ class DeviceSqliteDao(DeviceDao):
             parentUId = parentEnvironment._id
             
         if hasattr(device,"_dbId"):
-            yield self.update(args = (device._name,device._description,device._status,str(parentUId),device._dbId))
+            yield self.update(args = (device.name,device.description,device._status,str(parentUId),device._dbId))
         else:
-            device._dbId = yield self.insert(args = (str(device._id),device._name,device._description,device._status,str(parentUId)))                            
+            device._dbId = yield self.insert(args = (str(device._id),device.name,device.description,device._status,str(parentUId)))                            
             
     @defer.inlineCallbacks
     def save_devices(self,lDevices):
