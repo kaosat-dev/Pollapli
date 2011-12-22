@@ -5,11 +5,7 @@ from pollapli.core.persistence.sqlite.update_sqlite_dao import UpdateSqliteDao
 from pollapli.core.persistence.sqlite.environment_sqlite_dao import EnvironmentSqliteDao
 from pollapli.core.persistence.sqlite.device_sqlite_dao import DeviceSqliteDao
 from pollapli.core.persistence.sqlite.task_sqlite_dao import TaskSqliteDao
-
 from pollapli.core.persistence.sqlite.sqlite_persistence_strategy import SqlitePersistenceStrategy
-from pollapli.core.logic.tools.file_manager import FileManager
-
-
 
 class SqliteDaoManager(object):
     """Main manager for sqlite daos"""

@@ -37,7 +37,7 @@ class EnvironmentTest(unittest.TestCase):
     
     @defer.inlineCallbacks
     def test_get_environmment_byName(self):
-        environment = yield self.environmentManager.add_environment(name="Oh my an Environment", description="A test Environment", status="active")
+        yield self.environmentManager.add_environment(name="Oh my an Environment", description="A test Environment", status="active")
         environment2 =  yield self.environmentManager.add_environment(name="Test Environment", description="A test Environment", status="active")
         exp = environment2
         obs = yield self.environmentManager.get_environments({"name":["Test Environment"]})
@@ -56,7 +56,6 @@ class EnvironmentTest(unittest.TestCase):
         yield self.environmentManager.add_environment(name="Test Environment2", description="A test Environment", status="active")
 
         yield self.environmentManager.clear_environments()
-        
         obs = yield self.environmentManager.get_environments()
         exp = []
         self.assertEquals(obs,exp)

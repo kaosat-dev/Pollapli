@@ -6,29 +6,14 @@ import logging, time, datetime, uuid,ast
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
 from twisted.python.log import PythonLoggingObserver
-from twisted.plugin import getPlugins
 
 from pollapli import ipollapli
 from pollapli.exceptions import UnknownDriver,NoDriverSet
 #from pollapli.core.logic.components.updates.update_manager import UpdateManager
-from pollapli.core.logic.components.drivers.driver import Driver,DriverManager
-from pollapli.exceptions import UnknownDeviceType,DeviceNotFound
+#from pollapli.core.logic.components.drivers.driver import Driver,DriverManager
 from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.core.logic.components.base_component import BaseComponent
 
-class DeviceStatus(object):
-    EXPOSE=["isActive"]
-    def __init__(self):
-        self.isActive=False
-        
-    def start(self): 
-        self.isActive=True
-            
-    def stop(self):
-        self.isActive=False
-                
-    def _toDict(self):
-        return {"status":{"active":self.isActive}}
   
 class Device(BaseComponent):
     """
@@ -40,7 +25,6 @@ class Device(BaseComponent):
         self.description=description
         self._status = "inactive"
         self._driver=None 
-        #self.status=DeviceStatus()
             
         """this is to ensure no 'asynch clash' occurs when replacing the current driver"""
         self.driverLock=defer.DeferredSemaphore(1)
