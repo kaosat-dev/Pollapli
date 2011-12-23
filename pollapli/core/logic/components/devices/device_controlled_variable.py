@@ -7,18 +7,18 @@ class DeviceControlledVariable(object):
         """
         self.device = device
         self.name = name
-        self.value=value
-        self.defaultValue=defaultValue or value
-        self.targetValue=None
-        self.type=type
+        self.value = value
+        self.defaultValue = defaultValue or value
+        self.targetValue = None
+        self.type = type
         
-        self.historyStore=historyStore
-        self.history=None
-        if historyStore=='memory':
-            self.history=[]
-            self.historyLength=historyLength
-            self.historyIndex=0
-        elif historyStore=='db':
+        self.historyStore = historyStore
+        self.history = None
+        if historyStore == 'memory':
+            self.history = []
+            self.historyLength = historyLength
+            self.historyIndex = 0
+        elif historyStore =='db':
             pass
         elif historyStore=='file':
             pass
