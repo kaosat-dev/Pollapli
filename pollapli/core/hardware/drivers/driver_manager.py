@@ -198,34 +198,25 @@ class HardwareInterfaceInfo(object):
 class DriverManager(object):
     """
     This class acts as factory and manager
-    The driver factory assembles a Driver object (the one whose instances are actually stored in db)
-    from two objects : 
-        * a driver_high object for all higher level functions (ie the ones of the current driver class, mostly)
-        * a driver_low object for all lower level functions (ie the ones of the current connector class)
-        this lower level driver is for example the actual serial_connector class as we have it currently
-    This solve a whole lot of problems at once, since the subobjects will be essentially viewed as one, thanks
-    to the getattr method
+    For plug & play managment:
+    the whole "check and or set device id" procedure should not take place
+    during the normal connect etc process but in a completely seperate set
+    of phases(something like a "setup" and used to check for correct device
+    on port/device id)
 
-    For driver class: should there be a notion of "requester" for sending data, so that answers can be dispatche
-    to the actual entity that sent the command ? for example : during a reprap 3d print, querying for sensor 
-    data is actually completely seperate and should not be part of the print task, therefor, since all requests
-    are sent to the same device, there needs to be a way to differenciate between the two when sending back messages
-
-    For plug & play managment
-    the whole "check and or set device id" procedure should not take place during the normal 
-    connect etc process but in a completely seperate set of phases (somethink like a "setup" 
-    and used to check for correct device on port /device id 
-    
     the hardware manager's connect method needs to be modified:
-    - if the device was successfully associated with a port in the p&p detection phase, use that port info
-    - if the device was not identified , has no id, etc , then use the current "use the first available port" method
-    
-    perhaps we should use a method similar to the way drivers are installed on windows:
+    - if the device was successfully associated with a port in the
+    p&p detection phase, use that port info
+    - if the device was not identified , has no id, etc
+    then use the current "use the first available port" method
+
+    perhaps we should use a method similar to the way drivers are installed
+    on mswindows type systems:
     - ask for removal of cable if already connected
     - ask for re plug of cable
     - do a diff on the previous/new list of com/tty devices
     - do id generation/association
-    """    
+    """
 
     def __init__(self, hardware_poll_frequency=3, *args, **kwargs):
         self.hardware_poll_requency = hardware_poll_frequency
