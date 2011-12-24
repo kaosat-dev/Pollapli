@@ -22,13 +22,13 @@ class HydroduinoProtocol(BaseTextSerialProtocol):
         'pin_low':   3,     # pin low confirm 
         'pin_high':   4,     # pin high confirm 
         }     
-    def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
-        BaseTextSerialProtocol.__init__(self,driver,isBuffering,seperator)
+    def __init__(self,driver=None,is_buffering=True,seperator='\n',*args,**kwargs):
+        BaseTextSerialProtocol.__init__(self,driver,is_buffering,seperator)
            
-    def _set_deviceId(self,id=None):
+    def _set_hardware_id(self,id=None):
         self.send_data('99'+ " "+ str(self.driver.deviceId))
         
-    def _query_deviceInfo(self):
+    def _query_hardware_info(self):
         """method for retrieval of device info (for id and more) """
         self.send_data('2')
         

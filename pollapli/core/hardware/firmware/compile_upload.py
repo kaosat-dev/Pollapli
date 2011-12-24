@@ -6,8 +6,7 @@ from twisted.python.log import PythonLoggingObserver
 from twisted.internet import protocol
 
 from pollapli.core.logic.components.drivers.driver import Driver,DriverManager,CommandQueueLogic
-#from pollapli.core.logic.components.drivers.serial.serial_hardware_handler import BaseSerialProtocol,SerialHardwareHandler
-from pollapli.core.logic.tools.signal_system import SignalHander
+from pollapli.core.logic.tools.signal_system import SignalDispatcher
 
 
 #from pollapli.dependencies.SCons.Environment import *
@@ -19,6 +18,7 @@ class SconsProcessProtocol(protocol.ProcessProtocol):
         self.name=name
         self.outPutBuff=""
         self.tmpDir=tmpDir
+        
     def connectionMade(self):
         log.msg("SconsProcessProtocol connected")     
         #output = utils.getProcessOutput(self.prog)
@@ -26,6 +26,7 @@ class SconsProcessProtocol(protocol.ProcessProtocol):
        
     def noResponse(self,result):
         print("no response")
+        
     def writeResponse(self, resp):
         self.transport.write(resp)
         self.transport.loseConnection() 
@@ -39,7 +40,6 @@ class SconsProcessProtocol(protocol.ProcessProtocol):
         self.transport.loseConnection()
         self.receiveCounts(lines, words, chars)
         
-  
     def errReceived(self, data):
         print ("errReceived! with  bytes!" ,len(data),data)
         

@@ -11,7 +11,7 @@ from pollapli.core.logic.components.packages.package_manager import PackageManag
 from pollapli.core.logic.tools.path_manager import PathManager
 
 #TODO: fix all the package testing tests , since all files and folder should be moved to a main folder
-class PackageSystemTest(unittest.TestCase):   
+class TestPackageSystem(unittest.TestCase):   
     
     def setUp(self):
         self._pathManager = PathManager()
@@ -107,10 +107,6 @@ class PackageSystemTest(unittest.TestCase):
         obsLPlugins = [plugin.__name__ for plugin in (yield self._packageManager.get_plugins(IMockPlugin))]
 
         self.assertEquals(obsLPlugins,expLPlugins)
-           
-#    @defer.inlineCallbacks
-#    def test_list_localPackages(self):
-#        pass
     
     def test_save_installedPackageList(self):
         pass

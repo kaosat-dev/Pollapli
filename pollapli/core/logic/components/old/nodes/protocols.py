@@ -19,9 +19,9 @@ class DummyProtocol(Protocol):
 class BaseProtocol(Protocol):
     classProvides(IPlugin, IProtocol)
     """generic base protocol, cannot be used directly"""
-    def __init__(self,driver=None,isBuffering=True,seperator=None,handshake=None):             
+    def __init__(self,driver=None,is_buffering=True,seperator=None,handshake=None):             
         self.driver=driver
-        self.isBuffering=isBuffering
+        self.isBuffering=is_buffering
         self.seperator=seperator
         self.handshake=handshake
         self.buffer=[]
@@ -69,11 +69,11 @@ class BaseProtocol(Protocol):
             
             
     
-    def _query_deviceInfo(self):
+    def _query_hardware_info(self):
         """method for retrieval of device info (for id and more) """
         pass   
     
-    def _set_deviceId(self,id=None):
+    def _set_hardware_id(self,id=None):
         """ method for setting device id: MANDATORY for all drivers/protocols """
         pass
     
@@ -87,13 +87,13 @@ class BaseProtocol(Protocol):
             if self.handshake in data:
                 self.driver.isDeviceHandshakeOk=True
                 log.msg("Device handshake validated",system="Driver",logLevel=logging.DEBUG)
-                self._query_deviceInfo()
+                self._query_hardware_info()
             else:
                 log.msg("Device hanshake mismatch: expected :",self.handshake,"got:",data,system="Driver",logLevel=logging.DEBUG)
                 self.driver.reconnect()
         else:
             self.driver.isDeviceHandshakeOk=True
-            self._query_deviceInfo()
+            self._query_hardware_info()
             
     def _handle_deviceIdInit(self,data):
         """
@@ -157,8 +157,8 @@ class BaseProtocol(Protocol):
 class BaseTextSerialProtocol(BaseProtocol):
     classProvides(IPlugin, IProtocol)
     """basic , text based protocol for serial devices"""
-    def __init__(self,driver=None,isBuffering=True,seperator='\r\n',handshake="start"):  
-        BaseProtocol.__init__(self, driver, isBuffering, seperator,handshake)
+    def __init__(self,driver=None,is_buffering=True,seperator='\r\n',handshake="start"):  
+        BaseProtocol.__init__(self, driver, is_buffering, seperator,handshake)
         self.buffer=""
         self.regex = re.compile(self.seperator)
     
@@ -190,8 +190,8 @@ class BaseTextSerialProtocol(BaseProtocol):
                     sucess=True
                 elif self.driver.deviceId!= data:
                     log.msg("Remote and local DeviceId mismatch settind distant device id to",self.driver.deviceId,system="Driver",logLevel=logging.DEBUG)
-                    self._set_deviceId()
-                    #self._query_deviceInfo()
+                    self._set_hardware_id()
+                    #self._query_hardware_info()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -204,7 +204,7 @@ class BaseTextSerialProtocol(BaseProtocol):
                     self.driver.deviceId=str(uuid.uuid4())
                     log.msg("Device id was not set, generating a new one",self.driver.deviceId,system="Driver",logLevel=logging.DEBUG)
                 self.driver.connectionErrors+=1
-                self._set_deviceId()
+                self._set_hardware_id()
                 
         else:
             """ some other connection mode , that still requires id check"""

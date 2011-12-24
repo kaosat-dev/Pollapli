@@ -59,7 +59,7 @@ class IDriver_old(Interface):
     """
     An object with specific physical properties
     """
-    def _format_data(datablock):
+    def _format_data(self,datablock):
         """
         returns a formated version of the datablock
         this is for outgoing data only
@@ -80,7 +80,7 @@ class IDriver_old(Interface):
         @rtype: C{None}
         @return: Nothing
         """
-    def handle_request(datablock,*args,**kwargs):
+    def handle_request(self,datablock,*args,**kwargs):
         """
         Manages command requests
         @type datablock: C{string}
@@ -89,13 +89,13 @@ class IDriver_old(Interface):
         @rtype: C{None}
         @return: Nothing
         """
-    def get_next_command():
+    def get_next_command(self):
         """Returns next avalailable command in command queue 
         
         @rtype: C{string}
         @return: returns the next command in queue formated by _format_data 
         """
-    def handle_answer(datablock):
+    def handle_answer(self,datablock):
         """handles only commands that got an answer, formats them correctly and sets necesarry flags
         @type datablock: C{string}
         @param datablock:  the raw response that needs to be treated

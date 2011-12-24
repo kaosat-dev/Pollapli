@@ -85,9 +85,3 @@ class Package(BaseComponent):
     def send_signal(self,signal="",data=None):
         self.parentManager.send_signal("package_"+str(self.id)+"."+signal,data)
     
-    
-#class AddOn(Package):
-#    def __init__(self):
-#        pass
-#    
-#class Update(Package):

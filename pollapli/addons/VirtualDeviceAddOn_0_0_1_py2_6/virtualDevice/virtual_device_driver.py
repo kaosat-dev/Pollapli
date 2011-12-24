@@ -49,7 +49,7 @@ class VirtualDeviceProtocol(BaseProtocol):
         if "start" in data:
             self.driver.isDeviceHandshakeOk=True
             log.msg("Device handshake validated",system="Driver",logLevel=logging.INFO)
-            self._query_deviceInfo()
+            self._query_hardware_info()
         else:
             log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
             self.driver.reconnect()
@@ -77,8 +77,8 @@ class VirtualDeviceProtocol(BaseProtocol):
                     self.driver.deviceId=data
                     sucess=True
                 elif self.driver.deviceId!= data:
-                    self._set_deviceId()
-                    #self._query_deviceInfo()
+                    self._set_hardware_id()
+                    #self._query_hardware_info()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -89,7 +89,7 @@ class VirtualDeviceProtocol(BaseProtocol):
                 if not self.driver.deviceId:
                     self.driver.deviceId=str(uuid.uuid4())
                 self.driver.connectionErrors+=1
-                self._set_deviceId()
+                self._set_hardware_id()
                 
         else:
             """ some other connection mode , that still requires id check"""
@@ -107,10 +107,10 @@ class VirtualDeviceProtocol(BaseProtocol):
             self.driver.disconnect()
             self.driver.d.callback(None)      
         
-    def _set_deviceId(self,id=None):
+    def _set_hardware_id(self,id=None):
         self.send_data("s "+ self.driver.deviceId)
         
-    def _query_deviceInfo(self):
+    def _query_hardware_info(self):
         """method for retrieval of device info (for id and more) """
         self.send_data("i")
         

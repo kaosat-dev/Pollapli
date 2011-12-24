@@ -11,8 +11,8 @@ class TeacupProtocol(BaseSerialProtocol):
     Class defining the protocol used by this driver: in this case, the reprap teacup protocol 
     which is the most straighforward of reprap protocols (no checksum etc)
     """
-    def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
-        BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
+    def __init__(self,driver=None,is_buffering=True,seperator='\n',*args,**kwargs):
+        BaseSerialProtocol.__init__(self,driver,is_buffering,seperator)
         
     def _handle_deviceHandshake(self,data):
         """
@@ -23,7 +23,7 @@ class TeacupProtocol(BaseSerialProtocol):
         if "start" in data:
             self.driver.isDeviceHandshakeOk=True
             log.msg("Device handshake validated",system="Driver",logLevel=logging.INFO)
-            self._query_deviceInfo()
+            self._query_hardware_info()
         else:
             log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
             self.driver.reconnect()
@@ -52,8 +52,8 @@ class TeacupProtocol(BaseSerialProtocol):
                     self.driver.deviceId=data
                     sucess=True
                 elif self.driver.deviceId!= data:
-                    self._set_deviceId()
-                    #self._query_deviceInfo()
+                    self._set_hardware_id()
+                    #self._query_hardware_info()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -64,7 +64,7 @@ class TeacupProtocol(BaseSerialProtocol):
                 if not self.driver.deviceId:
                     self.driver.deviceId=str(uuid.uuid4())
                 self.driver.connectionErrors+=1
-                self._set_deviceId()
+                self._set_hardware_id()
                 
         else:
             """ some other connection mode , that still requires id check"""
@@ -82,13 +82,13 @@ class TeacupProtocol(BaseSerialProtocol):
             self.driver.disconnect()
             self.driver.d.callback(None)      
         
-    def _set_deviceId(self,id=None):
+    def _set_hardware_id(self,id=None):
         print("attempting to set device id")
         self.isProcessing=True
         self.send_data("s "+ self.driver.deviceId)
         self.isProcessing=False
         
-    def _query_deviceInfo(self):
+    def _query_hardware_info(self):
         """method for retrieval of device info (for id and more) """
         self.isProcessing=True
         self.send_data("i")

@@ -45,8 +45,8 @@ class MakerbotProtocol(BaseSerialProtocol):
     Class defining the protocol used by this driver: in this case, the reprap teacup protocol 
     which is the most straighforward of reprap protocols (no checksum etc)
     """
-    def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
-        BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
+    def __init__(self,driver=None,is_buffering=True,seperator='\n',*args,**kwargs):
+        BaseSerialProtocol.__init__(self,driver,is_buffering,seperator)
         
         
     def _handle_deviceHandshake(self,data):
@@ -56,7 +56,7 @@ class MakerbotProtocol(BaseSerialProtocol):
         """
         log.msg("Attempting to validate device handshake",system="Driver",logLevel=logging.INFO)
         self.driver.isDeviceHandshakeOk=True
-        self._query_deviceInfo()
+        self._query_hardware_info()
         
          
     def _handle_deviceIdInit(self,data):
@@ -82,7 +82,7 @@ class MakerbotProtocol(BaseSerialProtocol):
                     sucess=True
                 elif self.driver.deviceId!= data:
                     self.isProcessing=False
-                    self._set_deviceId()
+                    self._set_hardware_id()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -92,7 +92,7 @@ class MakerbotProtocol(BaseSerialProtocol):
                 if not self.driver.deviceId:
                     self.driver.deviceId=str(uuid.uuid4())
                 self.isProcessing=False
-                self._set_deviceId()
+                self._set_hardware_id()
         else:
             """ some other connection mode , that still requires id check"""
             if not validate_uuid(data) or self.driver.deviceId!= data:
@@ -111,10 +111,10 @@ class MakerbotProtocol(BaseSerialProtocol):
             self.driver.disconnect()
             self.driver.d.callback(None)      
         
-    def _set_deviceId(self,id=None):
+    def _set_hardware_id(self,id=None):
         self.send_data("s "+ self.driver.deviceId)
         
-    def _query_deviceInfo(self):
+    def _query_hardware_info(self):
         """method for retrieval of device info (for id and more) """
         self.send_data("i")
         

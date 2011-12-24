@@ -1,0 +1,265 @@
+"""
+####################################################################################
+Driver logic handlers
+
+some things need to be changed:
+*twostep handling for commands needs to be changed to multipart (n complete blocks of
+recieved data to consider the response done
+*for reprap temperature reading, it begs the question of where this would need to be implemented:
+the two part is required for 5d and teacup, but is unlikely to be the same for makerbot: so should this kind of 
+difference defined in the protocol ? and in that case should we define specific methods in the protocols like:
+ "read sensor" ? (read temperature would be waaay to specific)
+"""
+
+
+class Command(object):
+    """Base command class, encapsulate all request and answer commands, also has a 'special' flag for commands that do no participate in normal flow of gcodes : i
+    ie for example , regular poling of temperatures for display (the "OK" from those commands MUST not affect the line by line sending/answering of gcodes)
+    """
+    def __init__(self,special=False,multiParts=1,answerRequired=True,request=None,answer=None,sender=None,callback=None):
+        """
+        Params:
+        special: generally used for "system" commands such as M105 (temperature read) as oposed to general, print/movement commands
+        TwoStep: used for commands that return data in addition to "Ok"
+        AnswerRequired: for commands that return an answer
+        AnswerComplete: flag that specified that an answer is complete
+        Request: OPTIONAL: the sent command
+        Answer: what answer did we get
+        """
+        self.special=special
+        self.multiParts=multiParts
+        self.currentPart=1
+        self.answerRequired=answerRequired
+        self.requestSent=False
+        self.answerComplete=False
+        self.request=request
+        self.answer=answer
+        self.sender=sender
+        
+        self.callback=callback
+        
+    def callCallback(self):
+        if self.callback is not None:
+            self.callback(self.answer)
+    def __str__(self):
+        #return str(self.request)+" "+str(self.answer)
+        return str(self.answer)
+        #return "Special:"+ str(self.special)+", TwoStep:"+str(self.twoStep) +", Answer Required:"+str(self.answerRequired)+", Request:"+ str(self.request)+", Answer:"+ str(self.answer) 
+
+
+class CommandQueueLogic(object):
+    """
+    Implements a command queue system for drivers
+    """
+    def __init__(self,driver,bufferSize=8,*args,**kwargs):
+        self.driver=driver
+        self.bufferSize=bufferSize
+        self.answerableCommandBuffer=[]
+        self.commandBuffer=[]
+        self.commandSlots=bufferSize
+        #print("in command queue logic , driver:",driver)
+    
+        
+    def _handle_request(self,data,sender=None,callback=None,*args,**kwargs):
+        """
+        Manages command requests
+        """
+      
+        cmd=Command(**kwargs)
+        
+        cmd.request=data
+        cmd.sender=sender
+        cmd.callback=callback
+        
+        
+        if cmd.answerRequired and len(self.commandBuffer)<self.bufferSize:
+            log.msg("adding command",cmd,"from",cmd.sender,"callback",callback,system="Driver",logLevel=logging.DEBUG)
+            self.commandBuffer.append(cmd)
+            if self.commandSlots>1:
+                self.commandSlots-=1
+            #initial case
+            if len(self.commandBuffer)==1:
+                self.send_next_command()
+            
+             
+    def _handle_response(self,data):
+        """handles only commands that got an answer, formats them correctly and sets necesarry flags
+        params: data the raw response that needs to be treated
+        """
+        cmd=None        
+        #print("here",len(self.commandBuffer)>0)
+        #self.driver.send_signal("dataRecieved",data)
+        if len(self.commandBuffer)>0:
+            try:
+                if self.commandBuffer[0].currentPart>1:  
+                    self.commandBuffer[0].currentPart-=1
+                    #self.commandBuffer[0].twoStep=False
+                    cmd=self.commandBuffer[0]
+                    cmd.answer+=data
+                else:
+                    cmd=self.commandBuffer[0]
+                    del self.commandBuffer[0]
+                    cmd.answerComplete=True
+                    cmd.answer=data
+                    self.commandSlots+=1#free a commandSlot
+                    
+                    cmd.callCallback()
+                    
+                    #print("recieved data ",cmd.answer,"command sender",cmd.sender )
+                   # self.driver.send_signal(cmd.sender+".dataRecieved",cmd.answer,True)
+                   
+                    self.send_next_command()       
+            except Exception as inst:
+                log.msg("Failure in handling command ",str(inst),system="Driver")
+        else:
+                cmd=Command(answer=data)
+                cmd.answerComplete=True   
+                #print("recieved data 2",cmd.answer,"command sender",cmd.sender )    
+        return cmd
+     
+    def send_next_command(self):
+        """Returns next avalailable command in command queue """
+        cmd=None
+       # print("in next command: buffer",len(self.commandBuffer),"slots",self.commandSlots)  
+        if not self.driver.isDeviceHandshakeOk:
+            pass
+            #raise Exception("Machine connection not established correctly")
+        elif self.driver.isDeviceHandshakeOk and len(self.commandBuffer)>0 and self.commandSlots>0:        
+            tmp=self.commandBuffer[0]
+            if not tmp.requestSent:            
+                cmd=self.commandBuffer[0].request
+                tmp.requestSent=True
+                self.driver._send_data(cmd)
+                #self.logger.debug("Driver giving next command %s",str(cmd))
+        else:
+            if len(self.commandBuffer)>0:
+                print("pouet")
+                #self.logger.critical("Buffer Size Exceed Machine capacity: %s elements in command buffer, CommandSlots %s, CommandBuffer %s",str(len(self.commandBuffer)),str(self.commandSlots),[str(el) for el in self.commandBuffer])
+        return cmd 
+        
+class EndPoint(object):
+    def __init__(self,id,type=None,port=None,infos=[],getter=True,funct=None):
+        self.id=id
+        self.type=type
+        self.port=port
+        self.infos=infos
+        self.getter=getter
+        self.funct=funct
+ 
+    def set(self,value):
+        if self.getter:
+            raise Exception("this is a getter endpoint")
+        self.funct(self.port,value)
+    def get(self):
+        if not self.getter:
+            raise Exception("this is a setter endpoint")
+        self.funct(self.port)
+    
+    
+    
+ #was in DRIVER
+ 
+    def teststuff(self,params,*args,**kwargs):
+        pass
+
+    def variable_set(self,variable,params,sender=None,*args,**kwargs):
+        pass
+
+    def variable_get(self,variable,params,sender=None,*args,**kwargs):
+        pass
+ """
+    ####################################################################################
+                                Experimental
+    """ 
+    def start_command(self):
+        pass
+    def close_command(self):
+        pass
+    
+    def get_endpoint(self,filter=None):
+        """return a list of endpoints, filtered by parameters"""
+        d=defer.Deferred()
+        
+        def filter_check(endpoint,filter):
+            for key in filter.keys():
+                if not getattr(endpoint, key) in filter[key]:
+                    return False
+            return True
+      
+        def get(filter):
+            if filter:
+                return [endpoint for endpoint in self.endpoints if filter_check(endpoint,filter)]
+            else:               
+                pass
+            
+        d.addCallback(get)
+        reactor.callLater(0.5,d.callback,filter)
+        return d
+        
+"""for exposing capabilites"""
+        self.endpoints = []
+
+
+def connect(self, mode=None, *args, **kwargs):
+        if not self.is_connected:
+            if mode is not None:
+                self.connection_mode = mode
+                log.msg("Connecting in mode:", self.connection_mode, system="Driver", logLevel=logging.CRITICAL)
+                if mode == 3:
+                    """special case for forced connection"""
+                    unbound_ports = DriverManager.bindings.get_unbound_ports()
+                    if len(unbound_ports) > 0:
+                        port = unbound_ports[0]
+                        log.msg("Connecting in mode:", self.connection_mode, "to port", port, system="Driver", logLevel=logging.CRITICAL)
+                        DriverManager.bindings.bind(self, port)
+                        self.plugged_in(port)
+                        self.hardware_interface.connect(port=port)
+                else:
+                    self.hardware_interface.connect()
+            else:
+                self.hardware_interface.connect()
+        
+
+#was in serial_handler
+    def upload(self):
+        avrpath="/home/ckaos/data/Projects/Doboz/pollapli/core/tools/avr"
+        cmd=os.path.join(avrpath,"avrdude")
+        conf=os.path.join(avrpath,"avrdude.conf")
+        
+#was in arduinoexample driver
+ self.endpoints.append(EndPoint(0,"device",0,None,self.analogRead,self.analogWrite))
+        self.endpoints.append(EndPoint(1,"device",13,None,self.analogRead,self.analogWrite))
+
+    def hello_world(self):
+        self.send_command(0)
+
+    def set_mode(self, pin, mode):
+        self.send_command(" ".join([7, pin, mode]))
+
+    def set_Low(self, pin):
+        self.send_command(" ".join([3, pin]))
+
+    def set_High(self, pin):
+        self.send_command(" ".join([4, pin]))
+
+    def get_State(self, pin):
+        self.send_command('g' + str(pin))
+
+    def analogWrite(self, pin, value):
+        self.send_command(" ".join([3, pin, value]))
+
+    def analogRead(self, pin):
+        self.send_command(" ".join([5, pin]))
+
+#was in arduinoExample protocol
+ # these aren't used for anything yet, just sitting here for reference
+    messages = {
+        # Input Messages
+        'debug_confirm':      0,
+        'set_id':   99,     # device id set confirm
+        'get_id':   2,     # device id get
+        'pin_low':   3,     # pin low confirm
+        'pin_high':   4,     # pin high confirm
+        }
+
+        

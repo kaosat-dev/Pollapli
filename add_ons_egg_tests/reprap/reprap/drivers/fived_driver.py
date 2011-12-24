@@ -11,9 +11,9 @@ class FiveDProtocol(BaseSerialProtocol):
     """
     Class defining the protocol used by this driver: in this case, the reprap 5D protocol (similar to teacup, but with checksum)
     """
-    def __init__(self,driver=None,isBuffering=True,seperator='\n',*args,**kwargs):
+    def __init__(self,driver=None,is_buffering=True,seperator='\n',*args,**kwargs):
        # print("in  fived Protocol", seperator,driver)
-        BaseSerialProtocol.__init__(self,driver,isBuffering,seperator)
+        BaseSerialProtocol.__init__(self,driver,is_buffering,seperator)
         self.deviceHandshakeOk=False
         self.currentLine=1
         

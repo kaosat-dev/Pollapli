@@ -54,13 +54,13 @@ class Driver(object):
     variable endpoint : position, and sub ones for motors
     """
     
-    def __init__(self,deviceType="",connectionType="",hardwareHandlerKlass=None,logicHandlerKlass=None,protocol=None,options={},*args,**kwargs):    
+    def __init__(self,deviceType="",connectionType="",hardware_interface_klass=None,logicHandlerKlass=None,protocol=None,options={},*args,**kwargs):    
         self.driverType=self.__class__.__name__.lower()
         self.deviceType=deviceType
         self.connectionType=connectionType
         self.options=options
         self.protocol=protocol
-        self.hardwareHandlerKlass=hardwareHandlerKlass
+        self.hardware_interface_klass=hardware_interface_klass
         self.logicHandlerKlass=logicHandlerKlass
 
         self.deviceId=None
@@ -115,7 +115,7 @@ class Driver(object):
     
     @defer.inlineCallbacks    
     def setup(self,*args,**kwargs):  
-        self.hardwareHandler=self.hardwareHandlerKlass(self,self.protocol,**self.options)
+        self.hardwareHandler=self.hardware_interface_klass(self,self.protocol,**self.options)
         self.logicHandler=self.logicHandlerKlass(self,**self.options)  
         
         
@@ -139,7 +139,7 @@ class Driver(object):
                 log.msg("Connecting in mode:",self.connectionMode,system="Driver",logLevel=logging.CRITICAL) 
                 if mode==3:
                     """special case for forced connection"""
-                    unboundPorts=DriverManager.bindings.get_unboundPorts()
+                    unboundPorts=DriverManager.bindings.get_unbound_ports()
                     if len(unboundPorts)>0:
                         port=unboundPorts[0]
                         log.msg("Connecting in mode:",self.connectionMode,"to port",port,system="Driver",logLevel=logging.CRITICAL)
