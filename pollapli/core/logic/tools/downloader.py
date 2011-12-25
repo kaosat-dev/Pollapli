@@ -37,11 +37,11 @@ class Downloader(client.HTTPDownloader):
 class DownloaderWithProgress(object):
     def __init__(self, maxDownloadAttempts=5):
         self._currentDownloads = {}
-        self._maxDownloadAttempts = maxDownloadAttempts
+        self._max_download_attempts = maxDownloadAttempts
         
     @defer.inlineCallbacks
     def download(self,url="", destination="", object=None, refChecksum = None):
-        for attempt in range(0,self._maxDownloadAttempts):
+        for attempt in range(0,self._max_download_attempts):
             try:
                 download = self._createDownloader(url=url, file = destination, element = object)
                 self._currentDownloads[url] = download
@@ -57,7 +57,7 @@ class DownloaderWithProgress(object):
         del self._currentDownloads[url]
         if os.path.exists(destination):
             os.remove(destination)
-        raise Exception("Failed to download file at %s after %i attempts" %(url, self._maxDownloadAttempts))
+        raise Exception("Failed to download file at %s after %i attempts" %(url, self._max_download_attempts))
         
         
     def _createDownloader(self, url, file, contextFactory=None,element=None, *args, **kwargs):

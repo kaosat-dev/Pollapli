@@ -17,8 +17,8 @@ class DownloaderTest(unittest.TestCase):
         self._downloadUrl = "http://localhost:%i/%s" %(self._mockServerport,self._testFileName)
         
         self._downloader = DownloaderWithProgress()
-        self._pathManager = PathManager()
-        self._pathManager.tmpPath = "tmp"
+        self._path_manager = PathManager()
+        self._path_manager.tmpPath = "tmp"
         if not os.path.exists("tmp"):
             os.makedirs("tmp")       
         try: 
@@ -27,7 +27,7 @@ class DownloaderTest(unittest.TestCase):
         except:pass  
         
         self._start_mock_file_server(self._fileServePath)
-        self._downloadPath = os.path.join(self._pathManager.tmpPath,self._testFileName)
+        self._downloadPath = os.path.join(self._path_manager.tmpPath,self._testFileName)
         self._testFilePath = os.path.join(self._fileServePath,self._testFileName)
         self._write_mock_file(self._testFilePath)
         

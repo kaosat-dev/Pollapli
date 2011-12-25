@@ -50,7 +50,7 @@ class Device(BaseComponent):
         self._driver=None 
         
     def __eq__(self, other):
-        return self._id == other._id and self._name == other._name and self._description == other._description and self._status == other._status
+        return self.cid == other.cid and self._name == other._name and self._description == other._description and self._status == other._status
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -68,7 +68,7 @@ class Node(DBObject):
         self.name=name
         self.type=type
         self.description=description
-        self.options=options
+        self.extra_params=options
         
         self.status=NodeStatus()
         self.driver=None 
@@ -90,8 +90,8 @@ class Node(DBObject):
         
         """this is for internal comms handling"""
         self.signalChannelPrefix=str(self.id)
-        self.signalChannel="node"+self.signalChannelPrefix+"."+self.name
-        self.signalHandler=SignalHander(self.signalChannel)
+        self._signal_channel="node"+self.signalChannelPrefix+"."+self.name
+        self.signalHandler=SignalHander(self._signal_channel)
         self.signalHandler.add_handler(handler=self.variable_get,signal="get")
         self.signalHandler.add_handler(handler=self.variable_set,signal="set")
         
@@ -330,8 +330,8 @@ class NodeManager(object):
         self.parentEnvironment=parentEnvironment
         self.nodes={}
         self.lastNodeId=0
-        self.signalChannel="node_manager"
-        self.signalHandler=SignalHander(self.signalChannel)
+        self._signal_channel="node_manager"
+        self.signalHandler=SignalHander(self._signal_channel)
         self.signalChannelPrefix="environment_"+str(self.parentEnvironment.id)
      
     @defer.inlineCallbacks    

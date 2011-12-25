@@ -87,7 +87,7 @@ class DeviceControlledVariable(object):
 #            getattr(self.node.driver,"get_"+self.name)(value)
 #        except Exception as inst:
 #            log.mg("Node's driver does not have the request feature",system="Node",logLevel=logging.CRITICAL)
-        return command.d
+        return command.deferred
     
     def set(self,value,relative=False,params=None,sender=None):
         """ setting is dependent on the type of  variable
@@ -145,4 +145,4 @@ class DeviceControlledVariable(object):
             Reading(self.value).save()
         
         
-        reactor.callLater(0,originalCmd.d.callback,self.value)
+        reactor.callLater(0,originalCmd.deferred.callback,self.value)

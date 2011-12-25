@@ -13,9 +13,9 @@ class Test_device_manager(unittest.TestCase):
     
     @defer.inlineCallbacks
     def setUp(self):
-        self._pathManager = PathManager()
-        self._pathManager.dataPath = "."
-        self._persistenceLayer = PersistenceLayer(pathManager = self._pathManager)
+        self._path_manager = PathManager()
+        self._path_manager.dataPath = "."
+        self._persistenceLayer = PersistenceLayer(pathManager = self._path_manager)
         self.deviceManager=DeviceManager(self._persistenceLayer)
         #yield self._persistenceLayer.setup()
         yield self.deviceManagers.setup()

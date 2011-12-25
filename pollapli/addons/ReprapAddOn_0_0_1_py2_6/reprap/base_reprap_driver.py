@@ -44,7 +44,7 @@ class BaseReprapDriver(Driver):
     """ generic"""
     def get_firmware_version(self):
         self.send_command("M115")
-    def set_debugLevel(self,level):
+    def set_debug_level(self,level):
         self.send_command("M111")
     def init(self):
         self.send_command("")

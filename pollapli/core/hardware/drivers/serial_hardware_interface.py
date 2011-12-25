@@ -1,7 +1,11 @@
-from twisted.internet.protocol import Protocol, Factory
+"""classes for the serial interface"""
+from pollapli.core.hardware.drivers.hardware_interfaces import BaseHardwareInterface
 """necessary workaround for win32 serial port bugs in twisted"""
-import re, sys, itertools, time, logging, glob
-import os
+import re
+import sys
+import itertools
+import logging
+import glob
 from twisted.python.win32 import WindowsError
 from pollapli.core.hardware.drivers.protocols import DummyProtocol
 if sys.platform == "win32":
@@ -9,44 +13,39 @@ if sys.platform == "win32":
 else:
     from twisted.internet.serialport import SerialPort
 from twisted.internet import reactor, defer
-from twisted.internet.task import LoopingCall
 from twisted.python import log, failure
-from twisted.python.log import PythonLoggingObserver
 from twisted.plugin import IPlugin
-from zope.interface import implements,classProvides
+from zope.interface import classProvides
 from pollapli import ipollapli
-from pollapli.exceptions import NoAvailablePort
 
 
 class SerialWrapper(SerialPort):
-    """wrapper around the twisted SerialPort class, for convenience and bugfix"""
+    """wrapper around the twisted SerialPort class, for convenience and
+     bugfix
+     """
     def __init__(self, *args, **kwargs):
         SerialPort.__init__(self, *args, **kwargs)
-        self._tempDataBuffer = []
-        self.d = defer.Deferred()
+        self._tmp_data_buffer = []
+        self.deferred = defer.Deferred()
 
     def connectionLost(self, reason="connectionLost"):
         SerialPort.connectionLost(self, reason)
-        self.d.callback("connection failure")
+        self.deferred.callback("connection failure")
 
 
-class SerialHardwareInterface(object):
+class SerialHardwareInterface(BaseHardwareInterface):
+    """class handling the connection to serial based devices"""
     classProvides(IPlugin, ipollapli.IDriverHardwareHandler)
     blocked_ports = []
     blacklisted_ports = ["COM3"]
     available_ports = []
 
     def __init__(self, driver=None, protocol=None, speed=115200, *args, **kwargs):
-        self.driver = driver
+        BaseHardwareInterface.__init__(self, driver, protocol, *args, **kwargs)
         self.serial = None
-        self.protocol = protocol(self.driver, *args, **kwargs)
         self.speed = speed
         self.port = None
-        self.is_connected = False
-        self.setupMode = False
-
-    def send_data(self, command):
-        self.protocol.send_data(command)
+        self.setup_mode = False
 
     def connect(self, port=None, *args, **kwargs):
         self.driver.connection_errors = 0
@@ -68,7 +67,7 @@ class SerialHardwareInterface(object):
         try:
             if self.serial:
                 try:
-                    self.serial.d.cancel()
+                    self.serial.deferred.cancel()
                 except:
                     pass
                 try:
@@ -91,9 +90,8 @@ class SerialHardwareInterface(object):
                     SerialHardwareInterface.blocked_ports.append(self.port)
                 self.driver.is_connected = True
                 self.serial = SerialWrapper(self.protocol, self.port, reactor, baudrate=self.speed)
-                self.serial.d.addCallbacks(callback=self._connect, errback=self.connectionClosed)
+                self.serial.deferred.addCallbacks(callback=self._connect, errback=self.connectionClosed)
             except Exception as inst:
-                #log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
                 self.driver.is_connected = False
                 self.driver.connection_errors += 1
                 log.msg("failed to connect serial driver,because of error", inst, "attempts left:", self.driver.max_connection_errors - self.driver.connection_errors, system="Driver")
@@ -102,16 +100,15 @@ class SerialHardwareInterface(object):
 
         if self.driver.connection_errors >= self.driver.max_connection_errors:
             try:
-                self.serial.d.cancel()
+                self.serial.deferred.cancel()
                 self.disconnect(clear_port=True)
             except:
                 pass
-
             if self.driver.connectionMode == 1:
                 log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ", system="Driver", logLevel=logging.CRITICAL)
             else:
                 log.msg("Failed to establish correct connection with device/identify device by id", system="Driver", logLevel=logging.DEBUG)
-                reactor.callLater(0.1, self.driver.d.errback, failure.Failure())
+                reactor.callLater(0.1, self.driver.deferred.errback, failure.Failure())
 
     @classmethod
     def list_ports(cls):
@@ -177,16 +174,13 @@ class SerialHardwareInterface(object):
             self.disconnect()
 
     """The next methods are at least partially deprecated and not in use """
-    def reset_seperator(self):
-        self.regex = re.compile(self.seperator)
-
-    def tearDown(self):
+    def teardown(self):
         """
         Clean shutdown function
         """
         try:
             SerialHardwareInterface.blocked_ports.remove(self.port)
-        except:
-            pass
+        except Exception as inst:
+            log.msg("Serial error: %s " % str(inst), loglevel=logging.CRITICAL)
         self.driver.is_connected = False
-        self.logger.critical("Serial shutting down")
+        log.msg("Serial shutting down")

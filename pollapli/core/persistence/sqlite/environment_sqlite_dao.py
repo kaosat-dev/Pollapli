@@ -103,7 +103,7 @@ class EnvironmentSqliteDao(EnvironmentDao):
         if len(rows)>0:
             id,name,description,status = rows[0]
             result = Environment(name = name,description=description,status=status)
-            result._id = uuid.UUID(id)
+            result.cid = uuid.UUID(id)
         else:
             raise EnvironmentNotFound()
         
@@ -117,7 +117,7 @@ class EnvironmentSqliteDao(EnvironmentDao):
         for row in rows:
             id,name,description,status = row
             environment = Environment(name = name,description=description,status=status)
-            environment._id = uuid.UUID(id)
+            environment.cid = uuid.UUID(id)
             lEnvironments.append(environment)
         defer.returnValue(lEnvironments)
             
@@ -127,7 +127,7 @@ class EnvironmentSqliteDao(EnvironmentDao):
         if hasattr(environment,"_dbId"):
             yield self.update(args = (environment.name,environment.description,environment._status,environment._dbId))
         else:
-            environment._dbId = yield self.insert(args = (str(environment._id), environment.name, environment.description,environment._status))   
+            environment._dbId = yield self.insert(args = (str(environment.cid), environment.name, environment.description,environment._status))   
     
     @defer.inlineCallbacks 
     def save_environments(self, lEnvironment):

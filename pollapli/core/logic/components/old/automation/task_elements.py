@@ -13,7 +13,7 @@ class Action(DBObject):
     def __init__(self,name="defaultAction",description="",*args,**kwargs):
         DBObject.__init__(self,**kwargs)
         self.repeater=False
-        self.d=defer.Deferred()
+        self.deferred=defer.Deferred()
         return d
     
 """

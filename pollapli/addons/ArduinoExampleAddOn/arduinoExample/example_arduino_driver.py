@@ -1,5 +1,6 @@
+"""All classed for the arduino example driver (used for general reference)"""
 from twisted.plugin import IPlugin
-from pollapli import ipollapli 
+from pollapli import ipollapli
 from zope.interface import classProvides
 from twisted.internet import reactor, defer
 from pollapli.core.hardware.drivers.protocols import BaseTextSerialProtocol
@@ -7,17 +8,18 @@ from pollapli.core.hardware.drivers.serial_hardware_interface import SerialHardw
 from pollapli.core.hardware.drivers.driver import Driver
 
 
-class ArduinoExampleProtocol(BaseTextSerialProtocol):
+class ExampleArduinoProtocol(BaseTextSerialProtocol):
     """
-    Class defining the protocol used by this driver: in this case, the reprap 5D protocol (similar to teacup, but with checksum)
+    Class defining the protocol used by this driver: in this case,just a
+    simplified test protocol
     """
-    def __init__(self, driver=None, is_buffering=True, seperator='\n', *args, **kwargs):
-        BaseTextSerialProtocol.__init__(self, driver, is_buffering, seperator)
+    def __init__(self, driver=None, is_buffering=True, seperator='\n', ref_handshake="start", *args, **kwargs):
+        BaseTextSerialProtocol.__init__(self, driver, is_buffering, seperator, ref_handshake)
 
     def _set_hardware_id(self, hardware_id=99):
         self.send_data("%i%s" % (hardware_id, str(self.driver.deviceId)))
 
-    def _query_hardware_info(self):
+    def _query_hardware_id(self):
         """method for retrieval of device info (for hardware_id and more) """
         self.send_data("2")
 
@@ -35,16 +37,16 @@ class ArduinoExampleProtocol(BaseTextSerialProtocol):
         return data
 
 
-class ArduinoExampleDriver(Driver):
-    """Class defining the components of the driver for a basic arduino,using attached firmware """
+class ExampleArduinoDriver(Driver):
+    """Class defining the components of the driver for a basic
+     arduino,using attached firmware """
     classProvides(IPlugin, ipollapli.IDriver)
 
-    def __init__(self, options=None, *args, **kwargs):
-        """
-        very important : the first two args should ALWAYS be the CLASSES of the hardware handler and logic handler,
-        and not instances of those classes
-        """
-        Driver.__init__(self, SerialHardwareInterface, ArduinoExampleProtocol, options, *args, **kwargs)
+    def __init__(self, auto_connect=False, max_connection_errors=2,
+        connection_timeout=4, speed=115200, *args, **kwargs):
+        Driver.__init__(self, auto_connect, max_connection_errors, connection_timeout)
+        self._hardware_interface = SerialHardwareInterface(self, ExampleArduinoProtocol, speed)
 
     def hello_world(self):
+        """just a test"""
         self.send_command(0)

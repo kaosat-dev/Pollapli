@@ -24,7 +24,7 @@ class Environment(BaseComponent):
         self._tasks=TaskManager(self)
         
     def __eq__(self, other):
-        return self._id == other._id and self.name == other.name and self.description == other.description and self._status == other._status
+        return self.cid == other.cid and self.name == other.name and self.description == other.description and self._status == other._status
     
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -50,7 +50,7 @@ class Environment(BaseComponent):
         """
         yield self._devices.setup()
         yield self._tasks.setup()
-        log.msg("Environment ",self.name ,"with id", self._id," setup correctly", logLevel=logging.CRITICAL, system="environment")
+        log.msg("Environment ",self.name ,"with id", self.cid," setup correctly", logLevel=logging.CRITICAL, system="environment")
 
     def teardown(self):
         """

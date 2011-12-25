@@ -10,7 +10,7 @@ from pollapli.core.persistence.sqlite.sqlite_persistence_strategy import SqliteP
 class SqliteDaoManager(object):
     """Main manager for sqlite daos"""
     def __init__(self, pathManager = None):
-        self._pathManager = pathManager
+        self._path_manager = pathManager
         self._persistenceStrategy = SqlitePersistenceStrategy()
         self._dbPool = adbapi.ConnectionPool("sqlite3","pollapli.db",check_same_thread=False)
         self._updateDao = UpdateSqliteDao(dbPool = self._dbPool,persistenceStrategy = self._persistenceStrategy)

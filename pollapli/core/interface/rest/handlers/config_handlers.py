@@ -329,8 +329,8 @@ class GlobalEventsHandler(DefaultRestHandler):
         self.validGetParams.append('altTimeStamp')
         
         
-        self.signalChannel="global_event_listener"
-        self.signalHandler=SignalHander(self.signalChannel)
+        self._signal_channel="global_event_listener"
+        self.signalHandler=SignalHander(self._signal_channel)
         self.signalHandler.add_handler(channel="driver_manager",handler=self._signal_Handler)   
         self.signalHandler.add_handler(channel="update_manager",handler=self._signal_Handler)
         self.signalHandler.add_handler(channel="environment_manager",handler=self._signal_Handler)

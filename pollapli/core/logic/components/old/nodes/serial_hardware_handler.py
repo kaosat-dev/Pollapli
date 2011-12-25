@@ -21,12 +21,12 @@ class SerialWrapper(SerialPort):
       """wrapper around the twisted SerialPort class, for convenience and bugfix"""
       def __init__(self,*args,**kwargs):
           SerialPort.__init__(self,*args,**kwargs)
-          self._tempDataBuffer=[]
-          self.d=defer.Deferred()
+          self._tmp_data_buffer=[]
+          self.deferred=defer.Deferred()
      
       def connectionLost(self,reason="connectionLost"):
           SerialPort.connectionLost(self,reason)
-          self.d.callback("connection failure")
+          self.deferred.callback("connection failure")
 
 class SerialHardwareHandler(object):
     classProvides(IPlugin, ipollapli.IDriverHardwareHandler)
@@ -42,7 +42,7 @@ class SerialHardwareHandler(object):
         self.port=None
         self.isConnected=False
         self.notMyPorts=[]
-        self.setupMode=False
+        self.setup_mode=False
            
             
     def send_data(self,command):
@@ -68,7 +68,7 @@ class SerialHardwareHandler(object):
         try:
             if self.serial:
                 try:
-                    self.serial.d.cancel()
+                    self.serial.deferred.cancel()
                 except:pass
                 try:
                     self.serial.loseConnection()
@@ -89,7 +89,7 @@ class SerialHardwareHandler(object):
                     SerialHardwareHandler.blockedPorts.append(self.port)        
                 self.driver.isConnected=True
                 self.serial=SerialWrapper(self.protocol,self.port,reactor,baudrate=self.speed)
-                self.serial.d.addCallbacks(callback=self._connect,errback=self.connectionClosed)  
+                self.serial.deferred.addCallbacks(callback=self._connect,errback=self.connectionClosed)  
             except Exception as inst:          
                 #log.msg("cricital error while (re-)starting serial connection : please check your driver speed,  cables,  and make sure no other process is using the port ",str(inst))
                 self.driver.isConnected=False
@@ -100,7 +100,7 @@ class SerialHardwareHandler(object):
                 
         if self.driver.connectionErrors>=self.driver.maxConnectionErrors:
             try:
-                self.serial.d.cancel()
+                self.serial.deferred.cancel()
                 self.disconnect(clearPort=True)
             except:pass
             
@@ -108,7 +108,7 @@ class SerialHardwareHandler(object):
                 log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver",logLevel=logging.CRITICAL)
             else:
                 log.msg("Failed to establish correct connection with device/identify device by id",system="Driver",logLevel=logging.DEBUG)
-                reactor.callLater(0.1,self.driver.d.errback,failure.Failure())
+                reactor.callLater(0.1,self.driver.deferred.errback,failure.Failure())
                 
 
         

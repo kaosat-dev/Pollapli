@@ -116,8 +116,8 @@ class TaskManager(object):
     def __init__(self,parentEnvironment):
         self.tasks={}
         self.parentEnvironment=parentEnvironment
-        self.signalChannel="task_manager"
-        self.signalHandler=SignalHander(self.signalChannel)
+        self._signal_channel="task_manager"
+        self.signalHandler=SignalHander(self._signal_channel)
     
     @defer.inlineCallbacks
     def setup(self):         
@@ -185,7 +185,7 @@ class TaskManager(object):
         print("zerzer",targetVariable)
         
         
-        task=yield Task(taskType=taskType,options=None).save()
+        task=yield Task(taskType=taskType,extra_params=None).save()
         log.msg("Added  task ",name, logLevel=logging.CRITICAL)
         
         task.add_action(UpdateAndGetVariable_action(targetNode,targetVariable))

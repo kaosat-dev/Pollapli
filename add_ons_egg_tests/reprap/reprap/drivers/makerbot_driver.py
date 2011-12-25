@@ -49,17 +49,17 @@ class MakerbotProtocol(BaseSerialProtocol):
         BaseSerialProtocol.__init__(self,driver,is_buffering,seperator)
         
         
-    def _handle_deviceHandshake(self,data):
+    def _handle_device_handshake(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
         """
         log.msg("Attempting to validate device handshake",system="Driver",logLevel=logging.INFO)
-        self.driver.isDeviceHandshakeOk=True
-        self._query_hardware_info()
+        self.driver.is_handshake_ok=True
+        self._query_hardware_id()
         
          
-    def _handle_deviceIdInit(self,data):
+    def _handle_device_id_init(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -104,17 +104,17 @@ class MakerbotProtocol(BaseSerialProtocol):
                 sucess=True
                 
         if sucess is True: 
-            self.driver.isDeviceIdOk=True
+            self.driver.is_identification_ok=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.isProcessing=False
             self.driver.disconnect()
-            self.driver.d.callback(None)      
+            self.driver.deferred.callback(None)      
         
     def _set_hardware_id(self,id=None):
         self.send_data("s "+ self.driver.deviceId)
         
-    def _query_hardware_info(self):
+    def _query_hardware_id(self):
         """method for retrieval of device info (for id and more) """
         self.send_data("i")
         
@@ -167,7 +167,7 @@ class MakerbotProtocol(BaseSerialProtocol):
         return data
         
     def connectionLost(self,reason="connectionLost"):
-        self.driver.isDeviceHandshakeOk=False
+        self.driver.is_handshake_ok=False
         BaseSerialProtocol.connectionLost(self,reason)
         
 class HardwareHandler(SerialHardwareHandler):
@@ -194,7 +194,7 @@ class MakerbotDriver(Driver):
         pass
     def get_stats(self):
         pass
-    def set_debugLevel(self,level):
+    def set_debug_level(self,level):
         self.send_command((0x76,None))
     def init(self):
         self.send_command((0x01,None))

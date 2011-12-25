@@ -1,12 +1,8 @@
-import logging,ast,time
+"""base driver classes"""
+import logging
 from twisted.internet import reactor, defer
-from twisted.enterprise import adbapi
-from twisted.python import log,failure
-from twisted.python.log import PythonLoggingObserver
-from zope.interface import Interface, Attribute,implements
-from twisted.plugin import IPlugin,getPlugins
-from twisted.internet.interfaces import IProtocol
-from twisted.internet.protocol import Protocol
+from twisted.python import log
+from zope.interface import Interface, Attribute, implements
 from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.exceptions import DeviceNotConnected
 from pollapli.core.base_component import BaseComponent
@@ -20,11 +16,6 @@ class Driver(BaseComponent):
      It actually mimics the way system device drivers work in a way.
      You can think of the events beeing sent out by the driver(dataRecieved...)
      as interupts of sorts
-      ConnectionModes :
-        0:setup
-        1:normal
-        2:set_id
-        3:forced: to forcefully connect devices which have no deviceId stored
 
     Thoughts for future evolution:
     each driver will have a series of endpoints or slots/hooks,
@@ -50,116 +41,157 @@ class Driver(BaseComponent):
     hardwareId will be needed to identify a specific device,
         as the system does not work purely base on ports
     """
-    def __init__(self, hardware_interface=None, protocol=None, options=None,
-                 *args, **kwargs):
+    def __init__(self, auto_connect=False, max_connection_errors=2,
+        connection_timeout=4, *args, **kwargs):
         """
-        deviceType:
-        hardware_interface:
-        hardware_interface_klass:
-        logic_handler_klass:
-        protocol:
-        options:
+        autoconnect:if autoconnect is True,device will be connected as soon as
+        it is plugged in and detected
+        max_connection_errors: the number of connection errors above which
+        the driver gets disconnected
+        connection_timeout: the number of seconds after which the driver
+        gets disconnected (only in the initial , configuration phases by
+        default)
         """
         BaseComponent.__init__(self, parent=None)
-        self.hardware_interface = hardware_interface
-        self.options = options
-        self.protocol = protocol
-
+        self.auto_connect = auto_connect
+        self.max_connection_errors = max_connection_errors
+        self.connection_timeout = connection_timeout
+        self._hardware_interface = None
         self._hardware_id = None
         self.is_configured = False  # when port association has not been set
-        self.is_hardware_handshake_ok = False
-        self.is_hardware_id_ok = False
+        self.is_handshake_ok = False
+        self.is_identification_ok = False
         self.is_connected = False
         self.is_plugged_in = False
-        self.auto_connect = False
-        # if autoconnect is True,device will be connected as soon as
-        # it is plugged in and detected
 
         self.connection_errors = 0
-        self.max_connection_errors = 2
-        self.connection_timeout = 4
         self.connection_mode = 1
         self.deferred = defer.Deferred()
 
-        self._signal_dispatcher = None
-        self.signal_channel_prefix = ""
-        self.signal_channel = ""
+        self._signal_channel_prefix = ""
         self._signal_dispatcher = SignalDispatcher("driver_manager")
 
-    @defer.inlineCallbacks
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def setup(self, *args, **kwargs):
+        """do the driver setup phase"""
         self._signal_dispatcher.add_handler(handler=self.send_command, signal="addCommand")
         class_name = self.__class__.__name__.lower()
         log.msg("Driver of type", class_name, "setup sucessfully", system="Driver", logLevel=logging.INFO)
 
     def _send_signal(self, signal="", data=None):
-        prefix = self.signal_channel_prefix + ".driver."
-        self._signal_dispatcher.send_message(prefix+signal, self, data)
+        prefix = self._signal_channel_prefix + ".driver."
+        self._signal_dispatcher.send_message(prefix + signal, self, data)
+
+    @property
+    def hardware_interface_class(self):
+        """Get the current voltage."""
+        return self._hardware_interface.__class__
+    """
+    ###########################################################################
+    The following are the connection related methods
+    """
 
     def bind(self, port, set_id=True):
+        """
+        port : port to bind this driver to
+        set_id: flag on whether to set/reset the hardware's id
+        """
         self.deferred = defer.Deferred()
         log.msg("Attemtping to bind driver", self, "with deviceId:", self._hardware_id, "to port", port, system="Driver", logLevel=logging.DEBUG)
-        self.hardware_interface.connect(set_id_mode=set_id, port=port)
+        self._hardware_interface.connect(set_id_mode=set_id, port=port)
         return self.deferred
 
     def connect(self, connection_mode=None, *args, **kwargs):
+        """
+        connection_mode :
+        0:setup
+        1:normal
+        2:set_id
+        3:forced: to forcefully connect devices which have no deviceId stored
+        """
         if self.is_connected:
             raise Exception("Driver already connected")
         if connection_mode is None:
             raise Exception("Invalid connection mode")
         self.connection_mode = connection_mode
         log.msg("Connecting in mode:", self.connection_mode, system="Driver", logLevel=logging.CRITICAL)
-        self.hardware_interface.connect()
+        self._hardware_interface.connect()
 
     def reconnect(self, *args, **kwargs):
         """Reconnect driver"""
-        self.hardware_interface.reconnect(*args, **kwargs)
+        self._hardware_interface.reconnect(*args, **kwargs)
 
     def disconnect(self, *args, **kwargs):
         """Disconnect driver"""
-        self.hardware_interface.disconnect(*args, **kwargs)
+        self._hardware_interface.disconnect(*args, **kwargs)
 
     def plugged_in(self, port):
+        """
+        first method that gets called upon sucessfull connection
+        """
         self.is_plugged_in = True
         self._send_signal("plugged_In", port)
         if self.auto_connect:
-            """slight delay, to prevent certain problems when trying to send data to the device too fast"""
+            """slight delay, to prevent certain problems when trying to send
+            data to the device too fast"""
             reactor.callLater(1, self.connect, 1)
 
     def plugged_out(self, port):
+        """
+        first method that gets called upon sucessfull disconnection
+        """
         self.is_configured = False
-        self.is_hardware_handshake_ok = False
-        self.is_hardware_id_ok = False
+        self.is_handshake_ok = False
+        self.is_identification_ok = False
         self.is_connected = False
         self.is_plugged_in = False
         self._send_signal("plugged_Out", port)
 
+    """
+    ###########################################################################
+    The following are the methods dealing with communication with the hardware
+    """
+
     def send_command(self, data, sender=None, callback=None, *args, **kwargs):
+        """send a command to the physical device"""
         if not self.is_connected:
             raise DeviceNotConnected()
 #        if self.logic_handler:
 #            self.logic_handler._handle_request(data=data,sender=sender,callback=callback)
 
     def _send_data(self, data, *args, **kwargs):
-        self.hardware_interface.send_data(data)
+        """send data to the physical device, this should not be
+        called directly, all commands need to go through the send_command
+        method"""
+        self._hardware_interface.send_data(data)
 
     def _handle_response(self, data):
+        """handle hardware response"""
         pass
 #        if self.logic_handler:
 #            self.logic_handler._handle_response(data)
 
-    """higher level methods""" 
+    """
+    ###########################################################################
+    The following are the higher level methods
+    """
     def startup(self):
+        """send startup command to hardware"""
         pass
 
     def shutdown(self):
-        pass
-
-    def init(self):
+        """send shutdown command to hardware"""
         pass
 
     def get_firmware_version(self):
+        """retrieve firmware version from hardware"""
         pass
 
-    def set_debugLevel(self,level):
+    def set_debug_level(self, level):
+        """set hardware debug level, if any"""
         pass

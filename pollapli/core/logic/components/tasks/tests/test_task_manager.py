@@ -14,25 +14,25 @@ class TaskManagerFTest(unittest.TestCase):
         
         
         
-        self._pathManager = PathManager()
-        self._pathManager.addOnPath = os.path.abspath("addons")
-        self._pathManager.tmpPath = os.path.abspath("tmp")
+        self._path_manager = PathManager()
+        self._path_manager._addon_path = os.path.abspath("addons")
+        self._path_manager.tmpPath = os.path.abspath("tmp")
 
-        if not os.path.exists(self._pathManager.tmpPath):
-            os.makedirs(self._pathManager.tmpPath)
-        if not os.path.exists(self._pathManager.addOnPath):
-            os.makedirs(self._pathManager.addOnPath)
+        if not os.path.exists(self._path_manager.tmpPath):
+            os.makedirs(self._path_manager.tmpPath)
+        if not os.path.exists(self._path_manager._addon_path):
+            os.makedirs(self._path_manager._addon_path)
             
-        self._persistenceLayer = PersistenceLayer(pathManager=self._pathManager)
-        self._taskManager = TaskManager(pathManager=self._pathManager)
+        self._persistenceLayer = PersistenceLayer(pathManager=self._path_manager)
+        self._taskManager = TaskManager(pathManager=self._path_manager)
        
         yield self._taskManager.setup()
        
     def tearDown(self):
-        if os.path.exists(self._pathManager.tmpPath):
-            shutil.rmtree(self._pathManager.tmpPath)
-        if os.path.exists(self._pathManager.addOnPath):
-            shutil.rmtree(self._pathManager.addOnPath)
+        if os.path.exists(self._path_manager.tmpPath):
+            shutil.rmtree(self._path_manager.tmpPath)
+        if os.path.exists(self._path_manager._addon_path):
+            shutil.rmtree(self._path_manager._addon_path)
                 
     def test_add_task(self):
         task = self._taskManager.add_task("Test task", "a description", None, None)

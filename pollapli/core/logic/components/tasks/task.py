@@ -17,7 +17,7 @@ class Task(BaseComponent):
         """progress need to be computed base on the number of actions needed for this task to complete"""
         #self.status=TaskStatus()
     def __eq__(self, other):
-        return self._id == other._id and self.name == other.name and self.description == other.description and self._status == other._status
+        return self.cid == other.cid and self.name == other.name and self.description == other.description and self._status == other._status
     
     def __ne__(self, other):
         return not self.__eq__(other)

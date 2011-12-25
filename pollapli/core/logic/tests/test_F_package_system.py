@@ -13,17 +13,17 @@ from pollapli.core.logic.tools.path_manager import PathManager
 class PackageSystemTest(unittest.TestCase):   
     @defer.inlineCallbacks 
     def setUp(self):
-        self._pathManager = PathManager()
+        self._path_manager = PathManager()
         if not os.path.exists("tmp"):
             os.makedirs("tmp")
         if not os.path.exists("addons"):
             os.makedirs("addons")
             
-        self._pathManager.addOnPath = "addons"
-        self._pathManager.tmpPath = "tmp"
+        self._path_manager._addon_path = "addons"
+        self._path_manager.tmpPath = "tmp"
         
         self._persistenceLayer = PersistenceLayer()
-        self._packageManager = PackageManager(self._persistenceLayer,self._pathManager)
+        self._packageManager = PackageManager(self._persistenceLayer,self._path_manager)
         yield self._packageManager.setup()
        
     @defer.inlineCallbacks  
@@ -56,12 +56,12 @@ class PackageSystemTest(unittest.TestCase):
         
         addOn = Package(type = "addon", name = "TestAddOn", version = "0.0.1",file="TestAddOn.zip")
         addOn.downloadUrl = "http://localhost:8765/TestAddOn.zip"
-        self._packageManager._availablePackages[addOn._id] = addOn
-        yield self._packageManager._download_package(id = addOn._id)
+        self._packageManager._available_packages[addOn.cid] = addOn
+        yield self._packageManager._download_package(id = addOn.cid)
         
         if os.path.exists(fileServePath):
             shutil.rmtree(fileServePath)
-        packagePath = os.path.join(self._pathManager.tmpPath,addOn.file)    
+        packagePath = os.path.join(self._path_manager.tmpPath,addOn.file)    
         self.assertTrue(os.path.exists(packagePath))  
         
     def test_package_reloading(self):

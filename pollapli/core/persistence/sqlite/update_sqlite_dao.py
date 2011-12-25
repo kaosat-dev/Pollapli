@@ -81,7 +81,7 @@ class UpdateSqliteDao(UpdateDao):
         if len(rows)>0:    
             id, type, name, description, version, tags, downloadUrl, enabled = rows[0]
             result =  Update(type = type, name = name, description = description,version = version, tags = tags.split(","), downloadUrl = downloadUrl, enabled = enabled)
-            result._id = uuid.UUID(id)
+            result.cid = uuid.UUID(id)
         else:
             raise UpdateNotFound()
         defer.returnValue(result)
@@ -94,7 +94,7 @@ class UpdateSqliteDao(UpdateDao):
         for row in rows:
             id, type, name, description, version, tags, downloadUrl, enabled = row
             update =Update(type = type, name = name, description = description,version = version, tags = tags.split(","), downloadUrl = downloadUrl, enabled = enabled)
-            update._id = uuid.UUID(id)
+            update.cid = uuid.UUID(id)
             lUpdates.append(update)     
         defer.returnValue(lUpdates)
     
@@ -105,7 +105,7 @@ class UpdateSqliteDao(UpdateDao):
         if hasattr(update,"_dbId"):
             yield self.update(args = (update.type,update.name,update.description,update.version,",".join(update.tags),update.downloadUrl,update.enabled,update._dbId))
         else:
-            update._dbId = yield self.insert(args = (str(update._id),update.type,update.name,update.description,update.version,",".join(update.tags),update.downloadUrl,update.enabled))              
+            update._dbId = yield self.insert(args = (str(update.cid),update.type,update.name,update.description,update.version,",".join(update.tags),update.downloadUrl,update.enabled))              
          
     @defer.inlineCallbacks
     def save_updates(self, lUpdates):

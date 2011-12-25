@@ -17,22 +17,22 @@ class HydroduinoProtocol(BaseSerialProtocol):
     def __init__(self,driver=None,is_buffering=True,seperator='\n',*args,**kwargs):
         BaseSerialProtocol.__init__(self,driver,is_buffering,seperator)
         
-    def _handle_deviceHandshake(self,data):
+    def _handle_device_handshake(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
         """
         log.msg("Attempting to validate device handshake",system="Driver",logLevel=logging.INFO)
         if "start" in data:
-            self.driver.isDeviceHandshakeOk=True
+            self.driver.is_handshake_ok=True
             log.msg("Device handshake validated",system="Driver",logLevel=logging.INFO)
-            self._query_hardware_info()
+            self._query_hardware_id()
         else:
             log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
             self.driver.reconnect()
         
     
-    def _handle_deviceIdInit(self,data):
+    def _handle_device_id_init(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -46,7 +46,7 @@ class HydroduinoProtocol(BaseSerialProtocol):
             return False
         if self.driver.connectionErrors>=self.driver.maxConnectionErrors:
             self.driver.disconnect()
-            self.driver.d.errback(None)  
+            self.driver.deferred.errback(None)  
         sucess=False
         if self.driver.connectionMode==2 or self.driver.connectionMode==0:
             """if we are trying to set the device id"""    
@@ -57,7 +57,7 @@ class HydroduinoProtocol(BaseSerialProtocol):
                     sucess=True
                 elif self.driver.deviceId!= data:
                     self._set_hardware_id()
-                    #self._query_hardware_info()
+                    #self._query_hardware_id()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -80,16 +80,16 @@ class HydroduinoProtocol(BaseSerialProtocol):
                 sucess=True
                 
         if sucess is True: 
-            self.driver.isDeviceIdOk=True
+            self.driver.is_identification_ok=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.driver.disconnect()
-            self.driver.d.callback(None)      
+            self.driver.deferred.callback(None)      
         
     def _set_hardware_id(self,id=None):
         self.send_data("s "+ self.driver.deviceId)
         
-    def _query_hardware_info(self):
+    def _query_hardware_id(self):
         """method for retrieval of device info (for id and more) """
         self.send_data("i")
         
@@ -109,7 +109,7 @@ class HydroduinoProtocol(BaseSerialProtocol):
         return data
     
     def connectionLost(self,reason="connectionLost"):
-        self.driver.isDeviceHandshakeOk=False
+        self.driver.is_handshake_ok=False
         BaseSerialProtocol.connectionLost(self,reason)
         
 class HydroduinoHardwareHandler(SerialHardwareHandler):

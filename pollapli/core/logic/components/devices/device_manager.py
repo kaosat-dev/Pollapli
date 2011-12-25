@@ -18,24 +18,24 @@ class DeviceManager(object):
         self._parentEnvironment = parentEnvironment
         self._persistenceLayer = parentEnvironment._persistenceLayer
         self._devices = {}
-        self.signalChannel = "device_manager"
-        self._signalDispatcher = SignalDispatcher(self.signalChannel)
-        self.signalChannelPrefix = "environment_"+str(self._parentEnvironment._id)
+        self._signal_channel = "device_manager"
+        self._signal_dispatcher = SignalDispatcher(self._signal_channel)
+        self.signalChannelPrefix = "environment_"+str(self._parentEnvironment.cid)
      
     @defer.inlineCallbacks    
     def setup(self):
         if self._persistenceLayer is None:
             self._persistenceLayer = self._parentEnvironment._persistenceLayer        
-        devices = yield self._persistenceLayer.load_devices(environmentId = self._parentEnvironment._id)
+        devices = yield self._persistenceLayer.load_devices(environmentId = self._parentEnvironment.cid)
         for device in devices:
             device._parent = self._parentEnvironment
             device._persistenceLayer = self._persistenceLayer
-            self._devices[device._id] = device
+            self._devices[device.cid] = device
             #yield device.setup()
     
     def send_signal(self, signal="", data=None):
         prefix=self.signalChannelPrefix+"."
-        self._signalDispatcher.send_message(prefix+signal,self,data)    
+        self._signal_dispatcher.send_message(prefix+signal,self,data)    
     
     """
     ####################################################################################
@@ -56,7 +56,7 @@ class DeviceManager(object):
             
         device = Device(parent= self._parentEnvironment, name=name, description=description, type=type)
         yield self._persistenceLayer.save_device(device)
-        self._devices[device._id]=device
+        self._devices[device.cid]=device
         log.msg("Added  device ",name, logLevel=logging.CRITICAL)
         self.send_signal("device_created", device)
         defer.returnValue(device)
@@ -125,7 +125,7 @@ class DeviceManager(object):
         Removes & deletes ALL the devices, should be used with care
         """
         for device in self._devices.values():
-            yield self.delete_device(device._id)  
+            yield self.delete_device(device.cid)  
         self.send_signal("devices_cleared", self._devices)   
 
     """

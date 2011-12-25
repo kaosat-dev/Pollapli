@@ -74,7 +74,7 @@ class DriverManager(object):
         driver=None
         for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
-                driver=yield driverKlass(options=driverParams,**driverParams).save()
+                driver=yield driverKlass(extra_params=driverParams,**driverParams).save()
                 yield driver.save()  
                 driver.node.set(parentNode)
                 yield driver.setup()
@@ -125,7 +125,7 @@ class DriverManager(object):
         for driverKlass in plugins:
             if driverType==driverKlass.__name__.lower():
                 driver.driverType=driverType
-                driver.options=driverParams
+                driver.extra_params=driverParams
                 hardwareHandler=driverKlass.components["hardwareHandler"](driver,**driverParams)
                 logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
                 driver.set_handlers(hardwareHandler,logicHandler)
@@ -142,7 +142,7 @@ class DriverManager(object):
     """
     @classmethod
     @defer.inlineCallbacks
-    def get_driverTypes(cls,*args,**kwargs): 
+    def get_driver_types(cls,*args,**kwargs): 
         driverTypesTmp= yield UpdateManager.get_plugins(ipollapli.IDriver)   
         driverTypes=[driverTypeInst() for driverTypeInst in driverTypesTmp]
         defer.returnValue(driverTypes)

@@ -116,7 +116,7 @@ class Command(object):
         self.answered=False
         self.completed=False
         self.params=params
-        self.d=defer.Deferred()
+        self.deferred=defer.Deferred()
         
 class Variable(object):
     def __init__(self,node,name,value,type,unit,defaultValue=None,historyStore=None,historyLength=None,implicitSet=False,channels=[]):
@@ -208,7 +208,7 @@ class Variable(object):
 #            getattr(self.node.driver,"get_"+self.name)(value)
 #        except Exception as inst:
 #            log.mg("Node's driver does not have the request feature",system="Node",logLevel=logging.CRITICAL)
-        return command.d
+        return command.deferred
     
     def set(self,value,relative=False,params=None,sender=None):
         """ setting is dependent on the type of  variable
@@ -266,7 +266,7 @@ class Variable(object):
             Reading(self.value).save()
         
         
-        reactor.callLater(0,originalCmd.d.callback,self.value)
+        reactor.callLater(0,originalCmd.deferred.callback,self.value)
 
 
 """Variable types:

@@ -15,7 +15,7 @@ class PathManager(object):
         self.dataPath = ""
         self.uploadPath = ""
         self.tmpPath = ""
-        self.addOnPath = ""
+        self._addon_path = ""
     
     def list_files(self,path=None):
         result=[]

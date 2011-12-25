@@ -126,8 +126,8 @@ class EnvironmentManager(object):
         self.path=EnvironmentManager.envPath
         self.idCounter=EnvironmentManager.idCounter
         
-        self.signalChannel="environment_manager"
-        self.signalHandler=SignalHander(self.signalChannel)
+        self._signal_channel="environment_manager"
+        self.signalHandler=SignalHander(self._signal_channel)
     
     @classmethod
     @defer.inlineCallbacks

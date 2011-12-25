@@ -92,7 +92,7 @@ class TaskSqliteDao(TaskDao):
         if len(rows)>0:
             id,name,description,status = rows[0]
             result = Task(name = name,description=description,status=status)
-            result._id = uuid.UUID(id)
+            result.cid = uuid.UUID(id)
         else:
             raise TaskNotFound()
         defer.returnValue(result)
@@ -108,7 +108,7 @@ class TaskSqliteDao(TaskDao):
         for row in rows:
             id,name,description,status = row
             task = Task(name = name,description=description,status=status)
-            task._id = uuid.UUID(id)
+            task.cid = uuid.UUID(id)
             lTasks.append(task)
         defer.returnValue(lTasks)
         
@@ -118,12 +118,12 @@ class TaskSqliteDao(TaskDao):
         parentEnvironment = task._parent 
         parentUId = None
         if parentEnvironment is not None:
-            parentUId = parentEnvironment._id
+            parentUId = parentEnvironment.cid
             
         if hasattr(task,"_dbId"):
             yield self.update(args = (task.name,task.description,task._status,str(parentUId),task._dbId))
         else:
-            task._dbId = yield self.insert(args = (str(task._id),task.name,task.description,task._status,str(parentUId)))                            
+            task._dbId = yield self.insert(args = (str(task.cid),task.name,task.description,task._status,str(parentUId)))                            
             
     @defer.inlineCallbacks
     def save_tasks(self,lTasks):

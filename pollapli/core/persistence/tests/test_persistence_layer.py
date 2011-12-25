@@ -13,9 +13,9 @@ from pollapli.core.logic.tools.path_manager import PathManager
 
 class PersistenceLayerTest(unittest.TestCase):    
     def setUp(self):
-        self._pathManager = PathManager()
-        self._pathManager.dataPath = "."
-        self._persistenceLayer = PersistenceLayer(pathManager = self._pathManager)
+        self._path_manager = PathManager()
+        self._path_manager.dataPath = "."
+        self._persistenceLayer = PersistenceLayer(pathManager = self._path_manager)
         
     def tearDown(self):
         self._persistenceLayer.tearDown()
@@ -27,7 +27,7 @@ class PersistenceLayerTest(unittest.TestCase):
         input = Environment(name="TestEnvironment",description = "A test description")
         yield self._persistenceLayer.save_environment(input)
         exp = input 
-        obs = yield self._persistenceLayer.load_environment(id = input._id)
+        obs = yield self._persistenceLayer.load_environment(id = input.cid)
         self.assertEquals(obs,exp)
         
         yield self._persistenceLayer.delete_environment(input)
@@ -54,7 +54,7 @@ class PersistenceLayerTest(unittest.TestCase):
         yield self._persistenceLayer.save_environment(input)
     
         exp = input
-        obs = yield self._persistenceLayer.load_environment(id = input._id)
+        obs = yield self._persistenceLayer.load_environment(id = input.cid)
         self.assertEquals(obs,exp)
         yield self._persistenceLayer.delete_environment(input)
     
@@ -63,11 +63,11 @@ class PersistenceLayerTest(unittest.TestCase):
         input = Environment(name="TestEnvironment",description = "A test description")
         yield self._persistenceLayer.save_environment(input)
         exp = input 
-        obs = yield self._persistenceLayer.load_environment(id = input._id)
+        obs = yield self._persistenceLayer.load_environment(id = input.cid)
         self.assertEquals(obs,exp)
         
         yield self._persistenceLayer.delete_environment(input)
-        obs = self._persistenceLayer.load_environment(id = input._id)
+        obs = self._persistenceLayer.load_environment(id = input.cid)
         self.assertFailure(obs ,EnvironmentNotFound )
     
     def test_delete_environment_exception(self):
@@ -80,7 +80,7 @@ class PersistenceLayerTest(unittest.TestCase):
         input = Device(name="TestDevice",description = "A test description")
         yield self._persistenceLayer.save_device(input)
         exp = input 
-        obs = yield self._persistenceLayer.load_device(id = input._id)
+        obs = yield self._persistenceLayer.load_device(id = input.cid)
         self.assertEquals(obs,exp)
     
     @defer.inlineCallbacks
@@ -123,11 +123,11 @@ class PersistenceLayerTest(unittest.TestCase):
         yield self._persistenceLayer.save_device(device3)
         
         exp = input 
-        obs =  yield self._persistenceLayer.load_devices(parentEnvironement._id)
+        obs =  yield self._persistenceLayer.load_devices(parentEnvironement.cid)
         self.assertEquals(obs,exp)
         
         exp = [device3]
-        obs =  yield self._persistenceLayer.load_devices(parentEnvironement2._id)
+        obs =  yield self._persistenceLayer.load_devices(parentEnvironement2.cid)
         self.assertEquals(obs,exp)
         
     @defer.inlineCallbacks
@@ -138,7 +138,7 @@ class PersistenceLayerTest(unittest.TestCase):
         yield self._persistenceLayer.save_device(input)
     
         exp = input
-        obs = yield self._persistenceLayer.load_device(id = input._id)
+        obs = yield self._persistenceLayer.load_device(id = input.cid)
         self.assertEquals(obs,exp)      
     
     @defer.inlineCallbacks
@@ -146,11 +146,11 @@ class PersistenceLayerTest(unittest.TestCase):
         input = Device(name="TestDevice",description = "A test description")
         yield self._persistenceLayer.save_device(input)
         exp = input 
-        obs = yield self._persistenceLayer.load_device(id = input._id)
+        obs = yield self._persistenceLayer.load_device(id = input.cid)
         self.assertEquals(obs,exp)
         
         yield self._persistenceLayer.delete_device(input)
-        obs = self._persistenceLayer.load_device(id = input._id)
+        obs = self._persistenceLayer.load_device(id = input.cid)
         self.assertFailure(obs ,DeviceNotFound )
     
     def test_delete_device_exception(self):
@@ -168,7 +168,7 @@ class PersistenceLayerTest(unittest.TestCase):
         input = Task(name="TestTask",description = "A test description")
         yield self._persistenceLayer.save_task(input)
         exp = input 
-        obs = yield self._persistenceLayer.load_task(id = input._id)
+        obs = yield self._persistenceLayer.load_task(id = input.cid)
         self.assertEquals(obs,exp)
     
     @defer.inlineCallbacks
@@ -211,11 +211,11 @@ class PersistenceLayerTest(unittest.TestCase):
         yield self._persistenceLayer.save_task(task3)
         
         exp = input 
-        obs =  yield self._persistenceLayer.load_tasks(parentEnvironement._id)
+        obs =  yield self._persistenceLayer.load_tasks(parentEnvironement.cid)
         self.assertEquals(obs,exp)
         
         exp = [task3]
-        obs =  yield self._persistenceLayer.load_tasks(parentEnvironement2._id)
+        obs =  yield self._persistenceLayer.load_tasks(parentEnvironement2.cid)
         self.assertEquals(obs,exp)
         
     @defer.inlineCallbacks
@@ -226,7 +226,7 @@ class PersistenceLayerTest(unittest.TestCase):
         yield self._persistenceLayer.save_task(input)
     
         exp = input
-        obs = yield self._persistenceLayer.load_task(id = input._id)
+        obs = yield self._persistenceLayer.load_task(id = input.cid)
         self.assertEquals(obs,exp)
     
     @defer.inlineCallbacks
@@ -234,11 +234,11 @@ class PersistenceLayerTest(unittest.TestCase):
         input = Task(name="TestTask",description = "A test description")
         yield self._persistenceLayer.save_task(input)
         exp = input 
-        obs = yield self._persistenceLayer.load_task(id = input._id)
+        obs = yield self._persistenceLayer.load_task(id = input.cid)
         self.assertEquals(obs,exp)
         
         yield self._persistenceLayer.delete_task(input)
-        obs = self._persistenceLayer.load_task(id = input._id)
+        obs = self._persistenceLayer.load_task(id = input.cid)
         self.assertFailure(obs ,TaskNotFound )
     
     def test_delete_task_exception(self):
@@ -256,7 +256,7 @@ class PersistenceLayerTest(unittest.TestCase):
         input = Package(type ="update", name="TestPackage",description = "A test description",)
         yield self._persistenceLayer.save_update(input)
         exp = input 
-        obs = yield self._persistenceLayer.load_update(id = input._id)
+        obs = yield self._persistenceLayer.load_update(id = input.cid)
         self.assertEquals(obs,exp)
     
     @defer.inlineCallbacks
@@ -278,6 +278,6 @@ class PersistenceLayerTest(unittest.TestCase):
         yield self._persistenceLayer.save_update(input)
     
         exp = input
-        obs = yield self._persistenceLayer.load_update(id = input._id)
+        obs = yield self._persistenceLayer.load_update(id = input.cid)
         self.assertEquals(obs,exp)
     

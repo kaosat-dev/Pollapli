@@ -28,7 +28,7 @@ class HydroduinoProtocol(BaseTextSerialProtocol):
     def _set_hardware_id(self,id=None):
         self.send_data('99'+ " "+ str(self.driver.deviceId))
         
-    def _query_hardware_info(self):
+    def _query_hardware_id(self):
         """method for retrieval of device info (for id and more) """
         self.send_data('2')
         
@@ -41,7 +41,7 @@ class HydroduinoProtocol(BaseTextSerialProtocol):
         data=data.replace('\n','')
         data=data.replace('\r','')
     
-        if not data==self.handshake:
+        if not data==self.ref_handshake:
             message=data.split(" ")[0]
             print("full",data,"message",message)
             data="".join(data.split(" ")[1:])

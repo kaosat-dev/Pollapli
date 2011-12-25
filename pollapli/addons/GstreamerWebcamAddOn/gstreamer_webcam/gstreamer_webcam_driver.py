@@ -147,8 +147,8 @@ class GstreamerWebcamHandler(object):
         log.msg("Connecting... webcam:",system="Driver",logLevel=logging.DEBUG)
         #self._connect(port,*args,**kwargs)
         self.driver.isConnected=True
-        self.driver.isDeviceHandshakeOk=True
-        self.driver.isDeviceIdOk=True
+        self.driver.is_handshake_ok=True
+        self.driver.is_identification_ok=True
         self.driver.isConfigured=True 
         #self._connect(*args,**kwargs)    
         #hack !!
@@ -166,7 +166,7 @@ class GstreamerWebcamHandler(object):
 #        self.set_capture(filePath)
 #        self.fetch_data()
 #        threads.deferToThread(self.run, None).addBoth(self._runResult)
-        self.driver.d.callback(None) 
+        self.driver.deferred.callback(None) 
         
     def _connect(self,*args,**kwargs):
         """Port connection/reconnection procedure"""   
@@ -194,7 +194,7 @@ class GstreamerWebcamHandler(object):
                 log.msg("cricital error while (re-)starting gstreamerCam connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver",logLevel=logging.CRITICAL)
             else:
                 log.msg("Failed to establish correct connection with device/identify device by id",system="Driver",logLevel=logging.DEBUG)
-                reactor.callLater(0.1,self.driver.d.errback,failure.Failure())
+                reactor.callLater(0.1,self.driver.deferred.errback,failure.Failure())
                 
           
     def _runResult(self,result):

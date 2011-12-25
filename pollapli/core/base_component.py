@@ -1,6 +1,6 @@
 import uuid
 
 class BaseComponent(object):
-    def __init__(self,parent = None):
+    def __init__(self, parent=None):
         self._parent = parent
-        self._id = uuid.uuid4()
+        self.cid = uuid.uuid4()

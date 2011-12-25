@@ -10,24 +10,24 @@ class TaskManager(object):
         self._parentEnvironment = parentEnvironment
         self._persistenceLayer = parentEnvironment._persistenceLayer
         self._tasks = {}
-        self.signalChannel = "task_manager"
-        self._signalDispatcher = SignalDispatcher(self.signalChannel)
-        self.signalChannelPrefix = "environment_"+str(self._parentEnvironment._id)
+        self._signal_channel = "task_manager"
+        self._signal_dispatcher = SignalDispatcher(self._signal_channel)
+        self.signalChannelPrefix = "environment_"+str(self._parentEnvironment.cid)
     
     @defer.inlineCallbacks
     def setup(self):            
         if self._persistenceLayer is None:
             self._persistenceLayer = self._parentEnvironment._persistenceLayer        
-        tasks = yield self._persistenceLayer.load_tasks(environmentId = self._parentEnvironment._id)
+        tasks = yield self._persistenceLayer.load_tasks(environmentId = self._parentEnvironment.cid)
         for task in tasks:
             task._parent = self._parentEnvironment
             task._persistenceLayer = self._persistenceLayer
-            self._tasks[task._id] = task
+            self._tasks[task.cid] = task
             #yield task.setup()   
         
     def send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+"."
-        self._signalDispatcher.send_message(prefix+signal,self,data)
+        self._signal_dispatcher.send_message(prefix+signal,self,data)
     
     """
     ####################################################################################
@@ -44,10 +44,10 @@ class TaskManager(object):
         """
         task = Task(parent= self._parentEnvironment, name = name, description = description, status = status)
         #yield task.setup()
-        self._tasks[task._id] = task
+        self._tasks[task.cid] = task
         yield self._persistenceLayer.save_task(task)
-        log.msg("Added task named:",name ," description:",description,"with id",task._id, system="task manager", logLevel=logging.CRITICAL)         
-        self._signalDispatcher.send_message("task.created",self,task)
+        log.msg("Added task named:",name ," description:",description,"with id",task.cid, system="task manager", logLevel=logging.CRITICAL)         
+        self._signal_dispatcher.send_message("task.created",self,task)
         defer.returnValue(task)
     
     def get_task(self,id):

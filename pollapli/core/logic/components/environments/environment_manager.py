@@ -17,8 +17,8 @@ class EnvironmentManager(object):
         self._persistenceLayer = persistenceLayer
         self._logger=log.PythonLoggingObserver("dobozweb.core.components.environments.environmentManager")
         self._environments = {}
-        self.signalChannel="environment_manager"
-        self._signalDispatcher = SignalDispatcher(self.signalChannel)
+        self._signal_channel="environment_manager"
+        self._signal_dispatcher = SignalDispatcher(self._signal_channel)
         
     def __getattr__(self, attr_name):
         for env in self._environments.values():
@@ -31,7 +31,7 @@ class EnvironmentManager(object):
         """Retrieve all existing environments from disk"""
         environments = yield self._persistenceLayer.load_environments()
         for environment in environments:
-            self._environments[environment._id] = environment
+            self._environments[environment.cid] = environment
             environment._persistenceLayer = self._persistenceLayer
             yield environment.setup()
         log.msg("Environment manager setup correctly", system="environement manager", logLevel=logging.INFO)
@@ -44,8 +44,8 @@ class EnvironmentManager(object):
         pass
         
     def send_signal(self, signal="", data=None):
-        prefix=self.signalChannel+"."
-        self._signalDispatcher.send_message(prefix+signal,self,data)    
+        prefix=self._signal_channel+"."
+        self._signal_dispatcher.send_message(prefix+signal,self,data)    
     """
     ####################################################################################
     The following are the "CRUD" (Create, read, update,delete) methods for the general handling of environements
@@ -65,10 +65,10 @@ class EnvironmentManager(object):
                 raise EnvironmentAlreadyExists()
         environment = Environment(persistenceLayer=self._persistenceLayer, name=name,description=description,status=status)
         yield self._persistenceLayer.save_environment(environment)
-        self._environments[environment._id] = environment
+        self._environments[environment.cid] = environment
         
         self.send_signal("environment.created",environment)
-        log.msg("Added environment named:",name ," description:",description,"with id",environment._id, system="environment manager", logLevel=logging.CRITICAL)         
+        log.msg("Added environment named:",name ," description:",description,"with id",environment.cid, system="environment manager", logLevel=logging.CRITICAL)         
         defer.returnValue(environment)
 
     def get_environments(self,filter=None):

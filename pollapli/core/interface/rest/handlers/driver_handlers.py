@@ -32,7 +32,7 @@ class DriverTypesHandler(DefaultRestHandler):
         """
         r=ResponseGenerator(request,status=200,contentType="application/pollapli.driverTypeList+json",resource="driverTypes",rootUri=self.rootUri)
         d=RequestParser(request,"driverTypes",self.valid_contentTypes,self.validGetParams).ValidateAndParseParams()      
-        d.addCallbacks(callback=lambda params:DriverManager.get_driverTypes(params),errback=r._build_response)
+        d.addCallbacks(callback=lambda params:DriverManager.get_driver_types(params),errback=r._build_response)
         d.addBoth(r._build_response)
         request._call=reactor.callLater(0,d.callback,None)
         return NOT_DONE_YET

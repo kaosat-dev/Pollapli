@@ -37,7 +37,7 @@ class MainServer():
         self.filePath=filePath
         self.dataPath=dataPath
         self.logPath=dataPath
-        self.updatesPath=os.path.join(dataPath,"updates")
+        self.updates_path=os.path.join(dataPath,"updates")
         self.addOnsPath=os.path.join(self.rootPath,"addons")
         self.environmentsPath=os.path.join(self.dataPath,"environments")
         self.depenciesPath=os.path.join(self.rootPath,"dependencies")
@@ -45,8 +45,8 @@ class MainServer():
             os.makedirs(self.rootPath)
         if not os.path.exists(self.dataPath):
             os.makedirs(self.dataPath)
-        if not os.path.exists(self.updatesPath):
-            os.makedirs(self.updatesPath)
+        if not os.path.exists(self.updates_path):
+            os.makedirs(self.updates_path)
         if not os.path.exists(self.addOnsPath):
             os.makedirs(self.addOnsPath)
         if not os.path.exists(self.environmentsPath):
@@ -57,8 +57,8 @@ class MainServer():
         """""""""""""""""""""""""""""""""""""""""
         Initialize various subsystems /set correct paths
         """
-        UpdateManager.addOnPath=self.addOnsPath
-        UpdateManager.updatesPath=self.updatesPath
+        UpdateManager._addon_path=self.addOnsPath
+        UpdateManager.updates_path=self.updates_path
         EnvironmentManager.envPath=self.environmentsPath
         FileManager.rootDir=self.dataPath        
         FileManager.corePath=os.path.join(self.rootPath,"core")
@@ -68,8 +68,8 @@ class MainServer():
         FileManager.uploadPath=os.path.join(self.dataPath,"uploads")
         FileManager.dataPath=self.dataPath
         FileManager.logPath=self.logPath
-        FileManager.updatesPath=self.updatesPath
-        FileManager.addOnPath=self.addOnsPath
+        FileManager.updates_path=self.updates_path
+        FileManager._addon_path=self.addOnsPath
         FileManager.depenciesPath=self.depenciesPath
         
         if not os.path.exists(FileManager.uploadPath):
@@ -91,8 +91,8 @@ class MainServer():
         exceptionConverter.add_exception(InvalidFile,500,10,"Invalid File")
         exceptionConverter.add_exception(DeviceNotConnected,500,11,"Attempting to communicate with not connected device")
         
-        self.signalChannel="main_signal_listener"
-        self.signalHandler=SignalHander(self.signalChannel)
+        self._signal_channel="main_signal_listener"
+        self.signalHandler=SignalHander(self._signal_channel)
         self.signalHandler.add_handler(channel="driver_manager")   
         self.signalHandler.add_handler(channel="update_manager")
         self.signalHandler.add_handler(channel="environment_manager")

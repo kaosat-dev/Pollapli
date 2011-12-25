@@ -26,16 +26,16 @@ class VirtualDeviceProtocol(BaseProtocol):
             self.driver.send_signal("connected",self.driver.hardwareHandler.port) 
         self.virtualDevice.setup()
         #self.dataReceived(self.virtualDevice.currentResponse)
-#        self.driver.isDeviceHandshakeOk=True
+#        self.driver.is_handshake_ok=True
 #        if self.driver.connectionMode==2 or self.driver.connectionMode==0:
 #            if not self.driver.deviceId:
 #                self.driver.deviceId=str(uuid.uuid4())
-#            self.driver.isDeviceIdOk=True
+#            self.driver.is_identification_ok=True
 #            self.driver.isConfigured=True 
 #            self.driver.disconnect()
-#            self.driver.d.callback(None)  
+#            self.driver.deferred.callback(None)  
         
-    def _handle_deviceHandshake(self,data):
+    def _handle_device_handshake(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -46,14 +46,14 @@ class VirtualDeviceProtocol(BaseProtocol):
         """
         log.msg("Attempting to validate device handshake",system="Driver",logLevel=logging.INFO)
         if "start" in data:
-            self.driver.isDeviceHandshakeOk=True
+            self.driver.is_handshake_ok=True
             log.msg("Device handshake validated",system="Driver",logLevel=logging.INFO)
-            self._query_hardware_info()
+            self._query_hardware_id()
         else:
             log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
             self.driver.reconnect()
     
-    def _handle_deviceIdInit(self,data):
+    def _handle_device_id_init(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -77,7 +77,7 @@ class VirtualDeviceProtocol(BaseProtocol):
                     sucess=True
                 elif self.driver.deviceId!= data:
                     self._set_hardware_id()
-                    #self._query_hardware_info()
+                    #self._query_hardware_id()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -100,16 +100,16 @@ class VirtualDeviceProtocol(BaseProtocol):
                 sucess=True
                 
         if sucess is True: 
-            self.driver.isDeviceIdOk=True
+            self.driver.is_identification_ok=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.driver.disconnect()
-            self.driver.d.callback(None)      
+            self.driver.deferred.callback(None)      
         
     def _set_hardware_id(self,id=None):
         self.send_data("s "+ self.driver.deviceId)
         
-    def _query_hardware_info(self):
+    def _query_hardware_id(self):
         """method for retrieval of device info (for id and more) """
         self.send_data("i")
         
@@ -181,7 +181,7 @@ class VirtualDeviceHardwareHandler(object):
                 self.driver.isConnected=True
                 self.protocol.makeConnection(self)
                 #self.serial=SerialWrapper(self.protocol,self.port,reactor,baudrate=self.speed)
-                #self.serial.d.addCallbacks(callback=self._connect,errback=self.connectionClosed)  
+                #self.serial.deferred.addCallbacks(callback=self._connect,errback=self.connectionClosed)  
             except Exception as inst:          
                 self.driver.isConnected=False
                 self.driver.connectionErrors+=1
@@ -192,7 +192,7 @@ class VirtualDeviceHardwareHandler(object):
                 
         if self.driver.connectionErrors>=self.driver.maxConnectionErrors:
             try:
-                self.serial.d.cancel()
+                self.serial.deferred.cancel()
                 self.disconnect(clearPort=True)
             except:pass
             
@@ -200,7 +200,7 @@ class VirtualDeviceHardwareHandler(object):
                 log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ",system="Driver",logLevel=logging.CRITICAL)
             else:
                 log.msg("Failed to establish correct connection with device/identify device by id",system="Driver",logLevel=logging.DEBUG)
-                reactor.callLater(1,self.driver.d.errback,failure.Failure())
+                reactor.callLater(1,self.driver.deferred.errback,failure.Failure())
                 
 
         

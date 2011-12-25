@@ -79,10 +79,10 @@ class DriverSqliteDao(DriverDao):
     @defer.inlineCallbacks
     def save_driver(self, driver):
         """Save the driver object ."""    
-        if hasattr(driver,"_id"):
-            yield self.update(args = (driver.name,driver.description,driver.status,driver._id))
+        if hasattr(driver,"cid"):
+            yield self.update(args = (driver.name,driver.description,driver.status,driver.cid))
         else:
-            driver._id = yield self.insert(args = (driver.name,driver.description,driver.status))                            
+            driver.cid = yield self.insert(args = (driver.name,driver.description,driver.status))                            
             
     @defer.inlineCallbacks
     def save_drivers(self,lDevices):

@@ -14,25 +14,25 @@ from pollapli.core.logic.tools.path_manager import PathManager
 class TestPackageSystem(unittest.TestCase):   
     
     def setUp(self):
-        self._pathManager = PathManager()
-        self._packageManager = PackageManager(pathManager=self._pathManager)
-        self._pathManager.addOnPath = os.path.abspath("addons")
-        self._pathManager.tmpPath = os.path.abspath("tmp")
+        self._path_manager = PathManager()
+        self._packageManager = PackageManager(pathManager=self._path_manager)
+        self._path_manager._addon_path = os.path.abspath("addons")
+        self._path_manager.tmpPath = os.path.abspath("tmp")
 
-        if not os.path.exists(self._pathManager.tmpPath):
-            os.makedirs(self._pathManager.tmpPath)
-        if not os.path.exists(self._pathManager.addOnPath):
-            os.makedirs(self._pathManager.addOnPath)
+        if not os.path.exists(self._path_manager.tmpPath):
+            os.makedirs(self._path_manager.tmpPath)
+        if not os.path.exists(self._path_manager._addon_path):
+            os.makedirs(self._path_manager._addon_path)
        # yield self._packageManager.setup()
        
     def tearDown(self):
-        if os.path.exists(self._pathManager.tmpPath):
-            shutil.rmtree(self._pathManager.tmpPath)
-        if os.path.exists(self._pathManager.addOnPath):
-            shutil.rmtree(self._pathManager.addOnPath)
+        if os.path.exists(self._path_manager.tmpPath):
+            shutil.rmtree(self._path_manager.tmpPath)
+        if os.path.exists(self._path_manager._addon_path):
+            shutil.rmtree(self._path_manager._addon_path)
                 
     def test_parse_packageListFile(self):
-        packageListPath = os.path.join(self._pathManager.tmpPath,"pollapli_packages.json")
+        packageListPath = os.path.join(self._path_manager.tmpPath,"pollapli_packages.json")
         self._write_mock_packageListFile(packageListPath)
         
         package1 = Package(type = "addon", name = "Test AddOn", version = "0.0.1")      
@@ -40,7 +40,7 @@ class TestPackageSystem(unittest.TestCase):
         
         lExpPackages = [package1, package2]
         self._packageManager._parse_packageListFile()
-        lObsPackages = self._packageManager._availablePackages.values()
+        lObsPackages = self._packageManager._available_packages.values()
         
         self.assertEquals(lObsPackages[0],lExpPackages[0])
         self.assertEquals(lObsPackages, lExpPackages)
@@ -48,60 +48,60 @@ class TestPackageSystem(unittest.TestCase):
         
     @defer.inlineCallbacks
     def test_install_addon(self):
-        self._write_mock_compressedPackage("TestAddOn", self._pathManager.tmpPath)
+        self._write_mock_compressedPackage("TestAddOn", self._path_manager.tmpPath)
         addOn = Package(type = "addon", name = "TestAddOn", version = "0.0.1",file="TestAddOn.zip")
         addOn.downloaded = True
         
-        self._packageManager._availablePackages[addOn._id] = addOn
-        yield self._packageManager.install_package(id = addOn._id)
+        self._packageManager._available_packages[addOn.cid] = addOn
+        yield self._packageManager.install_package(id = addOn.cid)
 
-        packagePath = os.path.join(self._pathManager.addOnPath,"TestAddOn")    
+        packagePath = os.path.join(self._path_manager._addon_path,"TestAddOn")    
         self.assertTrue(os.path.exists(packagePath))
-        self.assertTrue(self._packageManager._installedPackages[addOn._id],addOn)
+        self.assertTrue(self._packageManager._installed_packages[addOn.cid],addOn)
         
     @defer.inlineCallbacks
     def test_install_addon_update(self):
-        self._write_mock_compressedPackage("TestAddOn", self._pathManager.tmpPath)
+        self._write_mock_compressedPackage("TestAddOn", self._path_manager.tmpPath)
         addOn = Package(type = "addon", name = "TestAddOn", version = "0.0.1",file="TestAddOn.zip")
         addOn.downloaded = True    
-        self._packageManager._availablePackages[addOn._id] = addOn
-        yield self._packageManager.install_package(id = addOn._id)
+        self._packageManager._available_packages[addOn.cid] = addOn
+        yield self._packageManager.install_package(id = addOn.cid)
         
-        self._write_mock_compressedPackage2("TestAddOn", self._pathManager.tmpPath,"TestUpdate")
+        self._write_mock_compressedPackage2("TestAddOn", self._path_manager.tmpPath,"TestUpdate")
         update = Package(type = "update", name = "TestUpdate", fromVersion= "0.0.1", toVersion = "0.0.2", file="TestUpdate.zip")
-        update.targetId = addOn._id
+        update.targetId = addOn.cid
         update.downloaded = True 
-        self._packageManager._availablePackages[update._id] = update
-        yield self._packageManager.install_package(id = update._id)
+        self._packageManager._available_packages[update.cid] = update
+        yield self._packageManager.install_package(id = update.cid)
 
-        self.assertEquals(self._packageManager._installedPackages[addOn._id].version , update.toVersion)
-        expNewFileOne = os.path.join(self._pathManager.addOnPath,"TestAddOn","addOnFileThree.py")
-        expNewFileTwo = os.path.join(self._pathManager.addOnPath,"TestAddOn","subdir","addOnFileFour.py")
+        self.assertEquals(self._packageManager._installed_packages[addOn.cid].version , update.toVersion)
+        expNewFileOne = os.path.join(self._path_manager._addon_path,"TestAddOn","addOnFileThree.py")
+        expNewFileTwo = os.path.join(self._path_manager._addon_path,"TestAddOn","subdir","addOnFileFour.py")
         self.assertTrue(os.path.exists(expNewFileOne))
         self.assertTrue(os.path.exists(expNewFileTwo))
         
     def test_enable_addon(self):
         addOn = Package(type = "addon", name = "TestAddOn")
-        self._packageManager._installedPackages[addOn._id] = addOn
-        self._packageManager.enable_addon(addOn._id)
+        self._packageManager._installed_packages[addOn.cid] = addOn
+        self._packageManager.enable_addon(addOn.cid)
         
-        self.assertTrue(self._packageManager.get_package(addOn._id).enabled)
+        self.assertTrue(self._packageManager.get_package(addOn.cid).enabled)
          
     def test_disable_addon(self):
         addOn = Package(type = "addon", name = "TestAddOn")
-        self._packageManager._installedPackages[addOn._id] = addOn
-        self._packageManager.disable_addon(addOn._id)
+        self._packageManager._installed_packages[addOn.cid] = addOn
+        self._packageManager.disable_addon(addOn.cid)
         
-        self.assertFalse(self._packageManager.get_package(addOn._id).enabled)
+        self.assertFalse(self._packageManager.get_package(addOn.cid).enabled)
         
     @defer.inlineCallbacks
     def test_get_plugins(self):
         addOn = Package(type = "addon", name = "TestAddOn", version = "0.0.1",file="TestAddOn.zip")
         addOn.downloaded = True    
-        self._packageManager._availablePackages[addOn._id] = addOn
+        self._packageManager._available_packages[addOn.cid] = addOn
         
-        self._write_mock_compressedPackageWithMockPlugin("TestAddOn", self._pathManager.tmpPath,"TestAddOn")
-        yield self._packageManager.install_package(id = addOn._id)
+        self._write_mock_compressedPackageWithMockPlugin("TestAddOn", self._path_manager.tmpPath,"TestAddOn")
+        yield self._packageManager.install_package(id = addOn.cid)
         
         expLPlugins = [plugin.__name__ for plugin in [IMockPluginImplementation,IMockPluginImplementationToo]]
         obsLPlugins = [plugin.__name__ for plugin in (yield self._packageManager.get_plugins(IMockPlugin))]

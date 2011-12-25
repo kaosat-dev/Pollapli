@@ -13,9 +13,9 @@ class EnvironmentTest(unittest.TestCase):
     
     @defer.inlineCallbacks
     def setUp(self):
-        self._pathManager = PathManager()
-        self._pathManager.dataPath = "."
-        self._persistenceLayer = PersistenceLayer(pathManager = self._pathManager)
+        self._path_manager = PathManager()
+        self._path_manager.dataPath = "."
+        self._persistenceLayer = PersistenceLayer(pathManager = self._path_manager)
         self.environmentManager=EnvironmentManager(self._persistenceLayer)
         #yield self._persistenceLayer.setup()
         yield self.environmentManager.setup()
@@ -47,8 +47,8 @@ class EnvironmentTest(unittest.TestCase):
     @defer.inlineCallbacks
     def test_remove_environment(self):
         environment = yield self.environmentManager.add_environment(name="Test Environment", description="A test Environment", status="active")
-        yield self.environmentManager.remove_environment(id = environment._id)
-        self.assertRaises(EnvironmentNotFound,self.environmentManager.get_environment,id = environment._id)
+        yield self.environmentManager.remove_environment(id = environment.cid)
+        self.assertRaises(EnvironmentNotFound,self.environmentManager.get_environment,id = environment.cid)
         
     @defer.inlineCallbacks
     def test_clear_environments(self):

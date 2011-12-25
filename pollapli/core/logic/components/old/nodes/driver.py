@@ -58,7 +58,7 @@ class Driver(object):
         self.driverType=self.__class__.__name__.lower()
         self.deviceType=deviceType
         self.connectionType=connectionType
-        self.options=options
+        self.extra_params=options
         self.protocol=protocol
         self.hardware_interface_klass=hardware_interface_klass
         self.logicHandlerKlass=logicHandlerKlass
@@ -66,13 +66,13 @@ class Driver(object):
         self.deviceId=None
         """will be needed to identify a specific device, as the system does not work base on ports"""
      
-        self._signalDispatcher=None 
+        self._signal_dispatcher=None 
         self.signalChannelPrefix=""
-        self.signalChannel=""
+        self._signal_channel=""
         
         self.isConfigured=False#when the port association has not been set
-        self.isDeviceHandshakeOk=False
-        self.isDeviceIdOk=False
+        self.is_handshake_ok=False
+        self.is_identification_ok=False
         self.isConnected=False
         self.isPluggedIn=False
         self.autoConnect=False#if autoconnect is set to true, the device will be connected as soon as a it is plugged in and detected
@@ -83,7 +83,7 @@ class Driver(object):
         self.connectionTimeout=4
          
         self.connectionMode=1
-        self.d=defer.Deferred()
+        self.deferred=defer.Deferred()
         
         """just for future reference : this is not implemented but would be a declarative way to 
         define the different "configuration steps" of this driver"
@@ -97,7 +97,7 @@ class Driver(object):
         configSteps[1]=["_handle_deviceHandshake","_handle_deviceIdInit","some_other_method"]
         
         #just a test
-        self._signalDispatcher=SignalDispatcher("driver_manager")
+        self._signal_dispatcher=SignalDispatcher("driver_manager")
         
         """for exposing capabilites"""
         self.endpoints=[]
@@ -107,30 +107,30 @@ class Driver(object):
        
         """this is a workaround needed when loading a driver from db"""
         try:
-            if not isinstance(self.options,dict):
-                self.options=ast.literal_eval(self.options)
+            if not isinstance(self.extra_params,dict):
+                self.extra_params=ast.literal_eval(self.extra_params)
         except Exception as inst:
-            log.msg("Failed to load driver options from db:",inst,system="Driver",logLevel=logging.CRITICAL)
+            log.msg("Failed to load driver extra_params from db:",inst,system="Driver",logLevel=logging.CRITICAL)
 
     
     @defer.inlineCallbacks    
     def setup(self,*args,**kwargs):  
-        self.hardwareHandler=self.hardware_interface_klass(self,self.protocol,**self.options)
-        self.logicHandler=self.logicHandlerKlass(self,**self.options)  
+        self.hardwareHandler=self.hardware_interface_klass(self,self.protocol,**self.extra_params)
+        self.logicHandler=self.logicHandlerKlass(self,**self.extra_params)  
         
         
         node= (yield self.node.get())
         env= (yield node.environment.get())
         self.signalChannelPrefix="environment_"+str(env.id)+".node_"+str(node.id)
 
-        self._signalDispatcher.add_handler(handler=self.send_command,signal="addCommand")
+        self._signal_dispatcher.add_handler(handler=self.send_command,signal="addCommand")
         log.msg("Driver of type",self.driverType ,"setup sucessfully",system="Driver",logLevel=logging.INFO)
         
     def bind(self,port,setId=True):
-        self.d=defer.Deferred()
+        self.deferred=defer.Deferred()
         log.msg("Attemtping to bind driver",self ,"with deviceId:",self.deviceId,"to port",port,system="Driver",logLevel=logging.DEBUG) 
         self.hardwareHandler.connect(setIdMode=setId,port=port)     
-        return self.d
+        return self.deferred
     
     def connect(self,mode=None,*args,**kwargs):
         if not self.isConnected:
@@ -166,16 +166,16 @@ class Driver(object):
            
     def pluggedOut(self,port):
         self.isConfigured=False  
-        self.isDeviceHandshakeOk=False
-        self.isDeviceIdOk=False
+        self.is_handshake_ok=False
+        self.is_identification_ok=False
         self.isConnected=False
         self.isPluggedIn=False
         self.send_signal("plugged_Out",port)
-        #self._signalDispatcher.send_message("pluggedOut",{"data":port})
+        #self._signal_dispatcher.send_message("pluggedOut",{"data":port})
     
     def send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+".driver."
-        self._signalDispatcher.send_message(prefix+signal,self,data)
+        self._signal_dispatcher.send_message(prefix+signal,self,data)
     
     def send_command(self,data,sender=None,callback=None,*args,**kwargs):
        # print("going to send command",data,"from",sender)
@@ -200,7 +200,7 @@ class Driver(object):
         pass
     def get_firmware_version(self):
         pass
-    def set_debugLevel(self,level):
+    def set_debug_level(self,level):
         pass
     
     def teststuff(self,params,*args,**kwargs):
@@ -363,10 +363,10 @@ class CommandQueueLogic(object):
         """Returns next avalailable command in command queue """
         cmd=None
        # print("in next command: buffer",len(self.commandBuffer),"slots",self.commandSlots)  
-        if not self.driver.isDeviceHandshakeOk:
+        if not self.driver.is_handshake_ok:
             pass
             #raise Exception("Machine connection not established correctly")
-        elif self.driver.isDeviceHandshakeOk and len(self.commandBuffer)>0 and self.commandSlots>0:        
+        elif self.driver.is_handshake_ok and len(self.commandBuffer)>0 and self.commandSlots>0:        
             tmp=self.commandBuffer[0]
             if not tmp.requestSent:            
                 cmd=self.commandBuffer[0].request

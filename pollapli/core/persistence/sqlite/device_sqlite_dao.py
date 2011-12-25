@@ -91,7 +91,7 @@ class DeviceSqliteDao(DeviceDao):
         if len(rows)>0:
             id,name,description,status = rows[0]
             result = Device(name = name,description=description,status=status)
-            result._id = uuid.UUID(id)
+            result.cid = uuid.UUID(id)
         else:
             raise DeviceNotFound()
         defer.returnValue(result)
@@ -107,7 +107,7 @@ class DeviceSqliteDao(DeviceDao):
         for row in rows:
             id,name,description,status = row
             device = Device(name = name,description=description,status=status)
-            device._id = uuid.UUID(id)
+            device.cid = uuid.UUID(id)
             lDevices.append(device)
         defer.returnValue(lDevices)
         
@@ -117,12 +117,12 @@ class DeviceSqliteDao(DeviceDao):
         parentEnvironment = device._parent 
         parentUId = None
         if parentEnvironment is not None:
-            parentUId = parentEnvironment._id
+            parentUId = parentEnvironment.cid
             
         if hasattr(device,"_dbId"):
             yield self.update(args = (device.name,device.description,device._status,str(parentUId),device._dbId))
         else:
-            device._dbId = yield self.insert(args = (str(device._id),device.name,device.description,device._status,str(parentUId)))                            
+            device._dbId = yield self.insert(args = (str(device.cid),device.name,device.description,device._status,str(parentUId)))                            
             
     @defer.inlineCallbacks
     def save_devices(self,lDevices):
