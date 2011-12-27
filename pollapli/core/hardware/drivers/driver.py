@@ -6,6 +6,7 @@ from zope.interface import Interface, Attribute, implements
 from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.exceptions import DeviceNotConnected
 from pollapli.core.base_component import BaseComponent
+import time
 
 
 class Driver(BaseComponent):
@@ -16,33 +17,10 @@ class Driver(BaseComponent):
      It actually mimics the way system device drivers work in a way.
      You can think of the events beeing sent out by the driver(dataRecieved...)
      as interupts of sorts
-
-    Thoughts for future evolution:
-    each driver will have a series of endpoints or slots/hooks,
-    which represent the actual subdevices it handles:
-    for example for reprap type devices, there is a :
-    * "position" endpoint (abstract)
-    * 3 endpoints for the cartesian bot motors
-    * at least an endpoint for head temperature , one for the heater etc
-    or this could be in a hiearchy , reflecting the one off the nodes:
-    variable endpoint : position, and sub ones for motors
-
-    just for future reference : this is not implemented but would be a
-    declarative way to define the different "configuration steps"
-    of this driver":
-    *basically a dictionary with keys being the connection modes, and values
-    a list of strings representing the methods to call
-    *would require a "validator" :certain elements need to be mandatory
-    ,such as the validation/setting of device ids
-    configSteps={}
-    configSteps[0]=["_handle_deviceHandshake","_handle_deviceIdInit"]
-    configSteps[1]=["_handle_deviceHandshake","_handle_deviceIdInit",
-    "some_other_method"]
-    hardwareId will be needed to identify a specific device,
-        as the system does not work purely base on ports
     """
     def __init__(self, auto_connect=False, max_connection_errors=2,
-        connection_timeout=4, *args, **kwargs):
+        connection_timeout=4, do_hanshake=False, do_authentifaction=False,
+        *args, **kwargs):
         """
         autoconnect:if autoconnect is True,device will be connected as soon as
         it is plugged in and detected
@@ -56,17 +34,21 @@ class Driver(BaseComponent):
         self.auto_connect = auto_connect
         self.max_connection_errors = max_connection_errors
         self.connection_timeout = connection_timeout
+        self.do_authentifaction = do_authentifaction
+        self.do_handshake = do_hanshake
         self._hardware_interface = None
-        self._hardware_id = None
-        self.is_configured = False  # when port association has not been set
+        self.hardware_id = None
+        self.is_configured = False
+        self.is_bound = False  # when port association has not been set
         self.is_handshake_ok = False
-        self.is_identification_ok = False
+        self.is_authentification_ok = False
         self.is_connected = False
         self.is_plugged_in = False
 
         self.connection_errors = 0
         self.connection_mode = 1
         self.deferred = defer.Deferred()
+        self._timeout = None
 
         self._signal_channel_prefix = ""
         self._signal_dispatcher = SignalDispatcher("driver_manager")
@@ -91,36 +73,56 @@ class Driver(BaseComponent):
     def hardware_interface_class(self):
         """Get the current voltage."""
         return self._hardware_interface.__class__
+
+    """
+    ###########################################################################
+    The following are the timeout related methods
+    """
+    def set_timeout(self):
+        """sets internal timeout"""
+        if self.connection_timeout>0:
+            log.msg("Setting _timeout at ", time.time(), logLevel=logging.DEBUG)
+            self._timeout = reactor.callLater(self.connection_timeout, self._timeout_check)
+
+    def cancel_timeout(self):
+        """cancels internal timeout"""
+        if self._timeout is not None:
+            try:
+                self._timeout.cancel()
+                log.msg("Canceling timeout at ", time.time(), logLevel=logging.DEBUG)
+            except:
+                pass
+
+    def _timeout_check(self):
+        """checks the timeout"""
+        if self.is_connected:
+            log.msg("Timeout check at ", time.time(), logLevel=logging.DEBUG)
+            self.cancel_timeout()
+            self.connection_errors += 1
+            self.reconnect()
+        else:
+            self.cancel_timeout()
+
     """
     ###########################################################################
     The following are the connection related methods
     """
-
-    def bind(self, port, set_id=True):
-        """
-        port : port to bind this driver to
-        set_id: flag on whether to set/reset the hardware's id
-        """
-        self.deferred = defer.Deferred()
-        log.msg("Attemtping to bind driver", self, "with deviceId:", self._hardware_id, "to port", port, system="Driver", logLevel=logging.DEBUG)
-        self._hardware_interface.connect(set_id_mode=set_id, port=port)
-        return self.deferred
-
-    def connect(self, connection_mode=None, *args, **kwargs):
+    def connect(self, port=None, connection_mode=None):
         """
         connection_mode :
         0:setup
         1:normal
-        2:set_id
-        3:forced: to forcefully connect devices which have no deviceId stored
+        2:forced: to forcefully connect devices which have no deviceId stored
         """
         if self.is_connected:
             raise Exception("Driver already connected")
         if connection_mode is None:
             raise Exception("Invalid connection mode")
+        self.deferred = defer.Deferred()
         self.connection_mode = connection_mode
         log.msg("Connecting in mode:", self.connection_mode, system="Driver", logLevel=logging.CRITICAL)
-        self._hardware_interface.connect()
+        self._hardware_interface.connect(port=port)
+        return self.deferred
 
     def reconnect(self, *args, **kwargs):
         """Reconnect driver"""
@@ -130,9 +132,9 @@ class Driver(BaseComponent):
         """Disconnect driver"""
         self._hardware_interface.disconnect(*args, **kwargs)
 
-    def plugged_in(self, port):
+    def _plugged_in(self, port):
         """
-        first method that gets called upon sucessfull connection
+        first method that gets called upon successfull connection
         """
         self.is_plugged_in = True
         self._send_signal("plugged_In", port)
@@ -141,13 +143,12 @@ class Driver(BaseComponent):
             data to the device too fast"""
             reactor.callLater(1, self.connect, 1)
 
-    def plugged_out(self, port):
+    def _plugged_out(self, port):
         """
         first method that gets called upon sucessfull disconnection
         """
-        self.is_configured = False
         self.is_handshake_ok = False
-        self.is_identification_ok = False
+        self.is_authentification_ok = False
         self.is_connected = False
         self.is_plugged_in = False
         self._send_signal("plugged_Out", port)
@@ -163,12 +164,6 @@ class Driver(BaseComponent):
             raise DeviceNotConnected()
 #        if self.logic_handler:
 #            self.logic_handler._handle_request(data=data,sender=sender,callback=callback)
-
-    def _send_data(self, data, *args, **kwargs):
-        """send data to the physical device, this should not be
-        called directly, all commands need to go through the send_command
-        method"""
-        self._hardware_interface.send_data(data)
 
     def _handle_response(self, data):
         """handle hardware response"""

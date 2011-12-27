@@ -22,21 +22,21 @@ class VirtualDeviceProtocol(BaseProtocol):
         
     def connectionMade(self):
         log.msg("Device connected",system="Driver",logLevel=logging.INFO)   
-        self._set_timeout()    
+        self.set_timeout()    
         if self.driver.connectionMode == 1 :
-            self.driver.send_signal("connected",self.driver.hardwareHandler.port) 
+            self.driver._send_signal("connected",self.driver.hardwareHandler.port) 
         self.virtualDevice.setup()
         #self.dataReceived(self.virtualDevice.currentResponse)
 #        self.driver.is_handshake_ok=True
 #        if self.driver.connectionMode==2 or self.driver.connectionMode==0:
 #            if not self.driver.deviceId:
 #                self.driver.deviceId=str(uuid.uuid4())
-#            self.driver.is_identification_ok=True
+#            self.driver.is_authentification_ok=True
 #            self.driver.isConfigured=True 
 #            self.driver.disconnect()
 #            self.driver.deferred.callback(None)  
         
-    def _handle_device_handshake(self,data):
+    def _handle_hardware_handshake(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -49,7 +49,7 @@ class VirtualDeviceProtocol(BaseProtocol):
         if "start" in data:
             self.driver.is_handshake_ok=True
             log.msg("Device handshake validated",system="Driver",logLevel=logging.INFO)
-            self._query_hardware_id()
+            self._get_hardware_id()
         else:
             log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
             self.driver.reconnect()
@@ -78,7 +78,7 @@ class VirtualDeviceProtocol(BaseProtocol):
                     sucess=True
                 elif self.driver.deviceId!= data:
                     self._set_hardware_id()
-                    #self._query_hardware_id()
+                    #self._get_hardware_id()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -101,7 +101,7 @@ class VirtualDeviceProtocol(BaseProtocol):
                 sucess=True
                 
         if sucess is True: 
-            self.driver.is_identification_ok=True
+            self.driver.is_authentification_ok=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.driver.disconnect()
@@ -110,7 +110,7 @@ class VirtualDeviceProtocol(BaseProtocol):
     def _set_hardware_id(self,id=None):
         self.send_data("s "+ self.driver.deviceId)
         
-    def _query_hardware_id(self):
+    def _get_hardware_id(self):
         """method for retrieval of device info (for id and more) """
         self.send_data("i")
         

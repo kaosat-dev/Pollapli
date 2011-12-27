@@ -73,7 +73,7 @@ class PackageManager(object):
     def tearDown(self):
         pass
 
-    def send_signal(self, signal="", data=None):
+    def _send_signal(self, signal="", data=None):
         prefix = "%s." % self.signalChannelPrefix
         self._signal_dispatcher.send_message(prefix + signal, self, data)
 
@@ -237,10 +237,10 @@ class PackageManager(object):
             yield DownloaderWithProgress.download(url = package.downloadUrl, destination= downloadPath, object=package, refChecksum=package.fileHash)
             package.downloaded = True
             #update.installPath=self._addon_path
-            self.send_signal("package_download_succeeded", package)
+            self._send_signal("package_download_succeeded", package)
             log.msg("Successfully downloaded package ",package.name,system="Package Manager",logLevel=logging.DEBUG)
         except Exception as inst:
-            self.send_signal("package_download_failed", package)
+            self._send_signal("package_download_failed", package)
             log.msg("Failed to download package",package.name," error:",inst,system="Package Manager",logLevel=logging.CRITICAL)
 
     @defer.inlineCallbacks
@@ -280,7 +280,7 @@ class PackageManager(object):
                 package.installPath = os.path.join(self._path_manager._addon_path,os.path.basename(extractedPackageDir))
                 package.enabled = True
                 self.add_package_toPythonPath(package.installPath)
-                self.send_signal("addon_install_succeeded", package)
+                self._send_signal("addon_install_succeeded", package)
             except Exception as inst:
                 raise Exception("Failed to install addOn: error %s" %(str(inst)))
             
@@ -314,7 +314,7 @@ class PackageManager(object):
                 dir_util.copy_tree(extractedPackagePath, destinationPath) 
                 shutil.rmtree(backupFolderName)  
                 packageToUpdate.version = package.toVersion
-                self.send_signal("update_install_succeeded", package)
+                self._send_signal("update_install_succeeded", package)
             except Exception as inst:
                 raise Exception("Failed to install update: error %s" %(str(inst)))
         else:
@@ -368,7 +368,7 @@ class PackageManager(object):
                             newPackageCount +=1
             
         if newPackageCount>0:
-            self.send_signal("new_packages_available", newPackageCount)     
+            self._send_signal("new_packages_available", newPackageCount)     
     
     def _backup_packageFiles(self,rootPath):
         d = defer.Deferred()

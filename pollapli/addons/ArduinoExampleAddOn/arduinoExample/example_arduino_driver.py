@@ -13,20 +13,13 @@ class ExampleArduinoProtocol(BaseTextSerialProtocol):
     Class defining the protocol used by this driver: in this case,just a
     simplified test protocol
     """
-    def __init__(self, driver=None, is_buffering=True, seperator='\n', ref_handshake="start", *args, **kwargs):
-        BaseTextSerialProtocol.__init__(self, driver, is_buffering, seperator, ref_handshake)
+    def __init__(self, driver=None, handshake="start", seperator='\n', *args, **kwargs):
+        BaseTextSerialProtocol.__init__(self, driver, handshake, seperator)
 
-    def _set_hardware_id(self, hardware_id=99):
-        self.send_data("%i%s" % (hardware_id, str(self.driver.deviceId)))
-
-    def _query_hardware_id(self):
-        """method for retrieval of device info (for hardware_id and more) """
-        self.send_data("2")
-
-    def _format_data_in(self, data, *args, **kwargs):
+    def _format_data_in(self, data):
         """
         Formats an incomming data block according to some specs/protocol
-        data: the incomming data from the device
+        :param data: the incomming data from the device
         """
         if " " in data:
             data = "".join(data.split(" ")[1:])
@@ -39,13 +32,22 @@ class ExampleArduinoProtocol(BaseTextSerialProtocol):
 
 class ExampleArduinoDriver(Driver):
     """Class defining the components of the driver for a basic
-     arduino,using attached firmware """
+     Arduino, using attached firmware """
     classProvides(IPlugin, ipollapli.IDriver)
+    target_hardware = "Generic_arduino"
 
-    def __init__(self, auto_connect=False, max_connection_errors=2,
-        connection_timeout=4, speed=115200, *args, **kwargs):
-        Driver.__init__(self, auto_connect, max_connection_errors, connection_timeout)
+    def __init__(self, auto_connect=False, max_connection_errors=3,
+        connection_timeout=0, do_hanshake=True, do_authentifaction=True,
+        speed=115200, *args, **kwargs):
+        Driver.__init__(self, auto_connect, max_connection_errors, connection_timeout, do_hanshake, do_authentifaction)
         self._hardware_interface = SerialHardwareInterface(self, ExampleArduinoProtocol, speed)
+
+    def set_hardware_id(self, hardware_id=None):
+        self.send_command("99%i" % (hardware_id))
+
+    def get_hardware_id(self):
+        """method for retrieval of hardware_id """
+        self.send_command("2")
 
     def hello_world(self):
         """just a test"""

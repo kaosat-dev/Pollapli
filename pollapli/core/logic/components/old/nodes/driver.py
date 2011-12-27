@@ -72,7 +72,7 @@ class Driver(object):
         
         self.isConfigured=False#when the port association has not been set
         self.is_handshake_ok=False
-        self.is_identification_ok=False
+        self.is_authentification_ok=False
         self.isConnected=False
         self.isPluggedIn=False
         self.autoConnect=False#if autoconnect is set to true, the device will be connected as soon as a it is plugged in and detected
@@ -158,7 +158,7 @@ class Driver(object):
         self.hardwareHandler.disconnect(*args,**kwargs)
     
     def pluggedIn(self,port):    
-        self.send_signal("plugged_In",port)
+        self._send_signal("plugged_In",port)
         self.isPluggedIn=True
         if self.autoConnect:
             #slight delay, to prevent certain problems when trying to send data to the device too fast
@@ -167,13 +167,13 @@ class Driver(object):
     def pluggedOut(self,port):
         self.isConfigured=False  
         self.is_handshake_ok=False
-        self.is_identification_ok=False
+        self.is_authentification_ok=False
         self.isConnected=False
         self.isPluggedIn=False
-        self.send_signal("plugged_Out",port)
+        self._send_signal("plugged_Out",port)
         #self._signal_dispatcher.send_message("pluggedOut",{"data":port})
     
-    def send_signal(self,signal="",data=None):
+    def _send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+".driver."
         self._signal_dispatcher.send_message(prefix+signal,self,data)
     
@@ -330,7 +330,7 @@ class CommandQueueLogic(object):
         """
         cmd=None        
         #print("here",len(self.commandBuffer)>0)
-        #self.driver.send_signal("dataRecieved",data)
+        #self.driver._send_signal("dataRecieved",data)
         if len(self.commandBuffer)>0:
             try:
                 if self.commandBuffer[0].currentPart>1:  
@@ -348,7 +348,7 @@ class CommandQueueLogic(object):
                     cmd.callCallback()
                     
                     #print("recieved data ",cmd.answer,"command sender",cmd.sender )
-                   # self.driver.send_signal(cmd.sender+".dataRecieved",cmd.answer,True)
+                   # self.driver._send_signal(cmd.sender+".dataRecieved",cmd.answer,True)
                    
                     self.send_next_command()       
             except Exception as inst:

@@ -6,7 +6,7 @@ from pollapli.core.hardware.drivers.tests.mock_driver import MockDriver,\
     MockHardwareInterface
 
 
-class Test(unittest.TestCase):
+class TestDriverManager(unittest.TestCase):
 
     def setUp(self):
         self._driverManager = DriverManager()
@@ -86,10 +86,12 @@ class Test(unittest.TestCase):
 #        obs_ubound_ports = self._driverManager.get_unbound_ports(driver.hardware_interface_class)
 #        exp_ubound_ports = ["port1"]
 #        self.assertEquals(obs_ubound_ports, exp_ubound_ports)
-
-
-    def test_connect_driver(self):
-        pass
+#
+#    def test_connect_driver(self):
+#        driver_class = MockDriver
+#        MockHardwareInterface.available_ports = ["port1"]
+#        driver = self._driverManager.add_driver(driver_class)
+#        self._driverManager.connect_to_hardware(driver_id = driver.cid, connection_mode=1)
 
     def test_disconnect_driver(self):
         pass

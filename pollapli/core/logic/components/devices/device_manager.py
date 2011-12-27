@@ -33,7 +33,7 @@ class DeviceManager(object):
             self._devices[device.cid] = device
             #yield device.setup()
     
-    def send_signal(self, signal="", data=None):
+    def _send_signal(self, signal="", data=None):
         prefix=self.signalChannelPrefix+"."
         self._signal_dispatcher.send_message(prefix+signal,self,data)    
     
@@ -58,7 +58,7 @@ class DeviceManager(object):
         yield self._persistenceLayer.save_device(device)
         self._devices[device.cid]=device
         log.msg("Added  device ",name, logLevel=logging.CRITICAL)
-        self.send_signal("device_created", device)
+        self._send_signal("device_created", device)
         defer.returnValue(device)
       
     def get_device(self,id):
@@ -97,7 +97,7 @@ class DeviceManager(object):
         device.description=description
             
         yield self._persistenceLayer.save_device(device)
-        self.send_signal("device_updated", device)
+        self._send_signal("device_updated", device)
         log.msg("updated device :new name",name,"new descrption",description,logLevel=logging.CRITICAL)
         defer.succeed(device)
     
@@ -115,7 +115,7 @@ class DeviceManager(object):
             raise DeviceNotFound()
         yield self._persistenceLayer.delete_device(device) 
         del self._devices[id]
-        self.send_signal("device_deleted", device)
+        self._send_signal("device_deleted", device)
         log.msg("Removed device ",device.name,logLevel=logging.CRITICAL)
         defer.succeed(True)
     
@@ -126,7 +126,7 @@ class DeviceManager(object):
         """
         for device in self._devices.values():
             yield self.delete_device(device.cid)  
-        self.send_signal("devices_cleared", self._devices)   
+        self._send_signal("devices_cleared", self._devices)   
 
     """
     ####################################################################################

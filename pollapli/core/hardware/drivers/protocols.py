@@ -4,8 +4,8 @@ import time
 import re
 from twisted.internet import reactor, defer
 from twisted.python import log, failure
-from zope.interface import Interface, Attribute,implements, classProvides
-from twisted.plugin import IPlugin, getPlugins
+from zope.interface import classProvides
+from twisted.plugin import IPlugin
 from twisted.internet.protocol import Protocol
 from twisted.internet.interfaces import IProtocol
 from uuid import uuid4
@@ -20,302 +20,240 @@ class BaseProtocol(Protocol):
     """generic base protocol, cannot be used directly"""
     classProvides(IPlugin, IProtocol)
 
-    def __init__(self, driver=None, is_buffering=True, seperator=None,
-                 ref_handshake=None):
+    def __init__(self, driver=None, handshake=None):
         self.driver = driver
-        self.is_buffering = is_buffering
-        self.seperator = seperator
-        self.ref_handshake = ref_handshake
-        self._in_data_buffer = []
-        self._timeout = None
-
-    def _set_timeout(self):
-        """sets internal timeout"""
-        if self.driver.connectionMode == 2:
-            log.msg("Setting _timeout at ", time.time(), logLevel=logging.DEBUG)
-            self._timeout = reactor.callLater(self.driver.connection_timeout, self._timeout_check)
-
-    def _cancel_timeout(self):
-        """cancels internal timeout"""
-        if self._timeout:
-            try:
-                self._timeout.cancel()
-                log.msg("Cancel _timeout at ", time.time(), logLevel=logging.DEBUG)
-            except:
-                pass
-
-    def _timeout_check(self, *args, **kwargs):
-        if self.driver.isConnected:
-            if self.driver.connectionMode == 2:
-                log.msg("Here Timeout check at ", time.time(), logLevel=logging.DEBUG)
-                self._cancel_timeout()
-                self.driver.connectionErrors += 1
-                self.driver.reconnect()
-            else:
-                self._cancel_timeout()
-        else:
-            self._cancel_timeout()
+        self.handshake = handshake
+        self._data_handlers_order = [self.driver._handle_response]
+        if self.driver.do_authentifaction:
+            self._data_handlers_order.insert(0, self._handle_authentification)
+        if self.driver.do_handshake:
+            self._data_handlers_order.insert(0, self._handle_handshake)
+        self._data_handler_index = 0
 
     def connectionMade(self):
         """called upon connection"""
         log.msg("Device connected", system="Driver", logLevel=logging.INFO)
-        self._set_timeout()
-        if self.driver.connectionMode == 1:
-            self.driver.send_signal("connected", self.driver.hardwareHandler.port)
+        self.driver.set_timeout()
+        if self.driver.connection_mode == 1:
+            self.driver._send_signal("connected", self.driver._hardware_interface.port)
 
     def connectionLost(self, reason="connectionLost"):
-        self.driver.is_handshake_ok = False
         log.msg("Device disconnected", system="Driver", logLevel=logging.INFO)
-        if self.driver.connectionMode == 1:
-            self.driver.send_signal("disconnected", self.driver.hardwareHandler.port)
-        if self._timeout:
-            try:
-                self._timeout.cancel()
-            except: pass
+        if self.driver.connection_mode == 1:
+            self.driver._send_signal("disconnected", self.driver._hardware_interface.port)
+        self.driver.cancel_timeout()
 
-    """
-    ###########################################################################
-    The following are the connection related methods
-    """
-
-    def _query_hardware_id(self):
-        """method for retrieval of device info (for id and more) """
-        pass   
-    
-    def _set_hardware_id(self, hardware_id=None):
-        """ method for setting device id: MANDATORY for all drivers/protocols """
-        pass
-    
-    def _check_hardware_id(self):
-        pass
-    
-    def _check_handshake(self):
-        pass
-    
-    def _handle_device_handshake(self, data):
-        """
-        handles machine (hardware node etc) initialization
-        data: the incoming data from the machine
-        """
-        log.msg("Attempting to validate device ref_handshake", system="Driver", logLevel=logging.INFO)
-        if self.ref_handshake is not None:
-            if self.ref_handshake in data:
-                self.driver.is_handshake_ok = True
-                log.msg("Device ref_handshake validated", system="Driver", logLevel=logging.DEBUG)
-                self._query_hardware_id()
-            else:
-                log.msg("Device hanshake mismatch: expected :", self.ref_handshake, "got:", data,system="Driver", logLevel=logging.DEBUG)
-                self.driver.reconnect()
-        else:
-            self.driver.is_handshake_ok = True
-            self._query_hardware_id()
-            
-    def _handle_device_id_init(self,data):
-        """
-        handles machine (hardware node etc) initialization
-        data: the incoming data from the machine
-        """
-    
     """
     ###########################################################################
     The following are methods for sending/recieving/formating data
     """
-       
-    def _format_data_in(self, data, *args, **kwargs):
+
+    def _format_data_in(self, data):
         """
         Formats an incoming data block according to some specs/protocol 
-        data: the incoming data from the device
+        :param data the incoming data from the device
+        :rtype: the formated data
         """
-        return data
-    
-    def _format_data_out(self, data, *args, **kwargs):
+        raise NotImplementedError()
+
+    def _format_data_out(self, data):
         """
         Formats an outgoing block of data according to some specs/protocol 
-        data: the OUTGOING data TO the device
+        :param data: the OUTGOING data TO the device
+        :rtype:
         """
-        return data
-    
+        raise NotImplementedError()
+
     def dataReceived(self, data):
-        self._cancel_timeout()
-        data = data.encode('utf-8')
-        data = data.replace(' ','')
+        self.driver.cancel_timeout()
         data = self._format_data_in(data)
-        log.msg("Data recieved <<: ",data,system = "Driver",logLevel = logging.DEBUG)  
-                    
-        if not self.driver.connectionMode==3:
-            if not self.driver.isConfigured:
-                if not self.driver.is_handshake_ok:
-                    self._handle_device_handshake(data)
-                elif not self.driver.is_identification_ok:
-                    self._handle_device_id_init(data)
-            else:
-                if not self.driver.is_handshake_ok:
-                    self._handle_device_handshake(data)
-                else:
-                    self.driver._handle_response(data)
-        else:
-            if not self.driver.is_handshake_ok:
-                self._handle_device_handshake(data)
-            else:
-                self.driver._handle_response(data)
-                            
-    def send_data(self, data, *args, **kwargs):  
+        log.msg("Data recieved <<: ", data,system = "Driver", logLevel = logging.DEBUG)
+        self.driver._handle_response(data)
+
+    def send_data(self, data):
         """
         Simple wrapper to send data over serial
-        """    
+        :param data: the data to send to the device
+        """
         try:
-            log.msg("Data sent >>: ", self._format_data_out(data), system="Driver", logLevel=logging.DEBUG)
-            self._set_timeout()
-            self.transport.write(self._format_data_out(data))
+            data = self._format_data_out(data)
+            log.msg("Data sent >>: ", data, system="Driver", logLevel=logging.DEBUG)
+            self.driver.set_timeout()
+            self.transport.write(data)
         except Exception:
             log.msg("serial device not connected or not found on specified port", system="Driver", logLevel=logging.CRITICAL)
-        
-            
+
+    def _dispatch_response(self, data):
+        if not self.driver.is_connected:
+            is_hans_ok = False
+            is_auth_ok = False
+
+            if self.driver.do_authentifaction:
+                if self.driver.is_authentification_ok:
+                    is_auth_ok = True
+            else:
+                is_auth_ok = True
+
+            if self.driver.do_handshake:
+                if self.driver.is_handshake_ok:
+                    is_hans_ok = True
+            else:
+                is_hans_ok = True
+
+            if is_hans_ok and is_auth_ok:
+                self.driver.is_connected = True
+                if self.driver.connection_mode == 0:
+                    self.driver.is_configured = True
+                self.driver.deferred.callback(None)
+            else:
+                handler = self._data_handlers_order[self._data_handler_index]
+                handler(data)
+        else:
+            self.driver._handle_response(data)
+
+    """
+    ###########################################################################
+    The following are methods for handshake/authentification
+    """
+
+    def _handle_handshake(self, data):
+        """
+        handles machine handshake
+        :param data: the incoming data from the machine (the handshake)
+        """
+        if self.driver.do_handshake:
+            self._check_handshake(data)
+            if not self.driver.is_handshake_ok:
+                self.driver.reconnect()
+
+    def _check_handshake(self, data):
+        """
+        checks the recieved hanshake vs the expercted one
+        :param data: the incoming data from the machine (the handshake)
+        """
+        log.msg("Attempting to validate hardware handshake", system="Driver", logLevel=logging.INFO)
+        if self.handshake is None:
+            raise Exception("No handshake specified")
+        if self.handshake in data:
+            self.driver.is_handshake_ok = True
+            log.msg("Device handshake validated", system="Driver", logLevel=logging.DEBUG)
+            self._data_handler_index += 1
+
+            if self.driver.do_authentifaction:
+                self._get_hardware_id()
+            else:
+                self._dispatch_response(data)
+        else:
+            log.msg("Device hanshake mismatch: expected :", self.handshake, "got:", data, system="Driver", logLevel=logging.DEBUG)
+            self._handle_handshake(data)
+
+    def _handle_authentification(self, data):
+        """
+        handles machine authentification
+        :param data: the incoming data from the machine (should be the hardware id)
+        """
+        if self.driver.do_authentifaction:
+#            if not hasattr(self, "_authentification_in_progress"):
+#                self._authentification_in_progress = True
+#                self._get_hardware_id()
+#                return
+            self._check_hardware_id(data)
+            if not self.driver.is_authentification_ok:
+                self.driver.reconnect()
+
+    def _check_hardware_id(self, data):
+        """
+        checks the recieved id vs the expercted one
+        :param data: the incoming data from the machine (the id)
+        """
+        log.msg("Attempting to validate hardware id", system="Driver", logLevel=logging.INFO)
+        if self.driver.connection_mode == 1:
+            if self.driver.hardware_id is None:
+                raise Exception("No identifier specified")
+            if data == str(self.driver.hardware_id):
+                self.driver.is_authentification_ok = True
+                log.msg("Device indentification validated", system="Driver", logLevel=logging.DEBUG)
+                self._data_handler_index += 1
+                self._dispatch_response(data)
+            else:
+                log.msg("Device indentification mismatch: expected :", self.driver.hardware_id, "got:", data, system="Driver", logLevel=logging.DEBUG)
+        else:
+            self.driver.is_authentification_ok = True
+            self.driver.hardware_id = data
+            log.msg("Device indentification configured", system="Driver", logLevel=logging.DEBUG)
+            self._data_handler_index += 1
+            self._dispatch_response(data)
+
+    def _set_hardware_id(self):
+        raise NotImplementedError()
+
+    def _get_hardware_id(self):
+        raise NotImplementedError()
+
+
 class BaseTextSerialProtocol(BaseProtocol):
     """basic , text based protocol for serial devices"""
     classProvides(IPlugin, IProtocol)
-    def __init__(self, driver=None, is_buffering=True, seperator='\r\n', handshake="start"):  
-        BaseProtocol.__init__(self, driver, is_buffering, seperator, handshake)
+
+    def __init__(self, driver=None, handshake="start", seperator='\r\n'):
+        BaseProtocol.__init__(self, driver, handshake)
+        self.seperator = seperator
+        self.handshake = handshake
         self._in_data_buffer = ""
-        self.regex = re.compile(self.seperator)
-            
-    def _handle_device_id_init(self, data):
-        """
-        handles machine (hardware node etc) initialization
-        data: the incoming data from the machine
-        """
-        log.msg("Attempting to configure device Id: recieved data",data,system="Driver",logLevel=logging.DEBUG)
-        def validate_uuid(data):
-            if len(str(data)) == 36:
-                fields = str(data).split('-')
-                if len(fields[0]) == 8 and len(fields[1]) == 4 and len(fields[2]) == 4 and len(fields[3]) == 4 and len(fields[4]) == 12:
-                    return True
-            return False
-        
-        if self.driver.connectionErrors >= self.driver.maxConnectionErrors:
-            self.driver.disconnect()
-            self.driver.deferred.errback(None)  
-      
-        sucess = False
-        if self.driver.connectionMode == 2 or self.driver.connectionMode == 0:
-            """if we are trying to set the device id"""    
-            if validate_uuid(data):
-                """if the remote device has already go a valid id, and we don't, update accordingly"""
-                if not self.driver.deviceId :
-                    self.driver.deviceId = data
-                    sucess = True
-                elif self.driver.deviceId != data:
-                    log.msg("Remote and local DeviceId mismatch settind distant device id to", self.driver.deviceId, system="Driver", logLevel=logging.DEBUG)
-                    self._set_hardware_id()
-                    #self._query_hardware_id()
-                    """if we end up here again, it means something went wrong with 
-                    the remote setting of id, so add to errors"""
-                    self.driver.connectionErrors += 1
-                    
-                elif self.driver.deviceId == data:
-                    sucess = True     
-            else:
-                log.msg("Remote Device id was not valid:", data, system="Driver", logLevel=logging.DEBUG)
-                if not self.driver.deviceId:
-                    self.driver.deviceId = str(uuid4())
-                    log.msg("Device id was not set, generating a new one", self.driver.deviceId, system="Driver", logLevel=logging.DEBUG)
-                self.driver.connectionErrors += 1
-                self._set_hardware_id()
-        else:
-            """ some other connection mode , that still requires id check"""
-            if not validate_uuid(data) or self.driver.deviceId != data:
-                log.msg("Device id not set or not valid", system="Driver", logLevel=logging.DEBUG)
-                self.driver.connectionErrors += 1
-                self.driver.reconnect()
-            else:
-                sucess = True
-                
-        if sucess is True: 
-            self.driver.is_identification_ok = True
-            log.msg("DeviceId match ok: id is ",data,system="Driver",logLevel=logging.DEBUG)
-            self.driver.isConfigured = True 
-            self.driver.disconnect()
-            self.driver.deferred.callback(None)    
-                  
-    def _format_data_in(self,data,*args,**kwargs):
-        """
-        Formats an incoming data block according to some specs/protocol 
-        data: the INCOMMING data FROM the device
-        """
-        data = data.replace('\n','')
-        data = data.replace('\r','')
+        self._regex = re.compile(self.seperator)
+
+    """
+    ###########################################################################
+    The following are methods for sending/recieving/formating data
+    """
+
+    def _format_data_in(self, data):
+        data = data.replace('\n', '')
+        data = data.replace('\r', '')
         return data
-    
-    def _format_data_out(self, data, *args, **kwargs):
-        """
-        Formats an outgoing block of data according to some specs/protocol 
-        data: the OUTGOING data TO the device
-        """
-        return "%s\n" % data 
-        
-    def dataReceived(self, data):
-        self._cancel_timeout()
+
+    def _format_data_out(self, data):
         try:
-            if self.is_buffering:   
-                self._in_data_buffer += str(data.encode('utf-8'))
-                #if we have NOT already checked the last state of the data block, then check it
-                results = None
+            if isinstance(data, unicode):
+                import unicodedata
+                data = unicodedata.normalize('NFKD', data).encode('ascii','ignore')
+            return "%s\n" % data
+        except Exception as inst:
+            log.msg("Error while formatting ouput data :", inst, system="Driver", logLevel=logging.CRITICAL)
+            return ""
+
+    def dataReceived(self, data):
+        self.driver.cancel_timeout()
+        try:
+            self._in_data_buffer += str(data.encode('utf-8'))
+            packets = None
+            try:
+                packets = self._regex.search(self._in_data_buffer)
+            except Exception as inst:
+                log.msg("Error while parsing serial data :", self._in_data_buffer, "error:", inst, system="driver", logLevel=logging.CRITICAL)
+
+            while packets is not None:
+                data_block = self._in_data_buffer[:packets.start()]
+                data_block = self._format_data_in(data_block)
+                log.msg("Data recieved <<: ", data_block, system="Driver", logLevel=logging.DEBUG)
+                self.driver.set_timeout()
+                self._dispatch_response(data_block)
+                self._in_data_buffer = self._in_data_buffer[packets.end():]
+                packets = None
                 try:
-                    results = self.regex.search(self._in_data_buffer)        
-                except Exception as inst:
-                    log.msg("Error while parsing serial data :", self._in_data_buffer, "error:", inst, system="driver", logLevel=logging.CRITICAL)
-                    
-                while results is not None:
-                    data_block = self._in_data_buffer[:results.start()] 
-                    try:
-                        data_block = self._format_data_in(data_block)
-                    except Exception as inst:
-                        log.msg("Error while formatting serial data :", inst, system="Driver", logLevel=logging.CRITICAL)  
-                    log.msg("Data recieved <<: ", data_block, system="Driver", logLevel=logging.DEBUG)  
-                    self._set_timeout()
-                    try:
-                        if not self.driver.connectionMode == 3:
-                            if not self.driver.isConfigured:
-                                    if not self.driver.is_handshake_ok:
-                                        self._handle_device_handshake(data_block)
-                                    elif not self.driver.is_identification_ok:
-                                        self._handle_device_id_init(data_block)
-                            else:
-                                if not self.driver.is_handshake_ok:
-                                    self._handle_device_handshake(data_block)
-                                else:
-                                    self.driver._handle_response(data_block)
-                        else:
-                            if not self.driver.is_handshake_ok:
-                                    self._handle_device_handshake(data_block)
-                            else:
-                                self.driver._handle_response(data_block)
-                    except Exception as inst:
-                        log.msg("Error while handling serial data :", inst, system="Driver", logLevel=logging.CRITICAL)  
-                        
-                    self._in_data_buffer = self._in_data_buffer[results.end():]
-                    results = None
-                    try:
-                        results =self.regex.search(self._in_data_buffer)
-                    except:
-                        pass 
-                        
+                    packets = self._regex.search(self._in_data_buffer)
+                except:
+                    pass
         except Exception as inst:
             log.msg("Critical error in serial, error:", str(inst), system="Driver", logLevel=logging.CRITICAL)
 
-    def send_data(self, data, *args, **kwargs):  
-        """
-        Simple wrapper to send data over serial
-        """    
-        try:
-            import unicodedata       
-            data = self._format_data_out(data)
-            if isinstance(data, unicode):
-                data = unicodedata.normalize('NFKD', data).encode('ascii','ignore')
-            log.msg("Data sent >>: ", data, " done", system="Driver", logLevel=logging.DEBUG)
-            self._set_timeout()
-            self.transport.write(data)
-        except OSError:
-            log.msg("serial device not connected or not found on specified port", system="Driver", logLevel=logging.CRITICAL)
-        
+    """
+    ###########################################################################
+    The following are methods for handshake/authentification
+    """
 
+    def _set_hardware_id(self):
+        self.send_data("s%s" % str(self.driver.hardware_id))
+
+    def _get_hardware_id(self):
+        self.send_data("2")

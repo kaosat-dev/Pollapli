@@ -242,47 +242,20 @@ class DriverManager(object):
     The following are the driver "CRUD" (Create, read, update,delete) methods
     """
 
-#    @defer.inlineCallbacks
-#    def create(self,parentNode=None,driverType=None,driverParams={},*args,**kwargs):
-#        plugins= (yield PackageManager.get_plugins(ipollapli.IDriver))
-#        driver=None
-#        for driverKlass in plugins:
-#            if driverType==driverKlass.__name__.lower():
-#                driver = driverKlass(options=driverParams,**driverParams)
-#                driver.node.set(parentNode)
-#                yield driver.setup()
-#                self.register_driver(driver,creation=True)
-#                break
-#        if not driver:
-#            raise UnknownDriver()
-#        defer.returnValue(driver)
-
-#    @defer.inlineCallbacks
-#    def update(self,driver,driverType=None,driverParams={},*args,**kwargs):
-#        """ updates the given driver with the new params"""
-#        driverType=driverType
-#        plugins= (yield PackageManager.get_plugins(ipollapli.IDriver))
-#        for driverKlass in plugins:
-#            if driverType==driverKlass.__name__.lower():
-#                driver.driverType=driverType
-#                driver.options=driverParams
-#                hardwareHandler=driverKlass.components["hardwareHandler"](driver,**driverParams)
-#                logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
-#                driver.set_handlers(hardwareHandler,logicHandler)
-#                yield driver.setup()
-#                break
-#        if not driver:
-#            raise UnknownDriver()
-#        defer.returnValue(driver)
-
     def add_driver(self, driver_class, *args, **kwargs):
         """add a driver to the list of manager drivers
         driver_class : the class of the driver
         params : the parameters to pass to the constructor of the driver
         """
         driver = driver_class(*args, **kwargs)
-        self.register_driver(driver)
+        if not driver.is_configured:
+            driver.connection_mode = 0
+        self._register_driver(driver)
         return driver
+
+    def update_driver(self, driver_id=None, *args, **kwargs):
+        driver = self.get_driver(driver_id)
+        driver.update(*args, **kwargs)
 
     def get_driver(self, driver_id=None):
         """get a driver, based on its id"""
@@ -335,7 +308,7 @@ class DriverManager(object):
         def remove(driver_id):
             driver = self._drivers.get(driver_id)
             del self._drivers[driver_id]
-            self.unregister_driver(driver)
+            self._unregister_driver(driver)
             log.msg("Removed driver %s" % str(driver), logLevel=logging.CRITICAL)
         deferred.addCallback(remove)
         reactor.callLater(0, deferred.callback, driver_id)
@@ -352,46 +325,18 @@ class DriverManager(object):
 
     """
     ###########################################################################
-    The following are the plug&play and registration methods for drivers
+    The following are helper methods
     """
+
     def get_unbound_ports(self, hardware_interface):
         hardware_interface_info = self._hardware_interfaces.get(hardware_interface)
         unbound_ports = hardware_interface_info.get_unbound_ports()
         return unbound_ports
 
-    def connect_to_hardware(self, driver_id=None, connection_mode=1):
-        """driver_id : the id of the driver to connect
-        connection_mode: the mode in which to connect the driver
-        """
-        driver = self.get_driver(driver_id=driver_id)
-        if connection_mode == 3:
-            """special case for forced connection"""
-            unbound_ports = self.get_unbound_ports(driver.hardware_interface_class)
-            if len(unbound_ports) > 0:
-                port = unbound_ports[0]
-                log.msg("Connecting in mode:", connection_mode, "to port", port, system="Driver", logLevel=logging.CRITICAL)
-                self._port_to_driver_bindings.bind(driver, port)
-
-    def upload_firmware(self, firmware):
-        """upload a specific firmware to a given device"""
-        pass
-
-    def register_driver(self, driver=None):
-        if driver is None:
-            raise UnknownDriver()
-        """register a driver in the system"""
-        log.msg("Registering driver", driver, logLevel=logging.DEBUG, system="Driver")
-        drv_inteface_class = driver.hardware_interface_class
-        if not drv_inteface_class in self._hardware_interfaces:
-            self._hardware_interfaces[drv_inteface_class] = HardwareInterfaceInfo(drv_inteface_class)
-        self._hardware_interfaces[drv_inteface_class].add_drivers([driver])
-        self._drivers[driver.cid] = driver
-        driver.connection_mode = 2
-
-    def unregister_driver(self, driver):
-        """for driver removal from the list of registered drivers"""
-        self._hardware_interfaces[driver.hardware_interface_class].remove_drivers([driver])
-
+    """
+    ###########################################################################
+    The following are driver related methods
+    """
     @defer.inlineCallbacks
     def set_remote_id(self, driver, port=None):
         """this method is usually used the first time a device is connected, to set
@@ -401,12 +346,55 @@ class DriverManager(object):
             unbound_ports = self._port_to_driver_bindings.get_unbound_ports()
             if unbound_ports > 0:
                 port = unbound_ports[0]
-                driver.connection_mode = 2
+                driver.connection_mode = 0
                 yield driver.bind(port).addCallbacks(callback=self._driver_binding_succeeded, \
                                             callbackKeywords={"driver": driver, "port": port}, errback=self._driver_binding_failed)
         else:
             log.msg("Impossible to do device binding, no ports available", system="Driver")
         driver.connection_mode = 1
+    """
+    ###########################################################################
+    The following are the plug&play and registration methods for drivers
+    """
+
+    def connect_to_hardware(self, driver_id=None, port=None, connection_mode=1):
+        """driver_id : the id of the driver to connect
+        connection_mode: the mode in which to connect the driver
+
+        first search if driver is already bound, if it is use that data
+        """
+        driver = self.get_driver(driver_id=driver_id)
+        if connection_mode == 2:
+            """special case for forced connection"""
+            unbound_ports = self.get_unbound_ports(driver.hardware_interface_class)
+            if len(unbound_ports) > 0:
+                port = unbound_ports[0]
+                log.msg("Connecting in mode:", connection_mode, "to port", port, system="Driver", logLevel=logging.CRITICAL)
+                self._port_to_driver_bindings.bind(driver, port)
+        driver.connect(port=port, connection_mode=connection_mode)
+
+    def upload_firmware(self, firmware):
+        """upload a specific firmware to a given device
+        perhaps use this kind of field as helper:
+        target_hardware = "Generic_arduino"
+        """
+        pass
+
+    def _register_driver(self, driver=None):
+        if driver is None:
+            raise UnknownDriver()
+        """register a driver in the system"""
+        log.msg("Registering driver", driver, logLevel=logging.DEBUG, system="Driver")
+        drv_inteface_class = driver.hardware_interface_class
+        if not drv_inteface_class in self._hardware_interfaces:
+            self._hardware_interfaces[drv_inteface_class] = HardwareInterfaceInfo(drv_inteface_class)
+        self._hardware_interfaces[drv_inteface_class].add_drivers([driver])
+        self._drivers[driver.cid] = driver
+        driver.connection_mode = 1
+
+    def _unregister_driver(self, driver):
+        """for driver removal from the list of registered drivers"""
+        self._hardware_interfaces[driver.hardware_interface_class].remove_drivers([driver])
 
     @defer.inlineCallbacks
     def _setup_drivers(self, hardware_interface):
@@ -427,7 +415,6 @@ class DriverManager(object):
             log.msg("Setting up drivers", logLevel=logging.INFO)
             for driver in unbound_drivers:   
                 yield self._start_bind_attempt(driver,self._hardware_interfaces[hardware_interface].bindings) 
-        defer.returnValue(True)
 
     @defer.inlineCallbacks
     def _start_bind_attempt(self, driver, binding):
@@ -438,10 +425,12 @@ class DriverManager(object):
         * all driver/port combos were tried
         """
         for port in binding.get_driver_untested_ports(driver):
-            if driver.is_configured:
+            if driver.is_bound or driver.do_authentifaction is False:
+                #if driver is already bound, or has authentification disabled
+                # we don't try anything
                 break
             else:
-                yield driver.bind(port).addCallbacks(callback = \
+                yield driver.connect(port=port,connection_mode=1).addCallbacks(callback = \
         self._driver_binding_succeeded\
         , callbackKeywords={"driver": driver, "port": port, "binding": binding}
         , errback=self._driver_binding_failed\

@@ -25,7 +25,7 @@ class TaskManager(object):
             self._tasks[task.cid] = task
             #yield task.setup()   
         
-    def send_signal(self,signal="",data=None):
+    def _send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+"."
         self._signal_dispatcher.send_message(prefix+signal,self,data)
     
@@ -94,7 +94,7 @@ class TaskManager(object):
                     task.shutdown()
         yield self._persistenceLayer.delete_task(task) 
         del self._tasks[id]
-        self.send_signal("task_deleted", task)
+        self._send_signal("task_deleted", task)
         log.msg("Removed task ",task.name,logLevel=logging.CRITICAL)      
        
     @defer.inlineCallbacks
@@ -104,7 +104,7 @@ class TaskManager(object):
         """
         for device in self._tasks.values():
                 yield self.remove_task(device.id)  
-        self.send_signal("devices_cleared", self._tasks)   
+        self._send_signal("devices_cleared", self._tasks)   
        
     """
     ####################################################################################

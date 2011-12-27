@@ -33,7 +33,7 @@ class UpdateSensorDataAction(DBObject):
         if isinstance(result,failure.Failure):
             self.status.update_progress(value=100)  
             log.msg("Finished print action. Status:",self.status._toDict(),system="Action",logLevel=logging.CRITICAL)
-            self.parentTask.send_signal("action"+self.id+".actionDone")    
+            self.parentTask._send_signal("action"+self.id+".actionDone")    
         else:
         
             self.status.update_progress()

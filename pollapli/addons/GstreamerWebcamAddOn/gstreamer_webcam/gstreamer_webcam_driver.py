@@ -148,7 +148,7 @@ class GstreamerWebcamHandler(object):
         #self._connect(port,*args,**kwargs)
         self.driver.isConnected=True
         self.driver.is_handshake_ok=True
-        self.driver.is_identification_ok=True
+        self.driver.is_authentification_ok=True
         self.driver.isConfigured=True 
         #self._connect(*args,**kwargs)    
         #hack !!

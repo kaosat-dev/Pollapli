@@ -43,7 +43,7 @@ class EnvironmentManager(object):
         """
         pass
         
-    def send_signal(self, signal="", data=None):
+    def _send_signal(self, signal="", data=None):
         prefix=self._signal_channel+"."
         self._signal_dispatcher.send_message(prefix+signal,self,data)    
     """
@@ -67,7 +67,7 @@ class EnvironmentManager(object):
         yield self._persistenceLayer.save_environment(environment)
         self._environments[environment.cid] = environment
         
-        self.send_signal("environment.created",environment)
+        self._send_signal("environment.created",environment)
         log.msg("Added environment named:",name ," description:",description,"with id",environment.cid, system="environment manager", logLevel=logging.CRITICAL)         
         defer.returnValue(environment)
 
@@ -107,7 +107,7 @@ class EnvironmentManager(object):
     def update_environment(self,id,name,description,status):
         environment = self._environments[id]
         environment.update(name,description,status)
-        self.send_signal("environment_updated", environment)
+        self._send_signal("environment_updated", environment)
         #return self.environments[id].update(name,description,status)
     
     @defer.inlineCallbacks
@@ -123,7 +123,7 @@ class EnvironmentManager(object):
             yield self._persistenceLayer.delete_environment(environment)
             #self.environments[envName].teardown()
             del self._environments[id]
-            self.send_signal("environment_deleted", environment)
+            self._send_signal("environment_deleted", environment)
             log.msg("Removed environment ",environment.name, system="environment manager",logLevel=logging.CRITICAL)
         except Exception as inst:
             raise Exception("Failed to delete environment because of error %s" %str(inst))
@@ -155,7 +155,7 @@ class EnvironmentManager(object):
         """
         for envId in self._environments.keys():
             yield self.remove_environment(id = envId)    
-        self.send_signal("environments_cleared", self._environments)       
+        self._send_signal("environments_cleared", self._environments)       
     """
     ####################################################################################
     Helper Methods    

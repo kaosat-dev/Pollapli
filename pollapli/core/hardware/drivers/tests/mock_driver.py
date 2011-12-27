@@ -36,12 +36,12 @@ class MockProtocol(BaseProtocol):
     simplified test protocol
     """
     def __init__(self, driver=None, is_buffering=True, seperator='\n', *args, **kwargs):
-        BaseProtocol.__init__(self, driver, is_buffering, seperator)
+        BaseProtocol.__init__(self, driver, None)
 
     def _set_hardware_id(self, hardware_id=99):
         self.send_data("%i%s" % (hardware_id, str(self.driver.deviceId)))
 
-    def _query_hardware_id(self):
+    def _get_hardware_id(self):
         """method for retrieval of device info (for hardware_id and more) """
         self.send_data("2")
 

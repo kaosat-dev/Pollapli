@@ -28,7 +28,7 @@ class HydroduinoProtocol(BaseTextSerialProtocol):
     def _set_hardware_id(self,id=None):
         self.send_data('99'+ " "+ str(self.driver.deviceId))
         
-    def _query_hardware_id(self):
+    def _get_hardware_id(self):
         """method for retrieval of device info (for id and more) """
         self.send_data('2')
         

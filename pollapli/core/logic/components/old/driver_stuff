@@ -167,6 +167,17 @@ class EndPoint(object):
 
     def variable_get(self,variable,params,sender=None,*args,**kwargs):
         pass
+        
+        
+    def bind(self, port, set_id=True):
+        """
+        port : port to bind this driver to
+        set_id: flag on whether to set/reset the hardware's id
+        """
+        self.deferred = defer.Deferred()
+        log.msg("Attemtping to bind driver", self, "with deviceId:", self._hardware_id, "to port", port, system="Driver", logLevel=logging.DEBUG)
+        self._hardware_interface.connect(set_id_mode=set_id, port=port)
+        return self.deferred
  """
     ####################################################################################
                                 Experimental
@@ -219,7 +230,33 @@ def connect(self, mode=None, *args, **kwargs):
             else:
                 self.hardware_interface.connect()
         
-
+ Thoughts for future evolution:
+    each driver will have a series of endpoints or slots/hooks,
+    which represent the actual subdevices it handles:
+    for example for reprap type devices, there is a :
+    * "position" endpoint (abstract)
+    * 3 endpoints for the cartesian bot motors
+    * at least an endpoint for head temperature , one for the heater etc
+    or this could be in a hiearchy , reflecting the one off the nodes:
+    variable endpoint : position, and sub ones for motors
+    
+    just for future reference : this is not implemented but would be a
+    declarative way to define the different "configuration steps"
+    of this driver":
+    *basically a dictionary with keys being the connection modes, and values
+    a list of strings representing the methods to call
+    *would require a "validator" :certain elements need to be mandatory
+    ,such as the validation/setting of device ids
+    configSteps={}
+    configSteps[0]=["_handle_deviceHandshake","_handle_deviceIdInit"]
+    configSteps[1]=["_handle_deviceHandshake","_handle_deviceIdInit",
+    "some_other_method"]
+    hardwareId will be needed to identify a specific device,
+        as the system does not work purely base on ports
+        
+        
+        
+      
 #was in serial_handler
     def upload(self):
         avrpath="/home/ckaos/data/Projects/Doboz/pollapli/core/tools/avr"
@@ -273,4 +310,115 @@ def connect(self, mode=None, *args, **kwargs):
     to the actual entity that sent the command ? for example : during a reprap 3d print, querying for sensor 
     data is actually completely seperate and should not be part of the print task, therefor, since all requests
     are sent to the same device, there needs to be a way to differenciate between the two when sending back messages
+    #    @defer.inlineCallbacks
+#    def create(self,parentNode=None,driverType=None,driverParams={},*args,**kwargs):
+#        plugins= (yield PackageManager.get_plugins(ipollapli.IDriver))
+#        driver=None
+#        for driverKlass in plugins:
+#            if driverType==driverKlass.__name__.lower():
+#                driver = driverKlass(options=driverParams,**driverParams)
+#                driver.node.set(parentNode)
+#                yield driver.setup()
+#                self.register_driver(driver,creation=True)
+#                break
+#        if not driver:
+#            raise UnknownDriver()
+#        defer.returnValue(driver)
+    
+  #    @defer.inlineCallbacks
+#    def update(self,driver,driverType=None,driverParams={},*args,**kwargs):
+#        """ updates the given driver with the new params"""
+#        driverType=driverType
+#        plugins= (yield PackageManager.get_plugins(ipollapli.IDriver))
+#        for driverKlass in plugins:
+#            if driverType==driverKlass.__name__.lower():
+#                driver.driverType=driverType
+#                driver.options=driverParams
+#                hardwareHandler=driverKlass.components["hardwareHandler"](driver,**driverParams)
+#                logicHandler=driverKlass.components["logicHandler"](driver,**driverParams)
+#                driver.set_handlers(hardwareHandler,logicHandler)
+#                yield driver.setup()
+#                break
+#        if not driver:
+#            raise UnknownDriver()
+#        defer.returnValue(driver)
+
+
+#was in baseprotocol
+  if not self.driver.connection_mode == 3:
+            if not self.driver.isConfigured:
+                if not self.driver.is_handshake_ok:
+                    self._handle_hardware_handshake(data)
+                elif not self.driver.is_identification_ok:
+                    self._handle_device_id_init(data)
+            else:
+                if not self.driver.is_handshake_ok:
+                    self._handle_hardware_handshake(data)
+                else:
+                    self.driver._handle_response(data)
+        else:
+            if not self.driver.is_handshake_ok:
+                self._handle_hardware_handshake(data)
+            else:
+                self.driver._handle_response(data)
+                
+                
+                
+ def _handle_device_id_init(self, data):
+        """
+        handles machine (hardware node etc) initialization
+        data: the incoming data from the machine
+        """
+        log.msg("Attempting to configure device Id: recieved data",data,system="Driver",logLevel=logging.DEBUG)
+        def validate_uuid(data):
+            if len(str(data)) == 36:
+                fields = str(data).split('-')
+                if len(fields[0]) == 8 and len(fields[1]) == 4 and len(fields[2]) == 4 and len(fields[3]) == 4 and len(fields[4]) == 12:
+                    return True
+            return False
+
+        if self.driver.connectionErrors >= self.driver.maxConnectionErrors:
+            self.driver.disconnect()
+            self.driver.deferred.errback(None)
+
+        sucess = False
+        if self.driver.connection_mode == 2 or self.driver.connection_mode == 0:
+            """if we are trying to set the device id"""
+            if validate_uuid(data):
+                """if the remote device has already go a valid id, and we don't, update accordingly"""
+                if not self.driver.deviceId :
+                    self.driver.deviceId = data
+                    sucess = True
+                elif self.driver.deviceId != data:
+                    log.msg("Remote and local DeviceId mismatch settind distant device id to", self.driver.deviceId, system="Driver", logLevel=logging.DEBUG)
+                    self._set_hardware_id()
+                    #self._get_hardware_id()
+                    """if we end up here again, it means something went wrong with
+                    the remote setting of id, so add to errors"""
+                    self.driver.connectionErrors += 1
+
+                elif self.driver.deviceId == data:
+                    sucess = True
+            else:
+                log.msg("Remote Device id was not valid:", data, system="Driver", logLevel=logging.DEBUG)
+                if not self.driver.deviceId:
+                    self.driver.deviceId = str(uuid4())
+                    log.msg("Device id was not set, generating a new one", self.driver.deviceId, system="Driver", logLevel=logging.DEBUG)
+                self.driver.connectionErrors += 1
+                self._set_hardware_id()
+        else:
+            """ some other connection mode , that still requires id check"""
+            if not validate_uuid(data) or self.driver.deviceId != data:
+                log.msg("Device id not set or not valid", system="Driver", logLevel=logging.DEBUG)
+                self.driver.connectionErrors += 1
+                self.driver.reconnect()
+            else:
+                sucess = True
+
+        if sucess is True:
+            self.driver.is_identification_ok = True
+            log.msg("DeviceId match ok: id is ", data, system="Driver", logLevel=logging.DEBUG)
+            self.driver.isConfigured = True
+            self.driver.disconnect()
+            self.driver.deferred.callback(None)
         

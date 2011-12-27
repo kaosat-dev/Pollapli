@@ -264,7 +264,7 @@ class Node(DBObject):
     def delete_driver(self):
         if self.driver:
             self.driver.disconnect()    
-            DriverManager.unregister_driver(self.driver) 
+            DriverManager._unregister_driver(self.driver) 
             yield self.driver.delete()
             self.driver=None         
             log.msg("Disconnected and removed driver", logLevel=logging.CRITICAL,system="Node")
@@ -348,7 +348,7 @@ class NodeManager(object):
         defer.returnValue(None)
     
     
-    def send_signal(self,signal="",data=None):
+    def _send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+"."
         self.signalHandler.send_message(prefix+signal,self,data)    
     """
@@ -373,7 +373,7 @@ class NodeManager(object):
         node.environment.set(self.parentEnvironment)
         self.nodes[node.id]=node
         log.msg("Added  node ",name," with id set to ",str(node.id), logLevel=logging.CRITICAL)
-        self.send_signal("node_created", node)
+        self._send_signal("node_created", node)
        
         defer.returnValue(node)
         
@@ -417,7 +417,7 @@ class NodeManager(object):
             node.name=name
             node.description=description
             yield node.save()
-            self.send_signal("node_updated", node)
+            self._send_signal("node_updated", node)
             log.msg("updating node ",id,"newname",name,"newdescrption",description,logLevel=logging.CRITICAL)
         _update()
         
@@ -448,7 +448,7 @@ class NodeManager(object):
             yield self.nodes[id].delete() 
             del self.nodes[id]
             tmpNode.id=tmpId
-            self.send_signal("node_deleted", tmpNode)
+            self._send_signal("node_deleted", tmpNode)
             log.msg("Removed node ",nodeName,"with id ",id,logLevel=logging.CRITICAL)
         if not id in self.nodes.keys():
             raise NodeNotFound()
@@ -465,7 +465,7 @@ class NodeManager(object):
         def _clear():
             for node in self.nodes.values():
                 yield self.delete_node(node.id)  
-            self.send_signal("nodes_cleared", self.nodes)   
+            self._send_signal("nodes_cleared", self.nodes)   
         _clear();  
              
         defer.succeed(True)     

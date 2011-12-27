@@ -94,7 +94,7 @@ class ReadSensorsAction(DBObject):
             self.status.update_progress(value=100)  
             log.msg("Finished print action. Status:",self.status._toDict(),system="PrintAction",logLevel=logging.CRITICAL)
             #raise event "action finished" 
-            self.parentTask.send_signal("action"+self.id+".actionDone")    
+            self.parentTask._send_signal("action"+self.id+".actionDone")    
         else:
             line,position=result
             self.lineIndex+=1
@@ -113,7 +113,7 @@ class ReadSensorsAction(DBObject):
                     line=printFile.next()      
                     if line!= "":    
                         line=line.replace('\n','')
-                        self.parentTask.send_signal(self.parentTask.driverChannel+".addCommand",line,True)
+                        self.parentTask._send_signal(self.parentTask.driverChannel+".addCommand",line,True)
                         log.msg("Task",self.id,"sent signal addCommand to node's driver",logLevel=logging.DEBUG)
                         pos=self.fileParser.parse(line)  
                     return (line,pos)

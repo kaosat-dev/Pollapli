@@ -176,7 +176,7 @@ class SerialHardwareHandler(object):
 
     """The next methods are at least partially deprecated and not in use """   
     def reset_seperator(self):
-        self.regex = re.compile(self.seperator)
+        self._regex = re.compile(self.seperator)
     
     def upload(self):
         avrpath="/home/ckaos/data/Projects/Doboz/pollapli/core/tools/avr"

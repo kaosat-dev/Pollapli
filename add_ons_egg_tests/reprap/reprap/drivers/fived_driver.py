@@ -17,7 +17,7 @@ class FiveDProtocol(BaseSerialProtocol):
         self.deviceHandshakeOk=False
         self.currentLine=1
         
-    def _handle_device_handshake(self,data):
+    def _handle_hardware_handshake(self,data):
         """
         handles machine (hardware node etc) initialization
         datab: the incoming data from the machine

@@ -46,15 +46,12 @@ class SerialPort(BaseSerialPort, abstract.FileDescriptor):
         self.closed = 0
         self.closedNotifies = 0
         self.writeInProgress = 0
-        
-        
-        
         self.protocol = protocol
         self._overlappedRead = win32file.OVERLAPPED()
         self._overlappedRead.hEvent = win32event.CreateEvent(None, 1, 0, None)
         self._overlappedWrite = win32file.OVERLAPPED()
         self._overlappedWrite.hEvent = win32event.CreateEvent(None, 0, 0, None)
-        
+
         self.reactor.addEvent(self._overlappedRead.hEvent, self, 'serialReadEvent')
         self.reactor.addEvent(self._overlappedWrite.hEvent, self, 'serialWriteEvent')
 
@@ -99,7 +96,7 @@ class SerialPort(BaseSerialPort, abstract.FileDescriptor):
                                                    self._overlappedRead)
             except:
                 self.connectionLost("serial disconnected")
-            
+
     def write(self, data):
         if data:
             if self.writeInProgress:
@@ -116,7 +113,7 @@ class SerialPort(BaseSerialPort, abstract.FileDescriptor):
             return
         else:
             win32file.WriteFile(self._serial.hComPort, dataToWrite, self._overlappedWrite)
-    
+
     def connectionLost(self, reason):
         try:
             self.reactor.removeEvent(self._overlappedRead.hEvent)
@@ -127,8 +124,9 @@ class SerialPort(BaseSerialPort, abstract.FileDescriptor):
         self._serial.close()
         self.connected=0
         self.protocol.connectionLost("connectionLost")
-        
+
     def loseConnection(self):
         self.connectionLost("")
+
     def writeSomeData(self,*args,**kwargs):
         pass

@@ -19,13 +19,14 @@ class BaseHardwareInterface(object):
         self.driver.connection_errors = 0
 
     def reconnect(self):
-        pass
+        raise NotImplementedError()
 
     def disconnect(self):
-        pass
+        raise NotImplementedError()
 
     @classmethod
     def list_ports(cls):
         """
         Return a list of ports, in a deferred
         """
+        raise NotImplementedError()

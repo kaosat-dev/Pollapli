@@ -4,7 +4,7 @@
 
 import uuid
 from pkg_resources import parse_version
-from pollapli.core.logic.components.base_component import BaseComponent
+from pollapli.core.base_component import BaseComponent
 
 
 class Package(BaseComponent):
@@ -82,6 +82,6 @@ class Package(BaseComponent):
                 setattr(package,key,value)  
         return package
 
-    def send_signal(self,signal="",data=None):
-        self.parentManager.send_signal("package_"+str(self.id)+"."+signal,data)
+    def _send_signal(self,signal="",data=None):
+        self.parentManager._send_signal("package_"+str(self.id)+"."+signal,data)
     

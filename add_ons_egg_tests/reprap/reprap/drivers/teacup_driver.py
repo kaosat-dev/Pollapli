@@ -14,7 +14,7 @@ class TeacupProtocol(BaseSerialProtocol):
     def __init__(self,driver=None,is_buffering=True,seperator='\n',*args,**kwargs):
         BaseSerialProtocol.__init__(self,driver,is_buffering,seperator)
         
-    def _handle_device_handshake(self,data):
+    def _handle_hardware_handshake(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -23,7 +23,7 @@ class TeacupProtocol(BaseSerialProtocol):
         if "start" in data:
             self.driver.is_handshake_ok=True
             log.msg("Device handshake validated",system="Driver",logLevel=logging.INFO)
-            self._query_hardware_id()
+            self._get_hardware_id()
         else:
             log.msg("Device hanshake mismatch",system="Driver",logLevel=logging.INFO)
             self.driver.reconnect()
@@ -53,7 +53,7 @@ class TeacupProtocol(BaseSerialProtocol):
                     sucess=True
                 elif self.driver.deviceId!= data:
                     self._set_hardware_id()
-                    #self._query_hardware_id()
+                    #self._get_hardware_id()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -76,7 +76,7 @@ class TeacupProtocol(BaseSerialProtocol):
                 sucess=True
                 
         if sucess is True: 
-            self.driver.is_identification_ok=True
+            self.driver.is_authentification_ok=True
             log.msg("DeviceId match ok: id is ",data,system="Driver")
             self.driver.isConfigured=True 
             self.driver.disconnect()
@@ -88,7 +88,7 @@ class TeacupProtocol(BaseSerialProtocol):
         self.send_data("s "+ self.driver.deviceId)
         self.isProcessing=False
         
-    def _query_hardware_id(self):
+    def _get_hardware_id(self):
         """method for retrieval of device info (for id and more) """
         self.isProcessing=True
         self.send_data("i")

@@ -125,7 +125,7 @@ class TaskManager(object):
         self.signalChannelPrefix="environment_"+str(self.parentEnvironment.id)    
         defer.returnValue(self)
     
-    def send_signal(self,signal="",data=None):
+    def _send_signal(self,signal="",data=None):
         prefix=self.signalChannelPrefix+"."
         self.signalHandler.send_message(prefix+signal,self,data)
     

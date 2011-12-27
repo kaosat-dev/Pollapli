@@ -31,20 +31,20 @@ class BaseProtocol(Protocol):
         if self.driver.isConnected:
             if self.driver.connectionMode==2:
                 log.msg("Here Timeout check at ",time.time(),logLevel=logging.DEBUG)
-                self._cancel_timeout()
+                self.cancel_timeout()
                 self.driver.connectionErrors+=1
                 self.driver.reconnect()
             else:
-                self._cancel_timeout()
+                self.cancel_timeout()
         else:
-            self._cancel_timeout()
+            self.cancel_timeout()
 
-    def _set_timeout(self):
+    def set_timeout(self):
         if self.driver.connectionMode==2:
             log.msg("Setting _timeout at ",time.time(),logLevel=logging.DEBUG)    
             self._timeout=reactor.callLater(self.driver.connectionTimeout,self._timeout_check)
         
-    def _cancel_timeout(self):
+    def cancel_timeout(self):
             if self._timeout:
                 try:
                     self._timeout.cancel()
@@ -53,15 +53,15 @@ class BaseProtocol(Protocol):
                            
     def connectionMade(self):
         log.msg("Device connected",system="Driver",logLevel=logging.INFO)   
-        self._set_timeout()    
+        self.set_timeout()    
         if self.driver.connectionMode == 1 :
-            self.driver.send_signal("connected",self.driver.hardwareHandler.port) 
+            self.driver._send_signal("connected",self.driver.hardwareHandler.port) 
             
     def connectionLost(self,reason="connectionLost"):
         self.driver.is_handshake_ok=False
         log.msg("Device disconnected",system="Driver",logLevel=logging.INFO)  
         if self.driver.connectionMode==1:
-            self.driver.send_signal("disconnected",self.driver.hardwareHandler.port)
+            self.driver._send_signal("disconnected",self.driver.hardwareHandler.port)
         if self._timeout:
             try:
                 self._timeout.cancel()
@@ -69,7 +69,7 @@ class BaseProtocol(Protocol):
             
             
     
-    def _query_hardware_id(self):
+    def _get_hardware_id(self):
         """method for retrieval of device info (for id and more) """
         pass   
     
@@ -77,7 +77,7 @@ class BaseProtocol(Protocol):
         """ method for setting device id: MANDATORY for all drivers/protocols """
         pass
     
-    def _handle_device_handshake(self,data):
+    def _handle_hardware_handshake(self,data):
         """
         handles machine (hardware node etc) initialization
         data: the incoming data from the machine
@@ -87,13 +87,13 @@ class BaseProtocol(Protocol):
             if self.ref_handshake in data:
                 self.driver.is_handshake_ok=True
                 log.msg("Device ref_handshake validated",system="Driver",logLevel=logging.DEBUG)
-                self._query_hardware_id()
+                self._get_hardware_id()
             else:
                 log.msg("Device hanshake mismatch: expected :",self.ref_handshake,"got:",data,system="Driver",logLevel=logging.DEBUG)
                 self.driver.reconnect()
         else:
             self.driver.is_handshake_ok=True
-            self._query_hardware_id()
+            self._get_hardware_id()
             
     def _handle_device_id_init(self,data):
         """
@@ -118,7 +118,7 @@ class BaseProtocol(Protocol):
         return data
     
     def dataReceived(self, data):
-        self._cancel_timeout()
+        self.cancel_timeout()
         data=data.encode('utf-8')
         data=data.replace(' ','')
         data=self._format_data_in(data)
@@ -128,17 +128,17 @@ class BaseProtocol(Protocol):
         if not self.driver.connectionMode==3:
             if not self.driver.isConfigured:
                 if not self.driver.is_handshake_ok:
-                    self._handle_device_handshake(data)
-                elif not self.driver.is_identification_ok:
+                    self._handle_hardware_handshake(data)
+                elif not self.driver.is_authentification_ok:
                     self._handle_device_id_init(data)
             else:
                 if not self.driver.is_handshake_ok:
-                    self._handle_device_handshake(data)
+                    self._handle_hardware_handshake(data)
                 else:
                     self.driver._handle_response(data)
         else:
             if not self.driver.is_handshake_ok:
-                self._handle_device_handshake(data)
+                self._handle_hardware_handshake(data)
             else:
                 self.driver._handle_response(data)
                             
@@ -148,7 +148,7 @@ class BaseProtocol(Protocol):
         """    
         try:
             log.msg("Data sent >>: ",self._format_data_out(data),system="Driver",logLevel=logging.DEBUG)
-            self._set_timeout()
+            self.set_timeout()
             self.transport.write(self._format_data_out(data))
         except Exception:
             log.msg("serial device not connected or not found on specified port",system="Driver",logLevel=logging.CRITICAL)
@@ -160,7 +160,7 @@ class BaseTextSerialProtocol(BaseProtocol):
     def __init__(self,driver=None,is_buffering=True,seperator='\r\n',handshake="start"):  
         BaseProtocol.__init__(self, driver, is_buffering, seperator,handshake)
         self._in_data_buffer=""
-        self.regex = re.compile(self.seperator)
+        self._regex = re.compile(self.seperator)
     
             
     def _handle_device_id_init(self,data):
@@ -191,7 +191,7 @@ class BaseTextSerialProtocol(BaseProtocol):
                 elif self.driver.deviceId!= data:
                     log.msg("Remote and local DeviceId mismatch settind distant device id to",self.driver.deviceId,system="Driver",logLevel=logging.DEBUG)
                     self._set_hardware_id()
-                    #self._query_hardware_id()
+                    #self._get_hardware_id()
                     """if we end up here again, it means something went wrong with 
                     the remote setting of id, so add to errors"""
                     self.driver.connectionErrors+=1
@@ -216,7 +216,7 @@ class BaseTextSerialProtocol(BaseProtocol):
                 sucess=True
                 
         if sucess is True: 
-            self.driver.is_identification_ok=True
+            self.driver.is_authentification_ok=True
             log.msg("DeviceId match ok: id is ",data,system="Driver",logLevel=logging.DEBUG)
             self.driver.isConfigured=True 
             self.driver.disconnect()
@@ -239,7 +239,7 @@ class BaseTextSerialProtocol(BaseProtocol):
         return data+'\n'
         
     def dataReceived(self, data):
-        self._cancel_timeout()
+        self.cancel_timeout()
         try:
             if self.is_buffering:   
                 self._in_data_buffer+=str(data.encode('utf-8'))
@@ -247,7 +247,7 @@ class BaseTextSerialProtocol(BaseProtocol):
                 #if we have NOT already checked the last state of the data block, then check it
                 results=None
                 try:
-                    results=self.regex.search(self._in_data_buffer)        
+                    results=self._regex.search(self._in_data_buffer)        
                 except Exception as inst:
                     log.msg("Error while parsing serial data :",self._in_data_buffer,"error:",inst,system="driver",logLevel=logging.CRITICAL)
                     
@@ -259,22 +259,22 @@ class BaseTextSerialProtocol(BaseProtocol):
                     except Exception as inst:
                         log.msg("Error while formatting serial data :",inst,system="Driver",logLevel=logging.CRITICAL)  
                     log.msg("Data recieved <<: ",nDataBlock,system="Driver",logLevel=logging.DEBUG)  
-                    self._set_timeout()
+                    self.set_timeout()
                     try:
                         if not self.driver.connectionMode==3:
                             if not self.driver.isConfigured:
                                     if not self.driver.is_handshake_ok:
-                                        self._handle_device_handshake(nDataBlock)
-                                    elif not self.driver.is_identification_ok:
+                                        self._handle_hardware_handshake(nDataBlock)
+                                    elif not self.driver.is_authentification_ok:
                                         self._handle_device_id_init(nDataBlock)
                             else:
                                 if not self.driver.is_handshake_ok:
-                                    self._handle_device_handshake(nDataBlock)
+                                    self._handle_hardware_handshake(nDataBlock)
                                 else:
                                     self.driver._handle_response(nDataBlock)
                         else:
                             if not self.driver.is_handshake_ok:
-                                    self._handle_device_handshake(nDataBlock)
+                                    self._handle_hardware_handshake(nDataBlock)
                             else:
                                 self.driver._handle_response(nDataBlock)
                     except Exception as inst:
@@ -283,7 +283,7 @@ class BaseTextSerialProtocol(BaseProtocol):
                     self._in_data_buffer=self._in_data_buffer[results.end():]
                     results=None
                     try:
-                        results =self.regex.search(self._in_data_buffer)
+                        results =self._regex.search(self._in_data_buffer)
                     except:
                         print("ljklj")
         except Exception as inst:
@@ -299,7 +299,7 @@ class BaseTextSerialProtocol(BaseProtocol):
             if isinstance(data,unicode):
                 data=unicodedata.normalize('NFKD', data).encode('ascii','ignore')
             log.msg("Data sent >>: ",data," done",system="Driver",logLevel=logging.DEBUG)
-            self._set_timeout()
+            self.set_timeout()
             self.transport.write(data)
         except OSError:
             log.msg("serial device not connected or not found on specified port",system="Driver",logLevel=logging.CRITICAL)

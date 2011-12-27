@@ -78,7 +78,7 @@ class DriverManager(object):
                 yield driver.save()  
                 driver.node.set(parentNode)
                 yield driver.setup()
-                cls.register_driver(driver,creation=True)
+                cls._register_driver(driver,creation=True)
                 break
         if not driver:
             raise UnknownDriver()
@@ -96,7 +96,7 @@ class DriverManager(object):
                 if drvType==driverKlass.__name__.lower():
                     driver=yield driverKlass.find(where=['node_id = ?', parentNode.id],limit=1)
                     yield driver.setup()
-                    cls.register_driver(driver)
+                    cls._register_driver(driver)
                     defer.returnValue(driver)
         
         if driverId is not None:
@@ -148,7 +148,7 @@ class DriverManager(object):
         defer.returnValue(driverTypes)
     
     @classmethod
-    def register_driver(cls,driver,creation=False):
+    def _register_driver(cls,driver,creation=False):
         log.msg("Registering driver",driver,logLevel=logging.DEBUG,system="Driver")
         if not driver.connectionType in cls.connectionsInfos:
             cls.connectionsInfos[driver.connectionType]=ConnectionInfo(driver.hardwareHandler.__class__)
@@ -159,7 +159,7 @@ class DriverManager(object):
         #cls._start_bind_attempt(driver)
             
     @classmethod
-    def unregister_driver(cls,driver):
+    def _unregister_driver(cls,driver):
         """for driver removal from the list of registered drivers"""
         cls.connectionsInfos[driver.connectionType].remove_drivers([driver])
 
