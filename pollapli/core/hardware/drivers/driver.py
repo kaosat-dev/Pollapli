@@ -7,6 +7,7 @@ from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.exceptions import DeviceNotConnected
 from pollapli.core.base_component import BaseComponent
 import time
+from twisted.internet.error import TimeoutError
 
 
 class Driver(BaseComponent):
@@ -18,9 +19,9 @@ class Driver(BaseComponent):
      You can think of the events beeing sent out by the driver(dataRecieved...)
      as interupts of sorts
     """
-    def __init__(self, auto_connect=False, max_connection_errors=2,
-        connection_timeout=4, do_hanshake=False, do_authentifaction=False,
-        *args, **kwargs):
+    def __init__(self, hardware_id=None, auto_connect=False,
+        max_connection_errors=2, connection_timeout=4, do_hanshake=False,
+        do_authentification=False):
         """
         autoconnect:if autoconnect is True,device will be connected as soon as
         it is plugged in and detected
@@ -34,10 +35,10 @@ class Driver(BaseComponent):
         self.auto_connect = auto_connect
         self.max_connection_errors = max_connection_errors
         self.connection_timeout = connection_timeout
-        self.do_authentifaction = do_authentifaction
+        self.do_authentification = do_authentification
         self.do_handshake = do_hanshake
         self._hardware_interface = None
-        self.hardware_id = None
+        self.hardware_id = hardware_id
         self.is_configured = False
         self.is_bound = False  # when port association has not been set
         self.is_handshake_ok = False
@@ -45,6 +46,7 @@ class Driver(BaseComponent):
         self.is_connected = False
         self.is_plugged_in = False
 
+        self.errors = []
         self.connection_errors = 0
         self.connection_mode = 1
         self.deferred = defer.Deferred()
@@ -80,8 +82,8 @@ class Driver(BaseComponent):
     """
     def set_timeout(self):
         """sets internal timeout"""
-        if self.connection_timeout>0:
-            log.msg("Setting _timeout at ", time.time(), logLevel=logging.DEBUG)
+        if self.connection_timeout > 0:
+            log.msg("Setting timeout at ", time.time(), system="Driver", logLevel=logging.DEBUG)
             self._timeout = reactor.callLater(self.connection_timeout, self._timeout_check)
 
     def cancel_timeout(self):
@@ -89,19 +91,17 @@ class Driver(BaseComponent):
         if self._timeout is not None:
             try:
                 self._timeout.cancel()
-                log.msg("Canceling timeout at ", time.time(), logLevel=logging.DEBUG)
+                log.msg("Canceling timeout at ", time.time(), system="Driver", logLevel=logging.DEBUG)
             except:
                 pass
 
     def _timeout_check(self):
         """checks the timeout"""
-        if self.is_connected:
-            log.msg("Timeout check at ", time.time(), logLevel=logging.DEBUG)
-            self.cancel_timeout()
-            self.connection_errors += 1
-            self.reconnect()
-        else:
-            self.cancel_timeout()
+        log.msg("Timeout check at ", time.time(), logLevel=logging.DEBUG)
+        self.cancel_timeout()
+        self.errors.append(TimeoutError())
+        self.connection_errors += 1
+        self.reconnect()
 
     """
     ###########################################################################
@@ -120,8 +120,13 @@ class Driver(BaseComponent):
             raise Exception("Invalid connection mode")
         self.deferred = defer.Deferred()
         self.connection_mode = connection_mode
-        log.msg("Connecting in mode:", self.connection_mode, system="Driver", logLevel=logging.CRITICAL)
-        self._hardware_interface.connect(port=port)
+        self.errors = []
+        self.connection_errors = 0
+        mode_str = "Normal"
+        if self.connection_mode == 1:
+            mode_str = "Setup"
+        log.msg("Connecting in %s mode:" % mode_str, system="Driver", logLevel=logging.CRITICAL)
+        reactor.callLater(0.1, self._hardware_interface.connect, port)
         return self.deferred
 
     def reconnect(self, *args, **kwargs):
@@ -130,6 +135,8 @@ class Driver(BaseComponent):
 
     def disconnect(self, *args, **kwargs):
         """Disconnect driver"""
+        self.is_connected = False
+        self.cancel_timeout()
         self._hardware_interface.disconnect(*args, **kwargs)
 
     def _plugged_in(self, port):

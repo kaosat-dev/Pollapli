@@ -8,7 +8,6 @@ from zope.interface import classProvides
 from twisted.plugin import IPlugin
 from twisted.internet.protocol import Protocol
 from twisted.internet.interfaces import IProtocol
-from uuid import uuid4
 
 
 class DummyProtocol(Protocol):
@@ -24,7 +23,7 @@ class BaseProtocol(Protocol):
         self.driver = driver
         self.handshake = handshake
         self._data_handlers_order = [self.driver._handle_response]
-        if self.driver.do_authentifaction:
+        if self.driver.do_authentification:
             self._data_handlers_order.insert(0, self._handle_authentification)
         if self.driver.do_handshake:
             self._data_handlers_order.insert(0, self._handle_handshake)
@@ -33,15 +32,15 @@ class BaseProtocol(Protocol):
     def connectionMade(self):
         """called upon connection"""
         log.msg("Device connected", system="Driver", logLevel=logging.INFO)
-        self.driver.set_timeout()
         if self.driver.connection_mode == 1:
             self.driver._send_signal("connected", self.driver._hardware_interface.port)
+        self.driver.set_timeout()
 
     def connectionLost(self, reason="connectionLost"):
+        self.driver.cancel_timeout()
         log.msg("Device disconnected", system="Driver", logLevel=logging.INFO)
         if self.driver.connection_mode == 1:
             self.driver._send_signal("disconnected", self.driver._hardware_interface.port)
-        self.driver.cancel_timeout()
 
     """
     ###########################################################################
@@ -65,7 +64,6 @@ class BaseProtocol(Protocol):
         raise NotImplementedError()
 
     def dataReceived(self, data):
-        self.driver.cancel_timeout()
         data = self._format_data_in(data)
         log.msg("Data recieved <<: ", data,system = "Driver", logLevel = logging.DEBUG)
         self.driver._handle_response(data)
@@ -78,7 +76,6 @@ class BaseProtocol(Protocol):
         try:
             data = self._format_data_out(data)
             log.msg("Data sent >>: ", data, system="Driver", logLevel=logging.DEBUG)
-            self.driver.set_timeout()
             self.transport.write(data)
         except Exception:
             log.msg("serial device not connected or not found on specified port", system="Driver", logLevel=logging.CRITICAL)
@@ -88,7 +85,7 @@ class BaseProtocol(Protocol):
             is_hans_ok = False
             is_auth_ok = False
 
-            if self.driver.do_authentifaction:
+            if self.driver.do_authentification:
                 if self.driver.is_authentification_ok:
                     is_auth_ok = True
             else:
@@ -101,6 +98,7 @@ class BaseProtocol(Protocol):
                 is_hans_ok = True
 
             if is_hans_ok and is_auth_ok:
+                self.driver.cancel_timeout()
                 self.driver.is_connected = True
                 if self.driver.connection_mode == 0:
                     self.driver.is_configured = True
@@ -133,13 +131,13 @@ class BaseProtocol(Protocol):
         """
         log.msg("Attempting to validate hardware handshake", system="Driver", logLevel=logging.INFO)
         if self.handshake is None:
-            raise Exception("No handshake specified")
+            raise Exception("No hardware handshake specified")
         if self.handshake in data:
             self.driver.is_handshake_ok = True
-            log.msg("Device handshake validated", system="Driver", logLevel=logging.DEBUG)
+            log.msg("Hardware handshake validated", system="Driver", logLevel=logging.DEBUG)
             self._data_handler_index += 1
 
-            if self.driver.do_authentifaction:
+            if self.driver.do_authentification:
                 self._get_hardware_id()
             else:
                 self._dispatch_response(data)
@@ -152,7 +150,7 @@ class BaseProtocol(Protocol):
         handles machine authentification
         :param data: the incoming data from the machine (should be the hardware id)
         """
-        if self.driver.do_authentifaction:
+        if self.driver.do_authentification:
 #            if not hasattr(self, "_authentification_in_progress"):
 #                self._authentification_in_progress = True
 #                self._get_hardware_id()
@@ -172,7 +170,7 @@ class BaseProtocol(Protocol):
                 raise Exception("No identifier specified")
             if data == str(self.driver.hardware_id):
                 self.driver.is_authentification_ok = True
-                log.msg("Device indentification validated", system="Driver", logLevel=logging.DEBUG)
+                log.msg("Hardware authentification validated", system="Driver", logLevel=logging.DEBUG)
                 self._data_handler_index += 1
                 self._dispatch_response(data)
             else:
@@ -222,8 +220,19 @@ class BaseTextSerialProtocol(BaseProtocol):
             log.msg("Error while formatting ouput data :", inst, system="Driver", logLevel=logging.CRITICAL)
             return ""
 
+    def send_data(self, data):
+        """
+        Simple wrapper to send data over serial
+        :param data: the data to send to the device
+        """
+        try:
+            data = self._format_data_out(data)
+            log.msg("Data sent >>: ", data.strip(), system="Driver", logLevel=logging.DEBUG)
+            self.transport.write(data)
+        except Exception:
+            log.msg("serial device not connected or not found on specified port", system="Driver", logLevel=logging.CRITICAL)
+            
     def dataReceived(self, data):
-        self.driver.cancel_timeout()
         try:
             self._in_data_buffer += str(data.encode('utf-8'))
             packets = None
@@ -236,7 +245,6 @@ class BaseTextSerialProtocol(BaseProtocol):
                 data_block = self._in_data_buffer[:packets.start()]
                 data_block = self._format_data_in(data_block)
                 log.msg("Data recieved <<: ", data_block, system="Driver", logLevel=logging.DEBUG)
-                self.driver.set_timeout()
                 self._dispatch_response(data_block)
                 self._in_data_buffer = self._in_data_buffer[packets.end():]
                 packets = None

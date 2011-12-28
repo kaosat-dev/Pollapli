@@ -36,10 +36,10 @@ class ExampleArduinoDriver(Driver):
     classProvides(IPlugin, ipollapli.IDriver)
     target_hardware = "Generic_arduino"
 
-    def __init__(self, auto_connect=False, max_connection_errors=3,
-        connection_timeout=0, do_hanshake=True, do_authentifaction=True,
-        speed=115200, *args, **kwargs):
-        Driver.__init__(self, auto_connect, max_connection_errors, connection_timeout, do_hanshake, do_authentifaction)
+    def __init__(self, hardware_id=None, auto_connect=False,
+        max_connection_errors=2, connection_timeout=4, do_hanshake=True,
+        do_authentification=True, speed=115200):
+        Driver.__init__(self, hardware_id, auto_connect, max_connection_errors, connection_timeout, do_hanshake, do_authentification)
         self._hardware_interface = SerialHardwareInterface(self, ExampleArduinoProtocol, speed)
 
     def set_hardware_id(self, hardware_id=None):
