@@ -44,13 +44,13 @@ class Driver(BaseComponent):
         self.is_handshake_ok = False
         self.is_authentification_ok = False
         self.is_connected = False
-        self.is_plugged_in = False
+        self.is_bound = False
 
         self.errors = []
         self.connection_errors = 0
         self.connection_mode = 1
+        self._connection_timeout = None
         self.deferred = defer.Deferred()
-        self._timeout = None
 
         self._signal_channel_prefix = ""
         self._signal_dispatcher = SignalDispatcher("driver_manager")
@@ -80,25 +80,25 @@ class Driver(BaseComponent):
     ###########################################################################
     The following are the timeout related methods
     """
-    def set_timeout(self):
+    def set_connection_timeout(self):
         """sets internal timeout"""
         if self.connection_timeout > 0:
             log.msg("Setting timeout at ", time.time(), system="Driver", logLevel=logging.DEBUG)
-            self._timeout = reactor.callLater(self.connection_timeout, self._timeout_check)
+            self._connection_timeout = reactor.callLater(self.connection_timeout, self._connection_timeout_check)
 
-    def cancel_timeout(self):
+    def cancel_connection_timeout(self):
         """cancels internal timeout"""
-        if self._timeout is not None:
+        if self._connection_timeout is not None:
             try:
-                self._timeout.cancel()
+                self._connection_timeout.cancel()
                 log.msg("Canceling timeout at ", time.time(), system="Driver", logLevel=logging.DEBUG)
             except:
                 pass
 
-    def _timeout_check(self):
+    def _connection_timeout_check(self):
         """checks the timeout"""
         log.msg("Timeout check at ", time.time(), logLevel=logging.DEBUG)
-        self.cancel_timeout()
+        self.cancel_connection_timeout()
         self.errors.append(TimeoutError())
         self.connection_errors += 1
         self.reconnect()
@@ -125,7 +125,7 @@ class Driver(BaseComponent):
         mode_str = "Normal"
         if self.connection_mode == 1:
             mode_str = "Setup"
-        log.msg("Connecting in %s mode:" % mode_str, system="Driver", logLevel=logging.CRITICAL)
+        log.msg("Connecting driver in %s mode:" % mode_str, system="Driver", logLevel=logging.CRITICAL)
         reactor.callLater(0.1, self._hardware_interface.connect, port)
         return self.deferred
 
@@ -135,30 +135,13 @@ class Driver(BaseComponent):
 
     def disconnect(self, *args, **kwargs):
         """Disconnect driver"""
+        log.msg("Disconnecting driver", system="Driver", logLevel=logging.CRITICAL)
         self.is_connected = False
-        self.cancel_timeout()
+        self.cancel_connection_timeout()
         self._hardware_interface.disconnect(*args, **kwargs)
 
-    def _plugged_in(self, port):
-        """
-        first method that gets called upon successfull connection
-        """
-        self.is_plugged_in = True
-        self._send_signal("plugged_In", port)
-        if self.auto_connect:
-            """slight delay, to prevent certain problems when trying to send
-            data to the device too fast"""
-            reactor.callLater(1, self.connect, 1)
-
-    def _plugged_out(self, port):
-        """
-        first method that gets called upon sucessfull disconnection
-        """
-        self.is_handshake_ok = False
-        self.is_authentification_ok = False
-        self.is_connected = False
-        self.is_plugged_in = False
-        self._send_signal("plugged_Out", port)
+#self._send_signal("plugged_In", port)
+#self._send_signal("plugged_Out", port)
 
     """
     ###########################################################################

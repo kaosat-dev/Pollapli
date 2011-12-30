@@ -31,14 +31,14 @@ class BaseProtocol(Protocol):
 
     def connectionMade(self):
         """called upon connection"""
-        log.msg("Device connected", system="Driver", logLevel=logging.INFO)
+        log.msg("Hardware connection made", system="Driver_Protocol", logLevel=logging.INFO)
         if self.driver.connection_mode == 1:
             self.driver._send_signal("connected", self.driver._hardware_interface.port)
-        self.driver.set_timeout()
+        self.driver.set_connection_timeout()
 
     def connectionLost(self, reason="connectionLost"):
-        self.driver.cancel_timeout()
-        log.msg("Device disconnected", system="Driver", logLevel=logging.INFO)
+        self.driver.cancel_connection_timeout()
+        log.msg("Hardware connection lost", system="Driver_Protocol", logLevel=logging.INFO)
         if self.driver.connection_mode == 1:
             self.driver._send_signal("disconnected", self.driver._hardware_interface.port)
 
@@ -98,7 +98,7 @@ class BaseProtocol(Protocol):
                 is_hans_ok = True
 
             if is_hans_ok and is_auth_ok:
-                self.driver.cancel_timeout()
+                self.driver.cancel_connection_timeout()
                 self.driver.is_connected = True
                 if self.driver.connection_mode == 0:
                     self.driver.is_configured = True
@@ -231,7 +231,7 @@ class BaseTextSerialProtocol(BaseProtocol):
             self.transport.write(data)
         except Exception:
             log.msg("serial device not connected or not found on specified port", system="Driver", logLevel=logging.CRITICAL)
-            
+
     def dataReceived(self, data):
         try:
             self._in_data_buffer += str(data.encode('utf-8'))

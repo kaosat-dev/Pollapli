@@ -5,7 +5,7 @@ from pollapli.core.hardware.drivers.tests.mock_driver import MockDriver
 from pollapli.core.logic.components.packages.package_manager import PackageManager
 
 
-class Test(unittest.TestCase):
+class TestHardwareLayer(unittest.TestCase):
 
     def setUp(self):
         self._package_manager = PackageManager()

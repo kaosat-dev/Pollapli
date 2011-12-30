@@ -49,7 +49,8 @@ class SerialHardwareInterface(BaseHardwareInterface):
     def connect(self, port=None, *args, **kwargs):
         log.msg("Connecting... to port:", port, " at speed ", self.speed, " in mode ", self.driver.connection_mode, system="Driver", logLevel=logging.DEBUG)
         if self.port is None and port is None:
-            raise Exception("No port specified")
+            self.driver.errors.append(Exception("No Port specified"))
+#            raise Exception("No port specified")
         if port is not None:
             self.port = port
         self._connect(port, *args, **kwargs)
@@ -75,7 +76,7 @@ class SerialHardwareInterface(BaseHardwareInterface):
 
     def _connect(self, *args, **kwargs):
         """Port connection/reconnection procedure"""
-        if self.port and self.driver.connection_errors < self.driver.max_connection_errors:
+        if self.port is not None and self.driver.connection_errors < self.driver.max_connection_errors:
             try:
                 if not self.port in SerialHardwareInterface.blocked_ports:
                     SerialHardwareInterface.blocked_ports.append(self.port)

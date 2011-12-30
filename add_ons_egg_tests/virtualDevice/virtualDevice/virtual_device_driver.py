@@ -21,7 +21,7 @@ class VirtualDeviceProtocol(BaseProtocol):
         
     def connectionMade(self):
         log.msg("Device connected",system="Driver",logLevel=logging.INFO)   
-        self.set_timeout()    
+        self.set_connection_timeout()    
         if self.driver.connectionMode == 1 :
             self.driver._send_signal("connected",self.driver.hardwareHandler.port) 
         self.virtualDevice.setup()

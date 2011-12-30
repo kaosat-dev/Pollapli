@@ -86,7 +86,7 @@ class TestDriverManager(unittest.TestCase):
 #        obs_ubound_ports = self._driverManager.get_unbound_ports(driver.hardware_interface_class)
 #        exp_ubound_ports = ["port1"]
 #        self.assertEquals(obs_ubound_ports, exp_ubound_ports)
-#
+
 #    def test_connect_driver(self):
 #        driver_class = MockDriver
 #        MockHardwareInterface.available_ports = ["port1"]

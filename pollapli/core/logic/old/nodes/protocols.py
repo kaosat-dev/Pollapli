@@ -25,35 +25,35 @@ class BaseProtocol(Protocol):
         self.seperator=seperator
         self.ref_handshake=handshake
         self._in_data_buffer=[]
-        self._timeout=None
+        self._connection_timeout=None
         
-    def _timeout_check(self,*args,**kwargs):
+    def _connection_timeout_check(self,*args,**kwargs):
         if self.driver.isConnected:
             if self.driver.connectionMode==2:
                 log.msg("Here Timeout check at ",time.time(),logLevel=logging.DEBUG)
-                self.cancel_timeout()
+                self.cancel_connection_timeout()
                 self.driver.connectionErrors+=1
                 self.driver.reconnect()
             else:
-                self.cancel_timeout()
+                self.cancel_connection_timeout()
         else:
-            self.cancel_timeout()
+            self.cancel_connection_timeout()
 
-    def set_timeout(self):
+    def set_connection_timeout(self):
         if self.driver.connectionMode==2:
-            log.msg("Setting _timeout at ",time.time(),logLevel=logging.DEBUG)    
-            self._timeout=reactor.callLater(self.driver.connectionTimeout,self._timeout_check)
+            log.msg("Setting _connection_timeout at ",time.time(),logLevel=logging.DEBUG)    
+            self._connection_timeout=reactor.callLater(self.driver.connectionTimeout,self._connection_timeout_check)
         
-    def cancel_timeout(self):
-            if self._timeout:
+    def cancel_connection_timeout(self):
+            if self._connection_timeout:
                 try:
-                    self._timeout.cancel()
-                    log.msg("Cancel _timeout at ",time.time(),logLevel=logging.DEBUG)
+                    self._connection_timeout.cancel()
+                    log.msg("Cancel _connection_timeout at ",time.time(),logLevel=logging.DEBUG)
                 except:pass
                            
     def connectionMade(self):
         log.msg("Device connected",system="Driver",logLevel=logging.INFO)   
-        self.set_timeout()    
+        self.set_connection_timeout()    
         if self.driver.connectionMode == 1 :
             self.driver._send_signal("connected",self.driver.hardwareHandler.port) 
             
@@ -62,9 +62,9 @@ class BaseProtocol(Protocol):
         log.msg("Device disconnected",system="Driver",logLevel=logging.INFO)  
         if self.driver.connectionMode==1:
             self.driver._send_signal("disconnected",self.driver.hardwareHandler.port)
-        if self._timeout:
+        if self._connection_timeout:
             try:
-                self._timeout.cancel()
+                self._connection_timeout.cancel()
             except: pass
             
             
@@ -118,7 +118,7 @@ class BaseProtocol(Protocol):
         return data
     
     def dataReceived(self, data):
-        self.cancel_timeout()
+        self.cancel_connection_timeout()
         data=data.encode('utf-8')
         data=data.replace(' ','')
         data=self._format_data_in(data)
@@ -148,7 +148,7 @@ class BaseProtocol(Protocol):
         """    
         try:
             log.msg("Data sent >>: ",self._format_data_out(data),system="Driver",logLevel=logging.DEBUG)
-            self.set_timeout()
+            self.set_connection_timeout()
             self.transport.write(self._format_data_out(data))
         except Exception:
             log.msg("serial device not connected or not found on specified port",system="Driver",logLevel=logging.CRITICAL)
@@ -239,7 +239,7 @@ class BaseTextSerialProtocol(BaseProtocol):
         return data+'\n'
         
     def dataReceived(self, data):
-        self.cancel_timeout()
+        self.cancel_connection_timeout()
         try:
             if self.is_buffering:   
                 self._in_data_buffer+=str(data.encode('utf-8'))
@@ -259,7 +259,7 @@ class BaseTextSerialProtocol(BaseProtocol):
                     except Exception as inst:
                         log.msg("Error while formatting serial data :",inst,system="Driver",logLevel=logging.CRITICAL)  
                     log.msg("Data recieved <<: ",nDataBlock,system="Driver",logLevel=logging.DEBUG)  
-                    self.set_timeout()
+                    self.set_connection_timeout()
                     try:
                         if not self.driver.connectionMode==3:
                             if not self.driver.isConfigured:
@@ -299,7 +299,7 @@ class BaseTextSerialProtocol(BaseProtocol):
             if isinstance(data,unicode):
                 data=unicodedata.normalize('NFKD', data).encode('ascii','ignore')
             log.msg("Data sent >>: ",data," done",system="Driver",logLevel=logging.DEBUG)
-            self.set_timeout()
+            self.set_connection_timeout()
             self.transport.write(data)
         except OSError:
             log.msg("serial device not connected or not found on specified port",system="Driver",logLevel=logging.CRITICAL)

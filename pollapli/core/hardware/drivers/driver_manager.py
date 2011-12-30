@@ -363,6 +363,7 @@ class DriverManager(object):
     The following are the plug&play and registration methods for drivers
     """
 
+    @defer.inlineCallbacks
     def connect_to_hardware(self, driver_id=None, port=None, connection_mode=1):
         """driver_id : the id of the driver to connect
         connection_mode: the mode in which to connect the driver
@@ -370,14 +371,21 @@ class DriverManager(object):
         first search if driver is already bound, if it is use that data
         """
         driver = self.get_driver(driver_id=driver_id)
+        if port is None:
+                unbound_ports = self.get_unbound_ports(driver.hardware_interface_class)
+                if len(unbound_ports) == 0:
+                    raise Exception("No port specified and no port available")
+                port = unbound_ports[0]
         if connection_mode == 2:
             """special case for forced connection"""
-            unbound_ports = self.get_unbound_ports(driver.hardware_interface_class)
-            if len(unbound_ports) > 0:
-                port = unbound_ports[0]
-                log.msg("Connecting in mode:", connection_mode, "to port", port, system="DriverManager", logLevel=logging.CRITICAL)
-                self._port_to_driver_bindings.bind(driver, port)
-        driver.connect(port=port, connection_mode=connection_mode)
+            self._port_to_driver_bindings.bind(driver, port)
+        elif connection_mode == 0:
+            pass
+#            if driver.hardware_id is None:
+#                raise Exception("No HardwareId specified Cannot configure hardware to port permabind ")
+
+        log.msg("Connecting to hardware in mode:", connection_mode, "to port", port, system="DriverManager", logLevel=logging.CRITICAL)
+        yield driver.connect(port=port, connection_mode=connection_mode)
 
     def upload_firmware(self, firmware):
         """upload a specific firmware to a given device
@@ -399,6 +407,7 @@ class DriverManager(object):
 
     def _unregister_driver(self, driver):
         """for driver removal from the list of registered drivers"""
+        log.msg("Unregistering driver", driver, system="DriverManager", logLevel=logging.DEBUG)
         self._hardware_interfaces[driver.hardware_interface_class].remove_drivers([driver])
 
     @defer.inlineCallbacks
@@ -442,9 +451,12 @@ class DriverManager(object):
             if binding_ok:
                 self._hardware_interfaces[driver.hardware_interface_class].bind(driver, port)
                 log.msg("Driver", str(driver), "plugged in to port", port, system="DriverManager", logLevel=logging.DEBUG)
-                driver._plugged_in(port)
+                driver.is_bound = True
+                if not driver.auto_connect:
+                    driver.disconnect()
             else:
                 self._hardware_interfaces[driver.hardware_interface_class].add_to_tested(driver, port)
+                driver.disconnect()
                 log.msg("failed to plug ", driver, "to port", port, system="DriverManager", logLevel=logging.DEBUG)
 
     def check_for_port_changes(self, old_list, new_list):
@@ -489,6 +501,6 @@ class DriverManager(object):
                 for driver in set(oldBoundDrivers) - set(newBoundDrivers):
                     port = driver.hardwareHandler.port
                     log.msg("Driver", driver, "plugged out of port", port, " in connection type", hardware_interface, system="DriverManager", logLevel=logging.DEBUG)
-                    driver.pluggedOut(port)
+                    driver.is_bound = False
 
 #        self._hardware_poller = reactor.callLater(self.hardware_poll_requency, self.update_device_list)
