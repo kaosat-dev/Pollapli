@@ -67,7 +67,7 @@ class Driver(object):
         """will be needed to identify a specific device, as the system does not work base on ports"""
      
         self._signal_dispatcher=None 
-        self.signalChannelPrefix=""
+        self.signal_channel_prefix=""
         self._signal_channel=""
         
         self.isConfigured=False#when the port association has not been set
@@ -121,7 +121,7 @@ class Driver(object):
         
         node= (yield self.node.get())
         env= (yield node.environment.get())
-        self.signalChannelPrefix="environment_"+str(env.id)+".node_"+str(node.id)
+        self.signal_channel_prefix="environment_"+str(env.id)+".node_"+str(node.id)
 
         self._signal_dispatcher.add_handler(handler=self.send_command,signal="addCommand")
         log.msg("Driver of type",self.driverType ,"setup sucessfully",system="Driver",logLevel=logging.INFO)
@@ -174,7 +174,7 @@ class Driver(object):
         #self._signal_dispatcher.send_message("pluggedOut",{"data":port})
     
     def _send_signal(self,signal="",data=None):
-        prefix=self.signalChannelPrefix+".driver."
+        prefix=self.signal_channel_prefix+".driver."
         self._signal_dispatcher.send_message(prefix+signal,self,data)
     
     def send_command(self,data,sender=None,callback=None,*args,**kwargs):

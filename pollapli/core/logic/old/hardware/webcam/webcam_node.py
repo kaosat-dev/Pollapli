@@ -56,7 +56,7 @@ class WebcamNode(DBObject):
         Function that handles possible Webcam connector disconnection 
         """
         self.logger.critical("Webcam connector disconnected !!!")
-        self.isPaused=True
+        self.is_paused=True
     
        
     def _on_connector_reconnected(self,args,kargs):

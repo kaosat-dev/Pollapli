@@ -35,7 +35,7 @@ class PackageManager(object):
         self._path_manager = pathManager
         self._signal_channel = "package_manager"
         self._signal_dispatcher = SignalDispatcher(self._signal_channel)
-        self.signalChannelPrefix = "package_manager"
+        self.signal_channel_prefix = "package_manager"
 
         pollapli_package = Package(name="Pollapli", description="core package", version="0.5.0", installed=True)
         pollapli_package.cid = uuid.UUID("23b0d813-a6b2-461a-88ad-a7020ae67742")
@@ -74,7 +74,7 @@ class PackageManager(object):
         pass
 
     def _send_signal(self, signal="", data=None):
-        prefix = "%s." % self.signalChannelPrefix
+        prefix = "%s." % self.signal_channel_prefix
         self._signal_dispatcher.send_message(prefix + signal, self, data)
 
     def enable_package_checking(self):

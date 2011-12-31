@@ -12,11 +12,11 @@ class SqliteDaoManager(object):
     def __init__(self, pathManager = None):
         self._path_manager = pathManager
         self._persistenceStrategy = SqlitePersistenceStrategy()
-        self._dbPool = adbapi.ConnectionPool("sqlite3","pollapli.db",check_same_thread=False)
-        self._updateDao = UpdateSqliteDao(dbPool = self._dbPool,persistenceStrategy = self._persistenceStrategy)
-        self._environmentDao = EnvironmentSqliteDao(dbPool = self._dbPool, persistenceStrategy = self._persistenceStrategy)
-        self._deviceDao = DeviceSqliteDao(dbPool = self._dbPool, persistenceStrategy = self._persistenceStrategy)
-        self._taskDao = TaskSqliteDao(dbPool = self._dbPool)
+        self._db_pool = adbapi.ConnectionPool("sqlite3","pollapli.db",check_same_thread=False)
+        self._updateDao = UpdateSqliteDao(db_pool = self._db_pool,persistenceStrategy = self._persistenceStrategy)
+        self._environmentDao = EnvironmentSqliteDao(db_pool = self._db_pool, persistenceStrategy = self._persistenceStrategy)
+        self._deviceDao = DeviceSqliteDao(db_pool = self._db_pool, persistenceStrategy = self._persistenceStrategy)
+        self._taskDao = TaskSqliteDao(db_pool = self._db_pool)
         
     def __getattr__(self, attr_name):
         if hasattr(self._updateDao, attr_name):
@@ -32,4 +32,4 @@ class SqliteDaoManager(object):
     
     @defer.inlineCallbacks
     def tearDown(self):
-        yield self._dbPool.close()
+        yield self._db_pool.close()

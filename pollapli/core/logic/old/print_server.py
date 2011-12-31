@@ -127,11 +127,11 @@ def printing(command):
         lastIndex=int(request.GET.get('LastIndex', '').strip())
         blockSize=int(request.GET.get('blockSize', '').strip())
         try:
-            truc=testBottle.reprapManager.currentTask.pointCloud.points[lastIndex:]
+            truc=testBottle.reprapManager.currentTask.point_cloud.points[lastIndex:]
             truc=",".join(str(pt) for pt in truc)
             truc='['+truc+']'
             progress=testBottle.reprapManager.currentTask.progress
-            data={"jobType":'print',"progress":progress,"duration":testBottle.reprapManager.currentTask.totalTime,"positions":str(truc),"commandHistory":testBottle.reprapManager.currentTask.gcodeHistory,"layer":testBottle.reprapManager.currentTask.currentLayer}
+            data={"jobType":'print',"progress":progress,"duration":testBottle.reprapManager.currentTask.total_time,"positions":str(truc),"commandHistory":testBottle.reprapManager.currentTask.gcodeHistory,"layer":testBottle.reprapManager.currentTask.currentLayer}
             response=callback+"("+str(data)+")"
             testBottle.logger.info("response %s",str(response))  
 
@@ -203,7 +203,7 @@ def scanning(command):
         blockSize=int(request.GET.get('blockSize', '').strip())
         testBottle.logger.info("lastIndex %s",str(lastIndex))  
         try:
-            truc=testBottle.reprapManager.currentTask.pointCloud.points[lastIndex:]
+            truc=testBottle.reprapManager.currentTask.point_cloud.points[lastIndex:]
             truc=",".join(str(pt) for pt in truc)
             truc='['+truc+']'
             progress=testBottle.reprapManager.currentTask.progress

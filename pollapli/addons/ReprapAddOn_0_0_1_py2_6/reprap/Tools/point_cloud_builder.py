@@ -32,7 +32,7 @@ class PointCloudBuilder(object):
         self.currentPoint=Point(0,0,0)
         self.finished=False
         
-        self.pointCloud=PointCloud();
+        self.point_cloud=PointCloud();
         self.pointIndex=0
         
         self.Even=True
@@ -41,12 +41,12 @@ class PointCloudBuilder(object):
     def add_point(self,z):
         if self.passCombineMethod==0:
             self.currentPoint.z=z
-            self.pointCloud.add_point(Point(self.currentPoint.x,self.currentPoint.y,z))
+            self.point_cloud.add_point(Point(self.currentPoint.x,self.currentPoint.y,z))
         elif self.passCombineMethod==1:
             if self.currentPass==0:
-                self.pointCloud.add_point(Point(self.currentPoint.x,self.currentPoint.y,z/self.passes))
+                self.point_cloud.add_point(Point(self.currentPoint.x,self.currentPoint.y,z/self.passes))
             else:
-                self.pointCloud.points[self.pointIndex].z+=z/self.passes
+                self.point_cloud.points[self.pointIndex].z+=z/self.passes
   
     def next_point_continuous(self):
         """

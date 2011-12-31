@@ -7,10 +7,10 @@ from pollapli.core.logic.components.devices.device import Device
 from pollapli.exceptions import DeviceNotFound
 
 class DeviceSqliteDao(DeviceDao):
-    def __init__(self,dbPool=None,persistenceStrategy=None):
-        self._dbPool=dbPool
+    def __init__(self,db_pool=None,persistenceStrategy=None):
+        self._db_pool=db_pool
         #self._persistenceStrategy = persistenceStrategy
-        self._tableCreated = False
+        self._table_created = False
                     
     def _get_last_insertId(self, txn):
         txn.execute("SELECT last_insert_rowid()")
@@ -18,7 +18,7 @@ class DeviceSqliteDao(DeviceDao):
         return result[0][0]
     
     def _execute_txn(self, txn, query, *args,**kwargs):
-        #if not self._tableCreated:
+        #if not self._table_created:
             try:
                 txn.execute('''SELECT name FROM devices ''')
             except Exception as inst:
@@ -32,7 +32,7 @@ class DeviceSqliteDao(DeviceDao):
                     status TEXT NOT NULL DEFAULT "inactive",
                     environment_uid INTEGER 
                     )''')
-                    self._tableCreated = True
+                    self._table_created = True
                 except Exception as inst:
                     log.msg("error in load device second step",inst, logLevel=logging.CRITICAL)
                    
@@ -63,22 +63,22 @@ class DeviceSqliteDao(DeviceDao):
         if order is not None:
             query = query + " ORDER BY %s" %(str(order))
         
-        return self._dbPool.runInteraction(self._select,query,args)
+        return self._db_pool.runInteraction(self._select,query,args)
        
     def insert(self,tableName=None, query=None, args=None):  
         query = query or '''INSERT into devices VALUES(null,?,?,?,?,?)''' 
         args = args
-        return self._dbPool.runInteraction(self._insert,query,args)
+        return self._db_pool.runInteraction(self._insert,query,args)
     
     def update(self,tableName=None,query=None,args=None):  
         query = query or '''UPDATE devices SET name = ? ,description = ?, status = ?, environment_uid = ? WHERE id = ? ''' 
         args = args
-        return self._dbPool.runInteraction(self._update,query,args)
+        return self._db_pool.runInteraction(self._update,query,args)
     
     def delete(self,id=None,tableName=None,query=None,args=None):  
         args=[id]
         query = query or '''DELETE FROM devices WHERE id = ? '''
-        return self._dbPool.runInteraction(self._execute_txn,query,args)
+        return self._db_pool.runInteraction(self._execute_txn,query,args)
     
     @defer.inlineCallbacks
     def load_device(self,id = None, environmentId = None ,*args,**kwargs):
@@ -120,9 +120,9 @@ class DeviceSqliteDao(DeviceDao):
             parentUId = parentEnvironment.cid
             
         if hasattr(device,"_dbId"):
-            yield self.update(args = (device.name,device.description,device._status,str(parentUId),device._dbId))
+            yield self.update(args = (device.name,device.description,device.status,str(parentUId),device._dbId))
         else:
-            device._dbId = yield self.insert(args = (str(device.cid),device.name,device.description,device._status,str(parentUId)))                            
+            device._dbId = yield self.insert(args = (str(device.cid),device.name,device.description,device.status,str(parentUId)))                            
             
     @defer.inlineCallbacks
     def save_devices(self,lDevices):

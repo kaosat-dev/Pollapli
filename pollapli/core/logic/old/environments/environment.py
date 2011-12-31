@@ -19,18 +19,18 @@ class Environment(BaseComponent):
         self._persistenceLayer = persistenceLayer
         self.name=name
         self.description=description
-        self._status=status
+        self.status=status
         self._devices=DeviceManager(self)
         self._tasks=TaskManager(self)
         
     def __eq__(self, other):
-        return self.cid == other.cid and self.name == other.name and self.description == other.description and self._status == other._status
+        return self.cid == other.cid and self.name == other.name and self.description == other.description and self.status == other.status
     
     def __ne__(self, other):
         return not self.__eq__(other)
     
     def __str__(self):
-        return "%s %s %s" %(self.name,self.description,self._status)
+        return "%s %s %s" %(self.name,self.description,self.status)
     
     def __getattr__(self, attr_name):
         if hasattr(self._devices, attr_name):

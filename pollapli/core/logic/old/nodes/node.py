@@ -46,11 +46,11 @@ class Device(BaseComponent):
         BaseComponent.__init__(self, parent)
         self._name=name
         self._description=description
-        self._status = "inactive"
+        self.status = "inactive"
         self._driver=None 
         
     def __eq__(self, other):
-        return self.cid == other.cid and self._name == other._name and self._description == other._description and self._status == other._status
+        return self.cid == other.cid and self._name == other._name and self._description == other._description and self.status == other.status
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -89,8 +89,8 @@ class Node(DBObject):
         #self.linkedElements=[]
         
         """this is for internal comms handling"""
-        self.signalChannelPrefix=str(self.id)
-        self._signal_channel="node"+self.signalChannelPrefix+"."+self.name
+        self.signal_channel_prefix=str(self.id)
+        self._signal_channel="node"+self.signal_channel_prefix+"."+self.name
         self.signalHandler=SignalHander(self._signal_channel)
         self.signalHandler.add_handler(handler=self.variable_get,signal="get")
         self.signalHandler.add_handler(handler=self.variable_set,signal="set")
@@ -100,7 +100,7 @@ class Node(DBObject):
         self.driver=yield DriverManager.load(parentNode=self)
         
         env= (yield self.environment.get())
-        self.signalChannelPrefix="environment_"+str(env.id)+".node_"+str(self.id)
+        self.signal_channel_prefix="environment_"+str(env.id)+".node_"+str(self.id)
         
         log.msg("Node with id",self.id, "setup successfully",system="Node", logLevel=logging.CRITICAL)
         self.elementsandVarsTest()
@@ -332,7 +332,7 @@ class NodeManager(object):
         self.lastNodeId=0
         self._signal_channel="node_manager"
         self.signalHandler=SignalHander(self._signal_channel)
-        self.signalChannelPrefix="environment_"+str(self.parentEnvironment.id)
+        self.signal_channel_prefix="environment_"+str(self.parentEnvironment.id)
      
     @defer.inlineCallbacks    
     def setup(self):
@@ -349,7 +349,7 @@ class NodeManager(object):
     
     
     def _send_signal(self,signal="",data=None):
-        prefix=self.signalChannelPrefix+"."
+        prefix=self.signal_channel_prefix+"."
         self.signalHandler.send_message(prefix+signal,self,data)    
     """
     ####################################################################################

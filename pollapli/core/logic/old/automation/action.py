@@ -22,7 +22,7 @@ class Action(DBObject):
     
     def _data_recieved(self,data,*args,**kwargs):
         log.msg("action recieved ",data,args,kwargs,logLevel=logging.DEBUG)
-        if self.status.isStarted:
+        if self.status.is_started:
             self._do_step().addBoth(self._step_done)
             
     def _step_done(self,result,*args,**kwargs):      

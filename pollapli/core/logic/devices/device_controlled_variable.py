@@ -1,5 +1,5 @@
 class DeviceControlledVariable(object):
-    def __init__(self, device, name, value, type, unit, defaultValue=None, historyStore=None, historyLength=None, implicitSet=False, channels=[]):
+    def __init__(self, device, name, value, type, unit, defaultValue=None, implicitSet=False, channels=[]):
         """
         defaultValue: base value to reset the variable to during a reset operation
         historyPersistance/store : Where will the data be stored None, memory, database, file
@@ -11,29 +11,17 @@ class DeviceControlledVariable(object):
         self.defaultValue = defaultValue or value
         self.targetValue = None
         self.type = type
-        
-        self.historyStore = historyStore
-        self.history = None
-        if historyStore == 'memory':
-            self.history = []
-            self.historyLength = historyLength
-            self.historyIndex = 0
-        elif historyStore =='db':
-            pass
-        elif historyStore=='file':
-            pass
-        
-        self.implicitSet=implicitSet
+
+        self.implicitSet = implicitSet
         """This defines the fact, that a "set" operation changes the current value to the target value
          even WITHOUT the need for checking it with a sensor read: we TRUST the remote device to do the 
          work correctly
         """
-        self.attachedSensors={}
-        self.attachedActors={}
-        
-        self._commanqueue=DeferredQueue()
-        self.commandqueue=deque()
-         
+        self.attachedSensors = {}
+        self.attachedActors = {}
+        self._commanqueue = DeferredQueue()
+        self.commandqueue = deque()
+
     def attach_sensor(self,sensor,channel=None,*args,**kwargs):
         realChannel=None
         if channel:
@@ -41,7 +29,7 @@ class DeviceControlledVariable(object):
         else:
             """if no channel was defined , the sensor needs to be attached to the reserved channel "root",
             which means, the variable itself"""
-            realChannel="root"    
+            realChannel="root"
             
         self.attachedSensors[realChannel]=sensor
         if sensor.channel is None:
@@ -72,23 +60,22 @@ class DeviceControlledVariable(object):
         self.attach_actors(actors)
         self.attach_sensors(sensors)
         
-    def get(self,saveToHistory=False,sender=None):
+    def get(self, sender=None):
         command=Command(type="get",sender=sender,params={"save":saveToHistory})
         self.commandqueue.append(command)
         #self.commanqueue.put(command)
         print("lskjfsdlfkj")
-        
+
        # self.node.driver.teststuff(self,None,self._updateConfirmed)
         #self.node.query_driver(self)
-       
-        
+
  #       self.node.driver.variable_get(self)
 #        try:
 #            getattr(self.node.driver,"get_"+self.name)(value)
 #        except Exception as inst:
 #            log.mg("Node's driver does not have the request feature",system="Node",logLevel=logging.CRITICAL)
         return command.deferred
-    
+
     def set(self,value,relative=False,params=None,sender=None):
         """ setting is dependent on the type of  variable
         This is a delayed operation: set just initiates the chain of events leading to an actual update

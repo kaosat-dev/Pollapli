@@ -27,7 +27,7 @@ class ScanTask(Task):
         self.filePath=filePath
         self.saveScan=saveScan
         
-        self.pointCloud=PointCloud()        
+        self.point_cloud=PointCloud()        
         self.pointCloudBuilder=PointCloudBuilder(resolution=resolution,width=scanWidth,length=scanLength,passes=passes)
         totalPoints=(int(scanWidth/resolution)+1)*(int(scanLength/resolution)+1)*passes
         self.logger.info("Total scan points %d",totalPoints)
@@ -78,16 +78,16 @@ class ScanTask(Task):
             self.connector.send_command(ptStr)     
         else:
             self.progress=100
-            self.pointCloud=self.pointCloudBuilder.pointCloud 
+            self.point_cloud=self.pointCloudBuilder.point_cloud 
             self.status="F"#finished
             if self.saveScan:
                 if self.filePath:
-                    self.pointCloud.save(self.filePath)
+                    self.point_cloud.save(self.filePath)
                 else:
                     pass
             self.connector.send_command("G1 X0 Y0")
-        self.totalTime+=time.time()-self.startTime
-        self.startTime=time.time()
+        self.total_time+=time.time()-self.start_time
+        self.start_time=time.time()
             
 
     def _data_recieved(self,args,kargs):
@@ -107,7 +107,7 @@ class ScanTask(Task):
                         self.pointCloudBuilder.add_point(height) 
                         self.logger.critical("current point %s",str(self.pointCloudBuilder.currentPoint))
                         self.pointCloudBuilder.next_point_continuous()
-                        self.pointCloud=self.pointCloudBuilder.pointCloud
+                        self.point_cloud=self.pointCloudBuilder.point_cloud
                     except:
                         pass
                     if self.status!="NP" and self.status!="SP":   

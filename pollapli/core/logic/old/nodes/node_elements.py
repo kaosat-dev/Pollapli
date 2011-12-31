@@ -11,24 +11,24 @@ from collections import deque
 
 class NodeElement(object):
     """A sub element of a node : such as actor, sensor etc """
-    def __init__(self,type="dummy",name="",tool="",boundVariable=None,variableChannel=None):
+    def __init__(self,type="dummy",name="",tool="",linked_variable=None,linked_variable_channel=None):
         self.name=name
         self.type=type
-        self.boundVariable=boundVariable #what variable is it bound to
-        self.channel=variableChannel
+        self.boundVariable=linked_variable #what variable is it bound to
+        self.channel=linked_variable_channel
         self.driverEndpoint=None
         
     def set_endPoint(self,endPoint):
         self.driverEndpoint=endPoint
 
 class Actor(NodeElement):
-    def __init__(self,type="BaseActor",name="",tool="",boundVariable=None,variableChannel=None):
-        NodeElement.__init__(self,type,name,tool,boundVariable,variableChannel)
+    def __init__(self,type="BaseActor",name="",tool="",linked_variable=None,linked_variable_channel=None):
+        NodeElement.__init__(self,type,name,tool,linked_variable,linked_variable_channel)
         
  
 class Sensor(NodeElement):
-    def __init__(self,type="Sensor",name="",tool="",boundVariable=None,variableChannel=None):
-        NodeElement.__init__(self,type,name,tool,boundVariable,variableChannel)
+    def __init__(self,type="Sensor",name="",tool="",linked_variable=None,linked_variable_channel=None):
+        NodeElement.__init__(self,type,name,tool,linked_variable,linked_variable_channel)
     def compute_value(self):
         pass
     

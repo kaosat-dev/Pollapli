@@ -12,7 +12,7 @@ class TaskManager(object):
         self._tasks = {}
         self._signal_channel = "task_manager"
         self._signal_dispatcher = SignalDispatcher(self._signal_channel)
-        self.signalChannelPrefix = "environment_"+str(self._parentEnvironment.cid)
+        self.signal_channel_prefix = "environment_"+str(self._parentEnvironment.cid)
     
     @defer.inlineCallbacks
     def setup(self):            
@@ -26,7 +26,7 @@ class TaskManager(object):
             #yield task.setup()   
         
     def _send_signal(self,signal="",data=None):
-        prefix=self.signalChannelPrefix+"."
+        prefix=self.signal_channel_prefix+"."
         self._signal_dispatcher.send_message(prefix+signal,self,data)
     
     """

@@ -13,11 +13,11 @@ class Task(BaseComponent):
         BaseComponent.__init__(self, parent)
         self.name = name
         self.description =  description  
-        self._status = status 
+        self.status = status 
         """progress need to be computed base on the number of actions needed for this task to complete"""
         #self.status=TaskStatus()
     def __eq__(self, other):
-        return self.cid == other.cid and self.name == other.name and self.description == other.description and self._status == other._status
+        return self.cid == other.cid and self.name == other.name and self.description == other.description and self.status == other.status
     
     def __ne__(self, other):
         return not self.__eq__(other)

@@ -40,8 +40,8 @@ class ReadSensorsAction(DBObject):
         self.nextTask=None
      
     def setup(self,params={},*args,**kwargs):
-        self.printFileName=params.get("file")
-        self.fileType=params.get("fileType")
+        self.print_file_name=params.get("file")
+        self.file_type=params.get("file_type")
         self.params=params
         
     def _toDict(self):
@@ -50,7 +50,7 @@ class ReadSensorsAction(DBObject):
     
     @defer.inlineCallbacks    
     def start(self):
-        if not self.status.isStarted:
+        if not self.status.is_started:
             """only allow start if not already started"""
             self.status.start()
             def do_start(result):
@@ -60,13 +60,13 @@ class ReadSensorsAction(DBObject):
     def pause(self):
         d=defer.Deferred()
         def do_pause_unpause(result):
-            if self.status.isPaused:
+            if self.status.is_paused:
                 """was paused, unpausing"""
-                self.status.isPaused=False
+                self.status.is_paused=False
                 self._do_step().addBoth(self._step_done)
             else:
                 """was not paused, pausing"""
-                self.status.isPaused=False
+                self.status.is_paused=False
                 
         d.addCallback(do_pause_unpause)
         reactor.callLater(0,d.callback,None)
@@ -84,40 +84,40 @@ class ReadSensorsAction(DBObject):
     
     def _data_recieved(self,data,*args,**kwargs):
         log.msg("Print action recieved ",data,args,kwargs,logLevel=logging.DEBUG)
-        if self.status.isStarted:
+        if self.status.is_started:
             self._do_step().addBoth(self._step_done)
             
     def _step_done(self,result,*args,**kwargs):      
         """gets called when an actions is finished """            
         if isinstance(result,failure.Failure):
-            self.printFile.close()
+            self.print_file.close()
             self.status.update_progress(value=100)  
             log.msg("Finished print action. Status:",self.status._toDict(),system="PrintAction",logLevel=logging.CRITICAL)
             #raise event "action finished" 
             self.parentTask._send_signal("action"+self.id+".actionDone")    
         else:
             line,position=result
-            self.lineIndex+=1
+            self.line_index+=1
             self.status.update_progress()
             log.msg("Finished print action step. Status:",self.status._toDict(),system="PrintAction",logLevel=logging.CRITICAL)
 
-            if self.lineIndex%1000==0:
-                log.msg("1000 steps done in",time.time()-self.startTime,"s",logLevel=logging.CRITICAL)
-                self.startTime=time.time()
+            if self.line_index%1000==0:
+                log.msg("1000 steps done in",time.time()-self.start_time,"s",logLevel=logging.CRITICAL)
+                self.start_time=time.time()
             
          
-    def _do_step(self,printFile,*args,**kwargs):
+    def _do_step(self,print_file,*args,**kwargs):
         d=defer.Deferred()
-        def parseAndSend(printFile):
-                if self.status.isStarted and not self.status.isPaused:
-                    line=printFile.next()      
+        def parse_and_send(print_file):
+                if self.status.is_started and not self.status.is_paused:
+                    line=print_file.next()      
                     if line!= "":    
                         line=line.replace('\n','')
                         self.parentTask._send_signal(self.parentTask.driverChannel+".addCommand",line,True)
                         log.msg("Task",self.id,"sent signal addCommand to node's driver",logLevel=logging.DEBUG)
-                        pos=self.fileParser.parse(line)  
+                        pos=self.file_parser.parse(line)  
                     return (line,pos)
 
-        d.addCallback(parseAndSend)
-        reactor.callLater(0,d.callback,printFile) 
+        d.addCallback(parse_and_send)
+        reactor.callLater(0,d.callback,print_file) 
         return d

@@ -8,10 +8,10 @@ from pollapli.exceptions import TaskNotFound
 
 
 class TaskSqliteDao(TaskDao):
-    def __init__(self,dbPool=None,persistenceStrategy=None):
-        self._dbPool=dbPool
+    def __init__(self,db_pool=None,persistenceStrategy=None):
+        self._db_pool=db_pool
         #self._persistenceStrategy = persistenceStrategy
-        self._tableCreated = False
+        self._table_created = False
                     
     def _get_last_insertId(self, txn):
         txn.execute("SELECT last_insert_rowid()")
@@ -19,7 +19,7 @@ class TaskSqliteDao(TaskDao):
         return result[0][0]
     
     def _execute_txn(self, txn, query, *args,**kwargs):
-        #if not self._tableCreated:
+        #if not self._table_created:
             try:
                 txn.execute('''SELECT name FROM tasks ''')
             except Exception as inst:
@@ -33,7 +33,7 @@ class TaskSqliteDao(TaskDao):
                     status TEXT NOT NULL DEFAULT "inactive",
                     environment_uid INTEGER 
                     )''')
-                    self._tableCreated = True
+                    self._table_created = True
                 except Exception as inst:
                     log.msg("error in load task second step",inst, logLevel=logging.CRITICAL)
                    
@@ -64,22 +64,22 @@ class TaskSqliteDao(TaskDao):
         if order is not None:
             query = query + " ORDER BY %s" %(str(order))
         
-        return self._dbPool.runInteraction(self._select,query,args)
+        return self._db_pool.runInteraction(self._select,query,args)
        
     def insert(self,tableName=None, query=None, args=None):  
         query = query or '''INSERT into tasks VALUES(null,?,?,?,?,?)''' 
         args = args
-        return self._dbPool.runInteraction(self._insert,query,args)
+        return self._db_pool.runInteraction(self._insert,query,args)
     
     def update(self,tableName=None,query=None,args=None):  
         query = query or '''UPDATE tasks SET name = ? ,description = ?, status = ?, environment_uid = ? WHERE id = ? ''' 
         args = args
-        return self._dbPool.runInteraction(self._update,query,args)
+        return self._db_pool.runInteraction(self._update,query,args)
     
     def delete(self,id=None,tableName=None,query=None,args=None):  
         args=[id]
         query = query or '''DELETE FROM tasks WHERE id = ? '''
-        return self._dbPool.runInteraction(self._execute_txn,query,args)
+        return self._db_pool.runInteraction(self._execute_txn,query,args)
     
     @defer.inlineCallbacks
     def load_task(self,id = None, environmentId = None ,*args,**kwargs):
@@ -121,9 +121,9 @@ class TaskSqliteDao(TaskDao):
             parentUId = parentEnvironment.cid
             
         if hasattr(task,"_dbId"):
-            yield self.update(args = (task.name,task.description,task._status,str(parentUId),task._dbId))
+            yield self.update(args = (task.name,task.description,task.status,str(parentUId),task._dbId))
         else:
-            task._dbId = yield self.insert(args = (str(task.cid),task.name,task.description,task._status,str(parentUId)))                            
+            task._dbId = yield self.insert(args = (str(task.cid),task.name,task.description,task.status,str(parentUId)))                            
             
     @defer.inlineCallbacks
     def save_tasks(self,lTasks):

@@ -21,13 +21,13 @@ from pollapli.core.logic.tools.signal_system import SignalHander
 
 
 class TaskStatus(object):
-    def __init__(self,progressIncrement=0,progress=0):
-        self.isStarted=False
-        self.isPaused=False
-        self.progressIncrement=progressIncrement
+    def __init__(self,progress_increment=0,progress=0):
+        self.is_started=False
+        self.is_paused=False
+        self.progress_increment=progress_increment
         self.progress=progress
-        self.startTime=0       
-        self.totalTime=0
+        self.start_time=0       
+        self.total_time=0
         
     def update_progress(self,value=None,increment=None):
         if value:
@@ -35,17 +35,17 @@ class TaskStatus(object):
         elif increment:
             self.progress+=increment
         else:
-            self.progress+=self.progressIncrement
+            self.progress+=self.progress_increment
         
     def _toDict(self):
-        return {"status":{"isStarted":self.isStarted,"isPaused":self.isPaused,"progress":self.progress,\
-                          "progressIncrement":self.progressIncrement,"timeStarted":self.startTime,"timeTotal":self.totalTime}}
+        return {"status":{"is_started":self.is_started,"is_paused":self.is_paused,"progress":self.progress,\
+                          "progress_increment":self.progress_increment,"timeStarted":self.start_time,"timeTotal":self.total_time}}
  
 
 class Action(object):
     def __init__(self):
         self.steps=0
-        self.startTime=time.time()
+        self.start_time=time.time()
         
     def do_step(self):
         pass
@@ -56,14 +56,14 @@ class Action(object):
         self.steps+=1
         #print("here")
         if self.steps%1000==0:
-                log.msg("1000 steps done in",time.time()-self.startTime,"s",logLevel=logging.CRITICAL)
-                self.startTime=time.time()
+                log.msg("1000 steps done in",time.time()-self.start_time,"s",logLevel=logging.CRITICAL)
+                self.start_time=time.time()
         
         self.do_step()
     
     def start(self):
         log.msg("starting action")
-        self.startTime=time.time()
+        self.start_time=time.time()
         self.do_step()
    
 
@@ -122,11 +122,11 @@ class TaskManager(object):
     @defer.inlineCallbacks
     def setup(self):         
         yield self.load(self.parentEnvironment)
-        self.signalChannelPrefix="environment_"+str(self.parentEnvironment.id)    
+        self.signal_channel_prefix="environment_"+str(self.parentEnvironment.id)    
         defer.returnValue(self)
     
     def _send_signal(self,signal="",data=None):
-        prefix=self.signalChannelPrefix+"."
+        prefix=self.signal_channel_prefix+"."
         self.signalHandler.send_message(prefix+signal,self,data)
     
     """

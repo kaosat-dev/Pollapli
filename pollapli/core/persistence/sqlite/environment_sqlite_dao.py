@@ -7,10 +7,10 @@ from pollapli.exceptions import EnvironmentNotFound
 
 #TODO: make these more generic (not the interface, the implementation)
 class EnvironmentSqliteDao(EnvironmentDao):
-    def __init__(self,dbPool=None, persistenceStrategy =None):
-        self._dbPool = dbPool
+    def __init__(self,db_pool=None, persistenceStrategy =None):
+        self._db_pool = db_pool
         self._persistenceStrategy = persistenceStrategy
-        self._tableCreated = False
+        self._table_created = False
         
     def _get_last_insertId(self, txn):
         txn.execute("SELECT last_insert_rowid()")
@@ -18,7 +18,7 @@ class EnvironmentSqliteDao(EnvironmentDao):
         return result[0][0]
     
     def _execute_txn(self, txn, query, *args,**kwargs):
-        if not self._tableCreated:
+        if not self._table_created:
             try:
                 txn.execute('''SELECT name FROM environments LIMIT 1''')
             except Exception as inst:
@@ -30,7 +30,7 @@ class EnvironmentSqliteDao(EnvironmentDao):
                     name TEXT,
                     description TEXT,
                     status TEXT NOT NULL DEFAULT "frozen")''')
-                    self._tableCreated = True
+                    self._table_created = True
                 except Exception as inst:
                     print("error in load environment second step",inst) 
                     
@@ -59,7 +59,7 @@ class EnvironmentSqliteDao(EnvironmentDao):
             query = query + " ORDER BY %s" %(str(order))
         #args = args
         
-        return self._dbPool.runInteraction(self._select,query,args)
+        return self._db_pool.runInteraction(self._select,query,args)
     
     def _select2(self,txn, id = None, order = None,store= None):
         if id is not None:
@@ -84,16 +84,16 @@ class EnvironmentSqliteDao(EnvironmentDao):
         
     def insert(self,tableName=None, query=None, args=None):  
         query = query or '''INSERT into environments VALUES(null,?,?,?,?)''' 
-        return self._dbPool.runInteraction(self._insert,query,args)
+        return self._db_pool.runInteraction(self._insert,query,args)
     
     def update(self,tableName=None,query=None,args=None):  
         query = query or '''UPDATE environments SET name = ? ,description = ?, status= ? WHERE id = ? ''' 
-        return self._dbPool.runInteraction(self._update,query,args)
+        return self._db_pool.runInteraction(self._update,query,args)
     
     def delete(self,id=None,tableName=None,query=None,args=None):  
         args=[id]
         query = query or '''DELETE FROM environments WHERE id = ? '''
-        return self._dbPool.runInteraction(self._execute_txn,query,args)
+        return self._db_pool.runInteraction(self._execute_txn,query,args)
         
     @defer.inlineCallbacks 
     def load_environment(self,id = None,*args,**kwargs):
@@ -125,9 +125,9 @@ class EnvironmentSqliteDao(EnvironmentDao):
     def save_environment(self, environment):
         """Save the environment object ."""
         if hasattr(environment,"_dbId"):
-            yield self.update(args = (environment.name,environment.description,environment._status,environment._dbId))
+            yield self.update(args = (environment.name,environment.description,environment.status,environment._dbId))
         else:
-            environment._dbId = yield self.insert(args = (str(environment.cid), environment.name, environment.description,environment._status))   
+            environment._dbId = yield self.insert(args = (str(environment.cid), environment.name, environment.description,environment.status))   
     
     @defer.inlineCallbacks 
     def save_environments(self, lEnvironment):

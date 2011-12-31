@@ -6,10 +6,10 @@ from pollapli.core.logic.components.packages.package import Package
 from pollapli.exceptions import PackageNotFound
 
 class UpdateSqliteDao(UpdateDao):
-    def __init__(self,dbPool=None, persistenceStrategy =None):
-        self._dbPool = dbPool
+    def __init__(self,db_pool=None, persistenceStrategy =None):
+        self._db_pool = db_pool
         self._persistenceStrategy = persistenceStrategy
-        self._tableCreated = False
+        self._table_created = False
              
     def _get_last_insertId(self, txn):
         txn.execute("SELECT last_insert_rowid()")
@@ -17,7 +17,7 @@ class UpdateSqliteDao(UpdateDao):
         return result[0][0]
     
     def _execute_txn(self, txn, query, *args,**kwargs):
-        if not self._tableCreated:
+        if not self._table_created:
             try:
                 txn.execute('''SELECT name FROM updates LIMIT 1''')
             except Exception as inst:
@@ -34,7 +34,7 @@ class UpdateSqliteDao(UpdateDao):
                      downloadUrl TEXT,
                      enabled TEXT NOT NULL DEFAULT "False"
                      )''')
-                    self._tableCreated = True
+                    self._table_created = True
                 except Exception as inst:
                     print("error in load update second step",inst) 
                     
@@ -61,17 +61,17 @@ class UpdateSqliteDao(UpdateDao):
         if order is not None:
             query = query + " ORDER BY %s" %(str(order))
         args = args
-        return self._dbPool.runInteraction(self._select,query,args)
+        return self._db_pool.runInteraction(self._select,query,args)
        
     def insert(self,tableName=None, query=None, args=None):  
         query = query or '''INSERT into updates VALUES(null,?,?,?,?,?,?,?,?)''' 
         args = args
-        return self._dbPool.runInteraction(self._insert,query,args)
+        return self._db_pool.runInteraction(self._insert,query,args)
     
     def update(self,tableName=None,query=None,args=None):  
         query = query or '''UPDATE updates SET type = ?, name = ? ,description = ?, version = ?, tags = ? , downloadUrl = ?, enabled = ? WHERE id = ? ''' 
         args = args
-        return self._dbPool.runInteraction(self._update,query,args)
+        return self._db_pool.runInteraction(self._update,query,args)
     
     @defer.inlineCallbacks
     def load_update(self,id = None, *args,**kwargs):

@@ -32,7 +32,7 @@ class EnvironmentTest(unittest.TestCase):
         obs =  yield self.environmentManager.add_environment(name="Test Environment", description="A test Environment", status="active")
         self.assertEquals(obs.name, exp.name)
         self.assertEquals(obs.description,exp.description)
-        self.assertEquals(obs._status,exp._status)
+        self.assertEquals(obs.status,exp.status)
     
     
     @defer.inlineCallbacks

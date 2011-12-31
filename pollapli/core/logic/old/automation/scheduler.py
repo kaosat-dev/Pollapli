@@ -33,7 +33,7 @@ class Schedule(object):
     
 class ScheduledCall(object):
     def __init__(self,callback,startTime,repeatTime=None):  
-        self.startTime=startTime
+        self.start_time=startTime
         self.repeatTime=repeatTime
         self._lastTime=None
         self.callback=callback
