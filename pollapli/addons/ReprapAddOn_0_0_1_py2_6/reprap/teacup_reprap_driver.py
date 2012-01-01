@@ -14,7 +14,6 @@ class TeacupReprapProtocol(BaseTextSerialProtocol):
         BaseTextSerialProtocol.__init__(self, driver, handshake, seperator)
 
 
-
 class TeacupReprapDriver(BaseReprapDriver):
     """Class defining the components of the driver for the teacup reprap firmware """
     classProvides(IPlugin, ipollapli.IDriver)
@@ -73,3 +72,17 @@ class TeacupReprapDriver(BaseReprapDriver):
 
     def wait_forTool(self):
         pass
+
+"""Reference for checksum calculation"""
+#        """RepRap Syntax: N<linenumber> <cmd> *<chksum>\n"""
+#        data = "N"+str(self.currentLine)+' '+data+''
+#        
+#        """ chksum = 0 xor each byte of the gcode (including the line number and trailing space)
+#        """     
+#        checksum = 0
+#        for c in data:
+#            checksum^=ord(c)
+#            
+#        self.currentLine+=1
+#        
+#        return data+'*'+str(checksum)+"\n"
