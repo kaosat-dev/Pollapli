@@ -4,10 +4,10 @@
    , node manager class etc
 """
 import logging
-from twisted.internet import reactor, defer
 from twisted.python import log
 from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.core.logic.devices.device_component import BaseDeviceComponent
+from twisted.internet.defer import Deferred
 
 
 class Device(BaseDeviceComponent):
@@ -15,7 +15,7 @@ class Device(BaseDeviceComponent):
     Base class for all Device: a Device is a software abstraction for a
     physical device such as a webcam, reprap , arduino etc
     """
-    def __init__(self,name="base_device", description="base device", environment="Home"):
+    def __init__(self, name="base_device", description="base device", environment="Home"):
         """
         :param environment : just a tag to identify the environment this device
         belongs to
@@ -24,7 +24,8 @@ class Device(BaseDeviceComponent):
         self.name = name
         self.description = description
         self.status = "inactive"
-        self._driver = None
+        self.environment = environment
+        self.driver = None
         self._signal_channel = "device %s" % self.cid
         self._signal_dispatcher = SignalDispatcher(self._signal_channel)
 
@@ -34,8 +35,25 @@ class Device(BaseDeviceComponent):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __getattr__(self, attr_name):
+        if hasattr(self.driver, attr_name):
+            attr = getattr(self.driver, attr_name)
+            if hasattr(attr, '__call__'):
+                def wrapper(*args, **kwargs):
+                    print('before calling %s' % attr.__name__)
+                    result = attr(*args, **kwargs)
+                    if isinstance(result, Deferred):
+                        print("method returning deferred",attr)
+                    print('done calling %s' % attr.__name__)
+                    return result
+                return wrapper
+            else:
+                return attr
+        else:
+            raise AttributeError(attr_name)
+
     def setup(self):
-        #self.driver = yield DriverManager.load(parentDevice=self)
+        "configure device"
         log.msg("Device with id", self.cid, "setup successfully", system="Device", logLevel=logging.CRITICAL)
 
     """

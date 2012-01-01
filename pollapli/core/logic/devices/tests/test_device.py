@@ -1,7 +1,7 @@
 from twisted.trial import unittest
-from twisted.internet import defer, reactor
 from pollapli.core.logic.devices.device import Device
 from pollapli.core.logic.devices.device_component import Actuator, Sensor, Tool
+
 
 class TestDevice(unittest.TestCase):
 

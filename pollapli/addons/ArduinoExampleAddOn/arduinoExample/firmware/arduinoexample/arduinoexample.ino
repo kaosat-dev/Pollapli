@@ -99,12 +99,13 @@ void  betterParse(char* data, int size)
     Serial.print(" total size: ");
     Serial.println(size);*/
     //answer prefix
+    Serial.print("ok ");
     Serial.print(cmd);
     Serial.print(" ");
      switch(cmd)
     {
       case 0://debug  test 
-        Serial.print("hello python, arduino here");
+        Serial.print("Hello python, Arduino here");
         break;
       case 99://set device id     
       {    
@@ -161,6 +162,12 @@ void  betterParse(char* data, int size)
         
       break;
       }
+      case 8://firmware info
+       {
+        Serial.print("Name: Pollapli Arduino example firmware,");
+        Serial.print("Version: 0.1");
+        break; 
+       }
 
       default:
         

@@ -5,7 +5,7 @@ from twisted.python import log
 from zope.interface import Interface, Attribute, implements
 from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.exceptions import DeviceNotConnected
-from pollapli.core.base_component import BaseComponent
+from pollapli.core.base.base_component import BaseComponent
 import time
 from twisted.internet.error import TimeoutError
 
@@ -45,10 +45,11 @@ class Driver(BaseComponent):
         self.is_authentification_ok = False
         self.is_connected = False
         self.is_bound = False
+        self.is_busy = False
 
         self.errors = []
-        self.connection_errors = 0
         self.connection_mode = 1
+        self._connection_errors = 0
         self._connection_timeout = None
         self.deferred = defer.Deferred()
 
@@ -76,6 +77,19 @@ class Driver(BaseComponent):
         """Get the current voltage."""
         return self._hardware_interface.__class__
 
+    @property
+    def connection_errors(self):
+        """Get the current voltage."""
+        return self._connection_errors
+
+    @connection_errors.setter
+    def connection_errors(self, value):
+        self._connection_errors = value
+        if self._connection_errors >= self.max_connection_errors:
+            self.disconnect(clear_port=True)
+            log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ", system="Driver", logLevel=logging.CRITICAL)
+            self.deferred.errback(self.errors[-1])
+            #self._hardware_interface._connect()  #weird way of handling disconnect
     """
     ###########################################################################
     The following are the timeout related methods
@@ -101,7 +115,8 @@ class Driver(BaseComponent):
         self.cancel_connection_timeout()
         self.errors.append(TimeoutError())
         self.connection_errors += 1
-        self.reconnect()
+        if self.connection_errors < self.max_connection_errors:
+            self.reconnect()
 
     """
     ###########################################################################
@@ -118,10 +133,13 @@ class Driver(BaseComponent):
             raise Exception("Driver already connected")
         if connection_mode is None:
             raise Exception("Invalid connection mode")
+
         self.deferred = defer.Deferred()
         self.connection_mode = connection_mode
         self.errors = []
-        self.connection_errors = 0
+        self._connection_errors = 0
+        self.is_busy = True
+
         mode_str = "Normal"
         if self.connection_mode == 1:
             mode_str = "Setup"
@@ -137,6 +155,7 @@ class Driver(BaseComponent):
         """Disconnect driver"""
         log.msg("Disconnecting driver", system="Driver", logLevel=logging.CRITICAL)
         self.is_connected = False
+        self.is_busy = False
         self.cancel_connection_timeout()
         self._hardware_interface.disconnect(*args, **kwargs)
 
@@ -148,18 +167,17 @@ class Driver(BaseComponent):
     The following are the methods dealing with communication with the hardware
     """
 
-    def send_command(self, data, sender=None, callback=None, *args, **kwargs):
+    def send_command(self, command):
         """send a command to the physical device"""
         if not self.is_connected:
             raise DeviceNotConnected()
-#        if self.logic_handler:
-#            self.logic_handler._handle_request(data=data,sender=sender,callback=callback)
+        self.command_deferred = defer.Deferred()
+        reactor.callLater(0.01, self._hardware_interface.send_data, command)
+        return self.command_deferred
 
     def _handle_response(self, data):
         """handle hardware response"""
-        pass
-#        if self.logic_handler:
-#            self.logic_handler._handle_response(data)
+        self.command_deferred.callback(data)
 
     """
     ###########################################################################

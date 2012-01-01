@@ -8,9 +8,10 @@ class BaseHardwareInterface(object):
     blacklisted_ports = ["COM3"]
     available_ports = []
 
-    def __init__(self, driver=None, protocol=None, *args, **kwargs):
+    def __init__(self, driver=None, protocol=None, reset_on_connection=False, *args, **kwargs):
         self.driver = driver
         self.protocol = protocol(self.driver, *args, **kwargs)
+        self.reset_on_connection = reset_on_connection
 
     def send_data(self, command):
         self.protocol.send_data(command)

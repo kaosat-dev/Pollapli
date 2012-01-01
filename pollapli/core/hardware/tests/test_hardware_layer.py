@@ -2,7 +2,7 @@ from twisted.trial import unittest
 from twisted.internet import defer
 from pollapli.core.hardware.hardware_layer import HardwareLayer
 from pollapli.core.hardware.drivers.tests.mock_driver import MockDriver
-from pollapli.core.logic.components.packages.package_manager import PackageManager
+from pollapli.core.logic.packages.package_manager import PackageManager
 
 
 class TestHardwareLayer(unittest.TestCase):

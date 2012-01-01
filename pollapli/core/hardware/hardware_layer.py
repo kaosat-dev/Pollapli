@@ -2,7 +2,6 @@
 interactions with actual hardware"""
 from twisted.internet import defer
 from pollapli import ipollapli
-from pollapli.core.logic.components.packages.package_manager import PackageManager
 from pollapli.core.hardware.drivers.driver_manager import DriverManager
 from pollapli.exceptions import UnknownDriver
 

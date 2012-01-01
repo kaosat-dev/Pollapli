@@ -1,4 +1,6 @@
 """classes for the serial interface"""
+from twisted.internet.defer import Deferred
+import time
 
 """necessary workaround for win32 serial port bugs in twisted"""
 import re
@@ -40,8 +42,8 @@ class SerialHardwareInterface(BaseHardwareInterface):
     blacklisted_ports = ["COM3"]
     available_ports = []
 
-    def __init__(self, driver=None, protocol=None, speed=115200, *args, **kwargs):
-        BaseHardwareInterface.__init__(self, driver, protocol, *args, **kwargs)
+    def __init__(self, driver=None, protocol=None, reset_on_connection=True, speed=115200, *args, **kwargs):
+        BaseHardwareInterface.__init__(self, driver, protocol, reset_on_connection, *args, **kwargs)
         self.speed = speed
         self.serial = None
         self.port = None
@@ -68,6 +70,7 @@ class SerialHardwareInterface(BaseHardwareInterface):
             if self.serial is not None:
                 try:
                     self.serial.loseConnection()
+                    #self.pulseDTR()
                 except Exception as inst:
                     self.driver.errors.append(inst)
                 self.serial = None
@@ -81,18 +84,13 @@ class SerialHardwareInterface(BaseHardwareInterface):
                 if not self.port in SerialHardwareInterface.blocked_ports:
                     SerialHardwareInterface.blocked_ports.append(self.port)
                 self.serial = SerialWrapper(self.protocol, self.port, reactor, baudrate=self.speed)
+                if self.reset_on_connection:
+                    self.pulseDTR()
             except SerialException as inst:
-                self.driver.connection_errors += 1
                 self.driver.errors.append(inst)
+                self.driver.connection_errors += 1
                 log.msg("failed to connect serial driver,because of error", inst, "attempts left:", self.driver.max_connection_errors - self.driver.connection_errors, system="Driver")
                 reactor.callLater(self.driver.connection_errors * 2, self._connect)
-        else:
-            self.disconnect(clear_port=True)
-            if self.driver.connection_mode == 1:
-                log.msg("cricital error while (re-)starting serial connection : please check your driver settings and device id, as well as cables,  and make sure no other process is using the port ", system="Driver", logLevel=logging.CRITICAL)
-            else:
-                log.msg("Failed to establish correct connection with device/identify device by id", system="Driver", logLevel=logging.DEBUG)
-            self.driver.deferred.errback(self.driver.errors[-1])
 
     @classmethod
     def list_ports(cls):
@@ -100,6 +98,7 @@ class SerialHardwareInterface(BaseHardwareInterface):
         Return a list of ports
         """
         deferred = defer.Deferred()
+
         def _list_ports(*args, **kwargs):
             foundPorts = []
             if sys.platform == "win32":
@@ -125,12 +124,23 @@ class SerialHardwareInterface(BaseHardwareInterface):
         reactor.callLater(0.1, deferred.callback, None)
         return deferred
 
-    def pulseDTR(self, target):
-        """emulation of the pulse DTR method"""
-        if self.driver.is_connected:
+    def pulseDTR(self):
+        if self.serial is not None:
             self.serial.setDTR(1)
+            time.sleep(0.022)
+            self.serial.setDTR(0)
 
-            def _set_dtr(*args, **kwargs):
-                self.serial.setDTR(0)
-            reactor.callLater(0.5, _set_dtr)  # not sure this would work as time.sleep replacement
-            self.disconnect()
+    def pulseDTR_alt(self):
+        """emulation of the pulse DTR method"""
+        deferred = Deferred()
+
+        def _pulse_dtr(*args, **kwargs):
+            self.serial.setDTR(1)
+            time.sleep(0.022)
+            self.serial.setDTR(0)
+        deferred.addCallback(_pulse_dtr)
+        reactor.callLater(0, deferred.callback, None)
+        return deferred
+#          s.setDTR(False) # Drop DTR
+#                    timesleep(0.022)    # Read somewhere that 22ms is what the UI does.
+#                    s.setDTR(True)  # UP the DTR back 

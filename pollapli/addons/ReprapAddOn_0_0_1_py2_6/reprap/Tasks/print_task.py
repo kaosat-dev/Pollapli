@@ -1,12 +1,14 @@
 """parsing and printing a gcode/other reprap file"""
 from __future__ import division
-import os, time, logging
+import os
+import time
+import logging
 from twisted.internet import reactor, defer
-from twisted.enterprise import adbapi
 from twisted.python import log,failure
 
 from pollapli.exceptions import InvalidFile
 from pollapli.addons.ReprapAddOn_0_0_1_py2_6.reprap.Tools.gcode_parser import GCodeParser
+from pollapli.core.logic.tasks.task import Task
 
 
 class ActionStatus(object):
@@ -41,12 +43,8 @@ class ActionStatus(object):
             self.is_paused = True  # should it be paused or should is running be set  to false?
             self.is_started = False
 
-    def _toDict(self):
-        return {"status":{"is_started":self.is_started, "is_paused":self.is_paused, "progress":self.progress,\
-                          "progress_increment":self.progress_increment, "timeStarted":self.start_time, "timeTotal":self.total_time}}
 
-
-class PrintAction(object):
+class PrintTask(Task):
     """"
     should a printstep action return a specific data structure ? for example :
     - 3D data from parsing
@@ -62,11 +60,12 @@ class PrintAction(object):
     self.point_cloud.add_point(Point(x/20,y/20,z/20))
     """
 
-    def __init__(self, parent=None, printFile=None, file_type="gcode", params={}, *args, **kwargs):
+    def __init__(self, parent=None, print_file=None, file_type="gcode", params=None):
+        Task.__init__(self, parent)
         self.params = params
         self.status = ActionStatus()
         self.file_type = file_type
-        self.print_file_name = printFile
+        self.print_file_name = print_file
         self.print_file_path = None
         self.print_file = None
 
@@ -88,8 +87,8 @@ class PrintAction(object):
         self.print_file_path = os.path.join("FileManager.rootDir", "printFiles", self.print_file_name)
         if self.file_type == "gcode":
             self.file_parser = GCodeParser()
-        log.msg("Print action setup: file", self.print_file_name, "type", self.file_type, "filepath", self.print_file_path,\
-                "file_parser",self.file_parser,system="Action",logLevel=logging.DEBUG)
+        log.msg("Print action setup: file", self.print_file_name, "type", self.file_type, "filepath", self.print_file_path, \
+        "file_parser", self.file_parser, system="Action", logLevel=logging.DEBUG)
 
     @defer.inlineCallbacks
     def start(self):
@@ -121,6 +120,7 @@ class PrintAction(object):
         return deferred
 
     def stop(self):
+        """stop the print"""
         deferred = defer.Deferred()
 
         def do_stop(result):
@@ -133,26 +133,25 @@ class PrintAction(object):
         return deferred
 
     def _getLineCount(self):
+        """sets the total line count"""
         deferred = defer.Deferred()
 
-        def line_count_done(result, *args, **kwargs):
-            if isinstance(result, failure.Failure):
-                log.msg("Failed to get lines in file", logLevel=logging.CRITICAL)
-                raise InvalidFile()
-            else:
+        def count_lines(result):
+            """counts the line in the gcode file"""
+            line_count = 0
+            try:
+                print_file = file(self.print_file_path, "r")
+                for line in print_file:
+                    line_count += 1
+                print_file.close()
                 self.line_count = result
                 self.status.progress_increment = float(1 / self.line_count) * 100
                 log.msg("Total Lines in file", self.line_count, logLevel=logging.INFO)
-
-        def count_lines(result):
-            line_count = 0
-            print_file = file(self.print_file_path, "r")
-            for line in print_file:
-                line_count += 1
-            print_file.close()
+            except Exception as inst:
+                log.msg("Failed to get lines in file", logLevel=logging.CRITICAL)
+                raise InvalidFile()
             return line_count
         deferred.addCallback(count_lines)
-        deferred.addBoth(line_count_done)
         reactor.callLater(0.1, deferred.callback, None)
         return deferred
 
@@ -161,12 +160,12 @@ class PrintAction(object):
         if self.status.is_started:
             self._do_step(self.print_file).addBoth(self._step_done)
 
-    def _step_done(self, result, *args, **kwargs):
+    def _step_done(self, result):
         """gets called when an actions is finished """
         if isinstance(result, failure.Failure):
             self.print_file.close()
             self.status.update_progress(value=100)
-            log.msg("Finished print action. Status:", self.status._toDict(), system="PrintAction", logLevel=logging.CRITICAL)
+            log.msg("Finished print action. Status:", str(self.status), system="PrintAction", logLevel=logging.CRITICAL)
             #raise event "action finished"
             #self.parentTask._send_signal("action"+self.id+".actionDone")
         else:
@@ -174,13 +173,13 @@ class PrintAction(object):
             self.point_cloud.append(position)
             self.line_index += 1
             self.status.update_progress()
-            log.msg("Finished print action step. Status:", self.status._toDict(), system="PrintAction", logLevel=logging.CRITICAL)
+            log.msg("Finished print action step. Status:", str(self.status), system="PrintAction", logLevel=logging.CRITICAL)
 
             if self.line_index % 1000 == 0:
                 log.msg("1000 steps done in", time.time() - self.start_time, "s", logLevel=logging.CRITICAL)
                 self.start_time = time.time()
 
-    def _do_step(self, print_file, *args, **kwargs):
+    def _do_step(self, print_file):
         """
         gets the next line in the gCode file, sends it via serial
         and then increments the currentLine counter
@@ -207,4 +206,3 @@ class PrintAction(object):
         deferred.addCallback(parse_and_send)
         reactor.callLater(0, deferred.callback, print_file)
         return deferred
-    

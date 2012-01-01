@@ -1,10 +1,9 @@
 """All classes related to device components:
 Actuators, sensors, variables etc"""
 
-from pollapli.core.base_component import BaseComponent
 import logging
 from twisted.python import log
-
+from pollapli.core.base.base_component import BaseComponent
 
 class BaseDeviceComponent(BaseComponent):
     """Base class for device components"""
@@ -15,12 +14,20 @@ class BaseDeviceComponent(BaseComponent):
         self.children_components = []
 
     def add_child(self, child=None):
+        """
+        add a child element to the component
+        :param child: the child to add
+        """
         if child is None:
             raise Exception("No child specified")
         child.parent = self
         self.children_components.append(child)
 
     def add_children(self, children=None):
+        """
+        add children elements to the component
+        :param children : a list of children to add
+        """
         if children is None:
             raise Exception("No children specified")
         for child in children:
@@ -28,16 +35,29 @@ class BaseDeviceComponent(BaseComponent):
             self.children_components.append(child)
 
     def remove_child(self, child=None):
+        """
+        remove a child element from the component
+        :param child: the child to remove
+        """
         if child is None:
             raise Exception("No child specified")
         child.parent = None
         self.children_components.remove(child)
 
     def clear_children(self):
+        """remove all children"""
         for child in self.children_components:
             self.remove_child(child)
 
     def get_children_bycategory(self, category=None, recursive=False):
+        """
+        return a list of children , filtered by category
+        :param category: the category to look for
+        :param recursive: look for components with the given category
+        in sub elements as well
+        """
+        if category is None:
+            raise Exception("No category specified")
         result = []
         for child in self.children_components:
             if child.__class__.__name__ != Variable:
@@ -48,10 +68,16 @@ class BaseDeviceComponent(BaseComponent):
         return result
 
     def get_children_by_type(self, type=None, recursive=False):
+        """
+        return a list of children , filtered by type (class name)
+        :param type: the type to look for
+        :param recursive: look for components with the given type
+        in sub elements as well
+        """
         result = []
         for child in self.children_components:
             if child.__class__.__name__.lower() == type.lower():
-                    result.append(child)
+                result.append(child)
             if recursive:
                 result.extend(child.get_children_by_type(type, True))
         return result
@@ -61,6 +87,7 @@ class BaseDeviceComponent(BaseComponent):
 
 
 class Tool(BaseDeviceComponent):
+    """A component representing tools : these usually act as containers"""
     def __init__(self, parent=None, name="", description="", category="generic"):
         BaseDeviceComponent.__init__(self, parent, name, description)
         self.category = category
@@ -100,8 +127,10 @@ class Variable(BaseDeviceComponent):
 
     def set(self, value, relative=False, params=None, sender=None):
         """ setting is dependent on the type of  variable
-        This is a delayed operation: set just initiates the chain of events leading to an actual update
-        it calls the driver set method + this variables type :ie  for a position: set_name_position
+        This is a delayed operation: set just initiates the chain of events
+        leading to an actual update
+        it calls the driver set method + this variables type :ie  for
+        a position: set_name_position
         all variable types need to support adding
         """
         if relative:
@@ -114,6 +143,7 @@ class Variable(BaseDeviceComponent):
         pass
 
     def reset(self, value=None, to_default=True):
+        """reset a variable to a value or default value"""
         if value is not None:
             self.value = value
         if to_default:

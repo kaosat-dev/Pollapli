@@ -65,7 +65,7 @@ class BaseProtocol(Protocol):
 
     def dataReceived(self, data):
         data = self._format_data_in(data)
-        log.msg("Data recieved <<: ", data,system = "Driver", logLevel = logging.DEBUG)
+        log.msg("Data recieved <<: ", data, system = "Driver", logLevel = logging.DEBUG)
         self.driver._handle_response(data)
 
     def send_data(self, data):
@@ -122,6 +122,8 @@ class BaseProtocol(Protocol):
         if self.driver.do_handshake:
             self._check_handshake(data)
             if not self.driver.is_handshake_ok:
+                self.driver.connection_errors += 1
+                self.driver.errors.append(Exception("Failed handshake"))
                 self.driver.reconnect()
 
     def _check_handshake(self, data):
@@ -157,7 +159,9 @@ class BaseProtocol(Protocol):
 #                return
             self._check_hardware_id(data)
             if not self.driver.is_authentification_ok:
-                self.driver.reconnect()
+                self.driver.connection_errors += 1
+                self.driver.errors.append(Exception("Failed authentification"))
+                self._get_hardware_id()
 
     def _check_hardware_id(self, data):
         """
@@ -215,6 +219,8 @@ class BaseTextSerialProtocol(BaseProtocol):
             if isinstance(data, unicode):
                 import unicodedata
                 data = unicodedata.normalize('NFKD', data).encode('ascii','ignore')
+            else:
+                data = str(data)
             return "%s\n" % data
         except Exception as inst:
             log.msg("Error while formatting ouput data :", inst, system="Driver", logLevel=logging.CRITICAL)

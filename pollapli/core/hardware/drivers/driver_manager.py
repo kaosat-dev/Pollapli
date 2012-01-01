@@ -3,6 +3,7 @@ import logging
 from twisted.internet import reactor, defer
 from twisted.python import log
 from pollapli.exceptions import UnknownDriver
+from twisted.internet.task import LoopingCall
 
 
 class PortDriverBindings(object):
@@ -47,14 +48,12 @@ class PortDriverBindings(object):
         for driver in drivers:
             self.elements.__setitem__(driver, None)
             self.tested[driver] = []
-        #[self.elements.__setitem__(driver,None) for driver in drivers]
 
     def add_ports(self, ports):
         """add a list of ports to the list of ports"""
         for port in ports:
             self.elements.__setitem__(port, None)
             self.tested[port] = []
-        #[self.elements.__setitem__(port,None) for port in ports]
 
     def remove_drivers(self, drivers):
         """
@@ -227,17 +226,18 @@ class DriverManager(object):
         self._drivers = {}
         self._port_to_driver_bindings = PortDriverBindings()
         self._hardware_interfaces = {}
-        self._hardware_poller = None
+        self._hardware_poller = LoopingCall(self.update_device_list)
 
     def setup(self):
         """setup the driver manager"""
         log.msg("Driver Manager setup succesfully", system="Driver Manager", logLevel=logging.CRITICAL)
-        self._hardware_poller = reactor.callLater(self.hardware_poll_requency, self.update_device_list)
+        self._hardware_poller.start(self.hardware_poll_requency, now=True)
+        #reactor.callLater(self.hardware_poll_requency, self.update_device_list)
 
     @defer.inlineCallbacks
     def teardown(self):
-        if self._hardware_poller is not None:
-            self._hardware_poller.cancel()
+        if self._hardware_poller.running:
+            self._hardware_poller.stop()
         yield self.clear_drivers()
         log.msg("Shutting down, goodbye!", system="DriverManager", logLevel=logging.CRITICAL)
 
@@ -369,15 +369,15 @@ class DriverManager(object):
         connection_mode: the mode in which to connect the driver
 
         first search if driver is already bound, if it is use that data
+        :param connection_mode: mode 2 is special case for forced connection
         """
         driver = self.get_driver(driver_id=driver_id)
-        if port is None:
-                unbound_ports = self.get_unbound_ports(driver.hardware_interface_class)
-                if len(unbound_ports) == 0:
-                    raise Exception("No port specified and no port available")
-                port = unbound_ports[0]
+#        if port is None:
+#                unbound_ports = self.get_unbound_ports(driver.hardware_interface_class)
+#                if len(unbound_ports) == 0:
+#                    raise Exception("No port specified and no port available")
+#                port = unbound_ports[0]
         if connection_mode == 2:
-            """special case for forced connection"""
             self._port_to_driver_bindings.bind(driver, port)
         elif connection_mode == 0:
             pass
@@ -437,17 +437,17 @@ class DriverManager(object):
         available port,until either:
         * the port binding was sucessfull
         * all driver/port combos were tried
+        binding can only be done with drivers that have authentification
+        enabled, are not bound, and are not currently busy
         """
         for port in binding.get_driver_untested_ports(driver):
             binding_ok = False
-
-            if not driver.is_bound and driver.do_authentification:
+            if not driver.is_bound and driver.do_authentification and not driver.is_busy:
                 try:
                     yield driver.connect(port=port, connection_mode=1)
                     binding_ok = True
                 except Exception as inst:
                     pass
-
             if binding_ok:
                 self._hardware_interfaces[driver.hardware_interface_class].bind(driver, port)
                 log.msg("Driver", str(driver), "plugged in to port", port, system="DriverManager", logLevel=logging.DEBUG)
@@ -461,8 +461,11 @@ class DriverManager(object):
 
     def check_for_port_changes(self, old_list, new_list):
         """
-        we don't do a preliminary "if len(old_list) != len(new_list):" since even with the same amount of
-        detected devices, the actual devices in the list could be different
+        returns a list of added and removed ports based on an old list
+        and a new list of ports
+        we don't do a preliminary "if len(old_list) != len(new_list):" since
+        even with the same amount of detected devices, the actual devices
+        in the list could be different
         """
         set_1 = set(old_list)
         set_2 = set(new_list)
@@ -477,10 +480,11 @@ class DriverManager(object):
     @defer.inlineCallbacks
     def update_device_list(self):
         """
-        Method that gets called regularly, scans for newly plugged in/out devices
-        and either 
+        Method that gets called regularly, scans for newly plugged in/out
+        devices and either
         * tries to start the binding process if new devices were found
-        * does all the necessary to remove a binding/do the cleanup, if a device was disconnected
+        * does all the necessary to remove a binding/do the cleanup, if a
+        device was disconnected
         """
         for hardware_interface, connection_info in self._hardware_interfaces.items():
             old_ports = connection_info.get_ports()
@@ -502,5 +506,3 @@ class DriverManager(object):
                     port = driver.hardwareHandler.port
                     log.msg("Driver", driver, "plugged out of port", port, " in connection type", hardware_interface, system="DriverManager", logLevel=logging.DEBUG)
                     driver.is_bound = False
-
-#        self._hardware_poller = reactor.callLater(self.hardware_poll_requency, self.update_device_list)

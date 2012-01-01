@@ -1,91 +1,88 @@
-import abc
+from twisted.internet import defer
 
 
 class Command(object):
-    __metaclass__ = abc.ABCMeta
+    def __init__(self, device=None):
+        self.device = device
+        self.deferred = defer.Deferred()
+
+    def run(self):
+        """Run the command on the device, should return a deferred"""
+        raise NotImplementedError()
 
 
-class EnqueuePosition(Command):
-    def __init__(self, target_position, fast_move=False):
-        self.target_position = target_position
-        self.fast_move = fast_move
+class HelloWorld(Command):
+    """Just a dummy command"""
+    def __init__(self, device=None):
+        Command.__init__(self, device)
 
-class MoveToOrigin(Command):
-    pass
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__)
 
-class Dwell(Command):
-    def __init__(self):
-        pass
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
-class SetPositionUnit(Command):
-    def __init__(self, unit):
-        self.unit = unit
+    def run(self):
+        return self.device.hello_world()
 
-class SetPosition(Command):
-    def __init__(self, position):
-        self.position = position
-
-class GetPosition(Command):
-    def __init__(self):
-        pass
-
-class GetCurrentPosition(Command):
-    def __init__(self):
-        pass
-
-class SetPositioningMode(Command):
-    def __init__(self, absolute=False):
-        self.positioning_mode = absolute
-
-class AllSteppersSwitch(Command):
-    def __init__(self, steppers_on=False):
-        self.steppers_on = steppers_on
-
-class AllExtrudersSwitch(Command):
-    def __init__(self, extruders_on=False):
-        self.extruders_on = extruders_on
-
-class FanSwitch(Command):
-    def __init__(self, fan_on=False):
-        self.fan_on = fan_on
-
-class CoolerSwitch(Command):
-    def __init__(self, cooler_on=False):
-        self.cooler_on = cooler_on
-
-class SetExtruderTemperature(Command):
-    def __init__(self, index=0, temperature=20):
-        self.index = index
-        self.temperature = temperature
-
-class SetBedTemperature(Command):
-    def __init__(self, temperature):
-        self.temperature = temperature
-
-class SetChamberTemperature(Command):
-    def __init__(self, temperature):
-        self.temperature = temperature
-
-class GetExtruderTemperature(Command):
-    def __init__(self, index=0):
-        self.index = index
-
-class Stop(Command):
-    def __init__(self):
-        pass
 
 class GetFirmwareInfo(Command):
-    def __init__(self):
-        pass
+    """Returns the firmware info"""
+    def __init__(self, device=None):
+        Command.__init__(self, device)
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def run(self):
+        return self.device.get_firmware_info()
 
 
-""""""
+class GetHardwareId(Command):
+    """Returns  the hardware id"""
+    def __init__(self, device=None):
+        Command.__init__(self, device)
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def run(self):
+        return self.device.get_hardware_id()
+
+
+class Stop(Command):
+    """Stops the device"""
+    def __init__(self, device=None):
+        Command.__init__(self, device)
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def run(self):
+        return self.device.stop()
+
+
+"""
+###########################################################################
+The following are not yet finished generic commands
+"""
+
 
 class EnableDisableComponents(Command):
     """
     :param device: could be more generic? ie target ??
     """
     def __init__(self, device=None, component_category="actuator", component_type="stepper", component_on=False):
+        Command.__init__(self, device)
         self.device = device
         self.component_category = component_category
         self.component_type = component_type
@@ -107,6 +104,7 @@ class EnableDisableComponents(Command):
 
 class SetVariableUnit(Command):
     def __init__(self, device=None, variable="position", unit=None):
+        Command.__init__(self, device)
         self.device = device
         self.variable = variable
         self.unit = unit
@@ -126,12 +124,13 @@ class SetVariableUnit(Command):
 
 class SetVariableTarget(Command):
     def __init__(self, device=None, variable="position", target_value=None):
+        Command.__init__(self, device)
         self.device = device
         self.variable = variable
         self.target_value = target_value
 
     def __eq__(self, other):
-        return (self.__class__ == other.__class__ and 
+        return (self.__class__ == other.__class__ and
         self.device == other.device and
         self.variable == other.variable and
         self.target_value == other.target_value)

@@ -22,8 +22,8 @@ from twisted.plugin import getPlugins, IPlugin
 
 from pollapli.core.logic.tools.signal_system import SignalDispatcher
 from pollapli.exceptions import UnknownPackage, PackageNotFound
-from pollapli.core.logic.components.packages.package import Package
 from pollapli.core.logic.tools.downloader import DownloaderWithProgress
+from pollapli.core.logic.packages.package import Package
 
 
 class PackageManager(object):

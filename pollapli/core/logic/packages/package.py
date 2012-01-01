@@ -4,7 +4,7 @@
 
 import uuid
 from pkg_resources import parse_version
-from pollapli.core.base_component import BaseComponent
+from pollapli.core.base.base_component import BaseComponent
 
 
 class Package(BaseComponent):
