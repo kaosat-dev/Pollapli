@@ -17,7 +17,7 @@ class BaseHardwareInterface(object):
         self.protocol.send_data(command)
 
     def connect(self, port=None, *args, **kwargs):
-        self.driver.connection_errors = 0
+        raise NotImplementedError()
 
     def reconnect(self):
         raise NotImplementedError()

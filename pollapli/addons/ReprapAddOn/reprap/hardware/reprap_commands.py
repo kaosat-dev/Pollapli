@@ -3,21 +3,21 @@ from pollapli.core.hardware.commands import Command
 
 class EnqueuePosition(Command):
     """Enqueues a (5d) position"""
-    def __init__(self, device=None, target_position=None, fast_move=False):
+    def __init__(self, device=None, target_position=None, rapid=False):
         Command.__init__(self, device)
         self.target_position = target_position
-        self.fast_move = fast_move
+        self.rapid = rapid
 
     def __eq__(self, other):
         return (self.__class__ == other.__class__ and
                 self.target_position == other.target_position and
-                self.fast_move == other.fast_move)
+                self.rapid == other.rapid)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def run(self):
-        return self.device.enqueue_position(self.target_position, self.fast_move)
+        return self.device.enqueue_position(self.target_position, self.rapid)
 
 
 class MoveToOrigin(Command):

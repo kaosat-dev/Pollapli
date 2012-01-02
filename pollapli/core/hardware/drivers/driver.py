@@ -159,9 +159,6 @@ class Driver(BaseComponent):
         self.cancel_connection_timeout()
         self._hardware_interface.disconnect(*args, **kwargs)
 
-#self._send_signal("plugged_In", port)
-#self._send_signal("plugged_Out", port)
-
     """
     ###########################################################################
     The following are the methods dealing with communication with the hardware
@@ -185,16 +182,16 @@ class Driver(BaseComponent):
     """
     def startup(self):
         """send startup command to hardware"""
-        pass
+        raise NotImplementedError()
 
     def shutdown(self):
         """send shutdown command to hardware"""
-        pass
+        raise NotImplementedError()
 
-    def get_firmware_version(self):
+    def get_firmware_info(self):
         """retrieve firmware version from hardware"""
-        pass
+        raise NotImplementedError()
 
     def set_debug_level(self, level):
         """set hardware debug level, if any"""
-        pass
+        raise NotImplementedError()

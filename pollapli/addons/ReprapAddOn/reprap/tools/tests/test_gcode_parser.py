@@ -1,8 +1,8 @@
 from twisted.trial import unittest
 from twisted.internet import defer, reactor
-from pollapli.addons.ReprapAddOn_0_0_1_py2_6.reprap.Tools.gcode_parser import GCodeParser
 from pollapli.core.hardware.commands import EnableDisableComponents,\
     SetVariableTarget
+from pollapli.addons.ReprapAddOn.reprap.tools.gcode_parser import GCodeParser
 
 class TestGCodeParser(unittest.TestCase):
 

@@ -7,7 +7,7 @@ from twisted.internet import reactor, defer
 from twisted.python import log,failure
 
 from pollapli.exceptions import InvalidFile
-from pollapli.addons.ReprapAddOn_0_0_1_py2_6.reprap.Tools.gcode_parser import GCodeParser
+from pollapli.addons.ReprapAddOn.reprap.tools.gcode_parser import GCodeParser
 from pollapli.core.logic.tasks.task import Task
 
 

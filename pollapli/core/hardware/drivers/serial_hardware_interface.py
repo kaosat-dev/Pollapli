@@ -10,13 +10,12 @@ import logging
 import glob
 from serial.serialutil import SerialException
 from twisted.python.win32 import WindowsError
-from pollapli.core.hardware.drivers.protocols import DummyProtocol
 if sys.platform == "win32":
     from pollapli.core.hardware.patches._win32serialport import SerialPort
 else:
     from twisted.internet.serialport import SerialPort
 from twisted.internet import reactor, defer
-from twisted.python import log, failure
+from twisted.python import log
 from twisted.plugin import IPlugin
 from zope.interface import classProvides
 from pollapli import ipollapli

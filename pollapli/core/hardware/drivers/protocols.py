@@ -8,6 +8,7 @@ from zope.interface import classProvides
 from twisted.plugin import IPlugin
 from twisted.internet.protocol import Protocol
 from twisted.internet.interfaces import IProtocol
+from pollapli.exceptions import DeviceHandshakeMismatch
 
 
 class DummyProtocol(Protocol):
@@ -123,7 +124,7 @@ class BaseProtocol(Protocol):
             self._check_handshake(data)
             if not self.driver.is_handshake_ok:
                 self.driver.connection_errors += 1
-                self.driver.errors.append(Exception("Failed handshake"))
+                self.driver.errors.append(DeviceHandshakeMismatch("Failed handshake"))
                 self.driver.reconnect()
 
     def _check_handshake(self, data):
