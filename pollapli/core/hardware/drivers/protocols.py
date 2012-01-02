@@ -35,7 +35,30 @@ class BaseProtocol(Protocol):
         log.msg("Hardware connection made", system="Driver_Protocol", logLevel=logging.INFO)
         if self.driver.connection_mode == 1:
             self.driver._send_signal("connected", self.driver._hardware_interface.port)
-        self.driver.set_connection_timeout()
+
+        #TODO: better handling of this
+        is_hans_ok = False
+        is_auth_ok = False
+        if self.driver.do_authentification:
+            if self.driver.is_authentification_ok:
+                is_auth_ok = True
+        else:
+            is_auth_ok = True
+
+        if self.driver.do_handshake:
+            if self.driver.is_handshake_ok:
+                is_hans_ok = True
+        else:
+            is_hans_ok = True
+
+        if is_hans_ok and is_auth_ok:
+            self.driver.cancel_connection_timeout()
+            self.driver.is_connected = True
+            if self.driver.connection_mode == 0:
+                self.driver.is_configured = True
+            self.driver.deferred.callback(None)
+        else:
+            self.driver.set_connection_timeout()
 
     def connectionLost(self, reason="connectionLost"):
         self.driver.cancel_connection_timeout()
