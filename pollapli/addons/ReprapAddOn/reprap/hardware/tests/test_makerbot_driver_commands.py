@@ -1,5 +1,9 @@
 """for now, no mock serial class, so this needs to be tested with an
 actual, pre-configured Arduino"""
+import sys
+if sys.platform == "win32":
+    from twisted.internet import win32eventreactor
+    win32eventreactor.install()
 from twisted.trial import unittest
 from twisted.internet import defer, reactor
 from twisted.internet.error import TimeoutError
@@ -30,12 +34,24 @@ class TestMakerbotDriverCommands(unittest.TestCase):
 #        self.assertEquals(obs_response, exp_response)
 #        driver.disconnect()
 
+#    @defer.inlineCallbacks
+#    def test_call_startup(self):
+#        driver = ReprapMakerbotDriver(connection_timeout=4)
+#        yield driver.connect(port=self.ports[0], connection_mode=1)
+#
+#        exp_response = "Name: Pollapli Arduino example firmware,Version: 0.1"
+#        obs_response = yield driver.startup()
+#        self.assertEquals(obs_response, exp_response)
+#        driver.disconnect()
+        
     @defer.inlineCallbacks
-    def test_call_startup(self):
+    def test_call_get_firmware_info(self):
         driver = ReprapMakerbotDriver(connection_timeout=4)
         yield driver.connect(port=self.ports[0], connection_mode=1)
 
         exp_response = "Name: Pollapli Arduino example firmware,Version: 0.1"
-        obs_response = yield driver.startup()
+        obs_response = yield driver.get_firmware_info()
         self.assertEquals(obs_response, exp_response)
         driver.disconnect()
+        
+    

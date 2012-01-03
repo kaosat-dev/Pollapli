@@ -47,22 +47,22 @@ class ReprapMakerbotProtocol(BaseProtocol):
         n-1: the package ends with a single byte CRC checksum of the payload
         (Maxim 1-Wire CRC)
         """
-        def compute_crc(crc, d):
-            crc = crc ^ ord(d)
-            for i in range(0,8):
-                if crc & ord("1"):
-                    crc = (crc >> 1) ^ 0x8C
-                else:
-                    crc >>= 1
-            return crc
+        def crc(payload):
+            crc = 0
+            for c in payload:
+                crc = (crc ^ ord(c)) & 0xff
+                for i  in range(8):
+                    if crc & 0x01:
+                        crc = ((crc >>1) ^ 0x8c)
+                    else:
+                        crc >>= 1
+            return chr(crc)
 
-        payload, size = data
-        crc = 0
-        for c in payload:
-            crc = compute_crc(crc, c)
+        payload = data
 
+        data = "\xd5"+chr(len(payload))+payload+crc(payload)
         # < is used since we need little endian
-        data = struct.pack("<BB%isB" % size, 213, size, payload, crc)
+        #data = struct.pack("<BB%isB" % size, 213, size, payload, crc)
         return data
 
     def _format_data_in(self, data, *args, **kwargs):
@@ -72,6 +72,7 @@ class ReprapMakerbotProtocol(BaseProtocol):
         (see Response Code below)
         All further bytes depend on the command sent.
         """
+        print("in format data in")
         start, lng, rcode, rdata, crc = struct.unpack("<BBBIB",data)
 
         if rcode == 128:
@@ -97,21 +98,18 @@ class ReprapMakerbotDriver(ReprapBaseDriver):
 
     def startup(self):
         cmd = struct.pack("<B", 1)
-        cmd_size = struct.calcsize("<B")
-        return self.send_command((cmd, cmd_size))
+        return self.send_command(cmd)
 
     def shutdown(self):
         cmd = struct.pack("<B", 7)
-        cmd_size = struct.calcsize("<B")
-        return self.send_command((cmd, cmd_size))
+        return self.send_command(cmd)
 
     def echo_test(self):
         return self.send_command(0x70)
 
     def get_firmware_info(self):
-        cmd = struct.pack("<B", 0)
-        cmd_size = struct.calcsize("<B")
-        return self.send_command((cmd, cmd_size))
+        cmd = "\x14\x1c\x00"
+        return self.send_command(cmd)
 
     def set_debug_level(self,level):
         return self.send_command((0x76,None))

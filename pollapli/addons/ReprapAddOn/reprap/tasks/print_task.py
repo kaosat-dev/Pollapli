@@ -5,7 +5,6 @@ import time
 import logging
 from twisted.internet import reactor, defer
 from twisted.python import log,failure
-
 from pollapli.exceptions import InvalidFile
 from pollapli.addons.ReprapAddOn.reprap.tools.gcode_parser import GCodeParser
 from pollapli.core.logic.tasks.task import Task
@@ -42,7 +41,6 @@ class ActionStatus(object):
         if self.progress == 100:
             self.is_paused = True  # should it be paused or should is running be set  to false?
             self.is_started = False
-
 
 class PrintTask(Task):
     """"
@@ -85,8 +83,6 @@ class PrintTask(Task):
         self.file_type = params.get("file_type")
         self.params = params
         self.print_file_path = os.path.join("FileManager.rootDir", "printFiles", self.print_file_name)
-        if self.file_type == "gcode":
-            self.file_parser = GCodeParser()
         log.msg("Print action setup: file", self.print_file_name, "type", self.file_type, "filepath", self.print_file_path, \
         "file_parser", self.file_parser, system="Action", logLevel=logging.DEBUG)
 
@@ -206,3 +202,16 @@ class PrintTask(Task):
         deferred.addCallback(parse_and_send)
         reactor.callLater(0, deferred.callback, print_file)
         return deferred
+
+    @defer.inlineCallbacks
+    def run(self, print_file):
+        """target : a device instance"""
+        for line in self.print_file.readlines():
+            try:
+                yield self.status.can_run()
+                command = self.file_parser.parse(line)
+                command.sender = self
+                target = ""
+                yield target.send_command()
+            except Exception as inst:
+                log.msg("In Task %s" %(self.cid), system="Task", logLevel=logging.DEBUG)
