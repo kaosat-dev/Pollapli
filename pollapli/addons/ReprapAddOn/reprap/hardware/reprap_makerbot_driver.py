@@ -108,7 +108,8 @@ class ReprapMakerbotDriver(ReprapBaseDriver):
         return self.send_command(0x70)
 
     def get_firmware_info(self):
-        cmd = "\x14\x1c\x00"
+        #cmd = "\x14\x1c\x00"
+        cmd = "\x01"
         return self.send_command(cmd)
 
     def set_debug_level(self,level):
