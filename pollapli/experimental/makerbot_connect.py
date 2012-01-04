@@ -105,6 +105,8 @@ for speed in baudRates:
         setpos(20,8,12)
         x,y,z,a = getpos()
         print("x:%s, y:%s, z:%s, a:%s" % (x,y,z,a))
+        vinfo = getversion2()
+        print(vinfo)
     ser.close()
 #    try:
 #        v = getversion2()
