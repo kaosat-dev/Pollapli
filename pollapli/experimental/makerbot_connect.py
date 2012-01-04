@@ -8,7 +8,6 @@ def runcommand(payload):
     ser.write(command)
     time.sleep(1)
     first = ser.read()
-    print("First",first)
     if first == '':
         raise Exception("No response")
     if first != '\xd5':
@@ -71,8 +70,8 @@ def pulseRTS(ser):
     ser.setDTR(1)
     ser.setRTS(1)
 
-baudRates = [19200,38400,57600,115200]
-#baudRates = [115200]
+#baudRates = [19200,38400,57600,115200]
+baudRates = [115200]
 
 def attemptConnection(ser): 
     ser.flush()
@@ -80,24 +79,33 @@ def attemptConnection(ser):
     ser.flushOutput()
     try:
         version = getversion()
+        print("got version",version)
         return True
     except:pass
     return False
 
+is_connected = False
+port = "COM7"
 for speed in baudRates:
     print("Connecting at speed %i" % speed)
-    ser = serial.Serial(0, speed, timeout=2.6)
+    ser = serial.Serial(port, speed, timeout=2.6)
     ser.flush()
     ser.flushInput()
     ser.flushOutput()
+    time.sleep(2.6)
     for i in range(5):
         print("Attempt %i" % i)
         if attemptConnection(ser) :
+            is_connected = True
             break
         if i == 1:
             pulseDTR(ser)
         time.sleep(2.6)
-    
+    if is_connected:
+        setpos(20,8,12)
+        x,y,z,a = getpos()
+        print("x:%s, y:%s, z:%s, a:%s" % (x,y,z,a))
+    ser.close()
 #    try:
 #        v = getversion2()
 #    except Exception as inst:
@@ -113,4 +121,4 @@ for speed in baudRates:
 #            #getversion2()
 #        except Exception as inst:
 #            print("Error %s" % str(inst))
-    ser.close()
+    
