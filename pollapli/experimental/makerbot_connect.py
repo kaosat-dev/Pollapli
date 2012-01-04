@@ -86,6 +86,7 @@ def attemptConnection(ser):
 
 is_connected = False
 port = "COM7"
+port = "/dev/ttyUSB0"
 for speed in baudRates:
     print("Connecting at speed %i" % speed)
     ser = serial.Serial(port, speed, timeout=2.6)
