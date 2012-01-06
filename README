@@ -1,54 +1,38 @@
+This application is NOT usable yet, still in early stage of development .
 
-Experimental remote monitoring and control system for Repraps/Repstraps/3d scanners. 
-It includes a Web client (using Javascript + Jquery + WebGl) and server (pure Python ):
+Experimental remote monitoring and control system for Arduinos/Hydroponics/Repraps/Repstraps/3d scanners.
+Also, it will be the "parent" of both the Hydroduino and Doboz-web projects
+It includes a Web client (using Javascript + Jquery ) and server (pure Python, Twisted based ):
 
 //////////////////////////////
+UPDATE: 01/06/2012
+WAY too many updates to list here, project is still not in a really usable state, but sub elements here and there work, lots still remaining to be
+done. If you are curious about the workings and the project, best look around the code/ the various commits
 
-UPDATE: 07/16/2011
- MAJOR UPDATE :
-WARNING : this version is UNUSABLE in its current state, as it include NO user interface
-* the communication method to the server was changed to a complete REST  api
-* it also uses longpolling : ie no more bruteforce polling
-* a lot if not most of the server's system where heavilly modified or rewritten for a great deal more of clarity,
-features and expandability
-* this version adds support for addons for modularity
-* this version also adds an sqlite database backend 
-* the project is now using the python twisted library
-* this version also support any amount of connected hardware (no guarantees on performance though)
-* plug & play support of arduino based devices
-
-OLD NEWS:
-* The project now comes with buidout scripts for easier deployment : no need to have the dependencies installed: here is how you can setup and run 
-Doboz-Web using buildout:
-* check out the code from github
+UPDATE: 04/17/2011
+-The project now comes with buidout scripts for easier deployment : no need to have the dependencies installed: here is how you can setup and run 
+Pollapli using buildout:
+-check out the code from github
 in command line :
-*  navigate to the directory you just checked out the code into 
-* type python bootstrap.py (Optionally you can do pythonVERSIONNUM bootstrap.py : ie i use python2.6 bootstrap.py)
-* type bin/buildout : here you will see buildout getting all the project dependencies and setting up an isolated python environment
+- navigate to the directory you just checked out the code into 
+- type python bootstrap.py (Optionally you can do pythonVERSIONNUM bootstrap.py : ie i use python2.6 bootstrap.py) 
+- type buildout/buildout : here you will see buildout getting all the project dependencies and setting up an isolated python environment
 DONE!
-To run the project , just type , at the same place: bin/dobozweb
-For developpers , there are a few helper scripts as well:
+To run the project , just type , at the same place: buildout/Pollapli
 
-Configuration:
-* To change the serial speed and the adapted driver for your firmware, change the speed and driver lines in the config.cfg file in the "Reprap" section:
-the only tested driver so far is Teacup, fived might work (feedbakc appreciated, as it does not respond with my reprap's motherboard)
-* To change the webserver (wsgiref or tornado)  , just change the ServerType in the config.cfg file in the "WebServer" section
-* To enable/disable webcam use : Change "use:False" (False or True must start with uppercase , as per python syntax)  in the config.cfg file in the "Webcam" section
+In general:
 
 Depencies:
-* For now only tested with python 2.6
-* You will need to have pySerial installed (normally deployed using the buildout method above)
-* You will also need the twisted framework : for now you will need to install this seperatly, future versions
-will have it included
+* Works with Python 2.6/2.7 (not Python 3.0 compatible)
+* You will need Twisted 11.0.0
+* You will need to have pySerial installed
 * for webcam support , pygst is required too
 * to generate docs, sphinx and all its dependencies are required
-* the dependency on pyparsing was removed
-
-
 
 For more info 
-please see the wiki pages at http://github.com/kaosat-dev/Doboz/wiki/Doboz-web
+please see the wiki pages at https://github.com/kaosat-dev/Pollapli/wiki
+
 
 //////////////////////////////
-Doboz-web : Licensed under the GPL license
+Pollapli : Licensed under the GPL license
 © 2011 by Mark "Ckaos" Moissette 
