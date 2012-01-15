@@ -12,6 +12,7 @@ class FiveDPoint():
         self.z = z
         self.e = e
         self.f = f
+
     def __str__(self):
         return "["+str(self.x)+","+str(self.y)+","+str(self.z)+","+str(self.e)+","+str(self.f)+"]"
 
@@ -25,7 +26,8 @@ class GCodeParser(object):
         #pattern="(\S[^G1|G0])?(?P<t>G1|G0)?(\S[^G1|G0])?"
         self.gcodeRe = re.compile(pattern)
 
-    def parse(self,line):
+    def parse(self, line):
+        """parses a gcode line"""
         command = None
         try:
             result = self.gcodeRe.search(line)
@@ -87,7 +89,7 @@ class GCodeParser(object):
 #            pass
 #        #print("ParsedPos",str(pos))
 #        return pos
-            
+
 if __name__ == "__main__":
     gcode_parser = GCodeParser()
     gcode_parser.parse("G1 X-11.4 Y-22.21 Z0.2 F180.0 E0.318")

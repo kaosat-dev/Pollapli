@@ -114,14 +114,15 @@ class Actuator(ConcreteDeviceComponent):
         ConcreteDeviceComponent.__init__(self, parent, name, description, category)
 
 
-class Variable(BaseDeviceComponent):
+class VariableOld(BaseDeviceComponent):
     """This class represents a physical variable that can be controlled
     by a device"""
-    def __init__(self, parent=None, name="", description="", value=None, defaultValue=None, variable_type=None, unit=""):
+    def __init__(self, parent=None, name="", description="", value=None, defaultValue=None, max_rateofchange=None, variable_type=None, unit=""):
         BaseDeviceComponent.__init__(self, parent, name, description)
         self.value = value
         self.defaultValue = defaultValue or value
         self.targetValue = None
+        self.max_rateofchange = max_rateofchange
         self.variable_type = variable_type
         self.unit = unit
 
@@ -148,3 +149,43 @@ class Variable(BaseDeviceComponent):
             self.value = value
         if to_default:
             self.value = self.defaultValue
+
+
+class Variable(BaseDeviceComponent):
+    """This class represents a physical variable that can be controlled
+    by a device"""
+    def __init__(self, parent=None, name="", description="", value_data=None, rateofchange_data=None, variable_type=None, unit=""):
+        """
+        :param value_data: tupple of value, default value
+        :param variation_data : tupple of rate of change, max rate of change
+        """
+        BaseDeviceComponent.__init__(self, parent, name, description)
+        self.value, self.default_value, self.min_value, self.max_value = value_data
+        self.rate_of_change, self.min_rate_of_change, self.max_rate_of_change = rateofchange_data
+        self.target_value = None
+        self.variable_type = variable_type
+        self.unit = unit
+
+    def set_variable(self, value, relative=False, params=None):
+        """ setting is dependent on the type of  variable
+        This is a delayed operation: set just initiates the chain of events
+        leading to an actual update
+        it calls the driver set method + this variables type :ie  for
+        a position: set_name_position
+        all variable types need to support adding
+        """
+        if relative:
+            self.target_value += value
+        else:
+            self.target_value = value
+        #send command to driver
+
+    def get_variable(self):
+        pass
+
+    def reset(self, value=None, home=True):
+        """reset a variable to a value or default value"""
+        if value is not None:
+            self.value = value
+        if home:
+            self.value = self.default_value

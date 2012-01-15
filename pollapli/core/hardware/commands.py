@@ -99,7 +99,7 @@ class EnableDisableComponents(Command):
         return not self.__eq__(other)
 
     def run(self):
-        self.device.enable_disable_components(self.component_category, self.component_type, self.component_on)
+        return self.device.enable_disable_components(self.component_category, self.component_type, self.component_on)
 
 
 class SetVariableUnit(Command):
@@ -139,4 +139,26 @@ class SetVariableTarget(Command):
         return not self.__eq__(other)
 
     def run(self):
-        self.device.set_variable_target(self.variable, self.target_value)
+        return self.device.set_variable_target(self.variable, self.target_value)
+
+
+class EnqueueVariableTarget(Command):
+    def __init__(self, device=None, variable_name="toolhead_position", target_value=None, rate_of_change=None):
+        Command.__init__(self, device)
+        self.device = device
+        self.variable_name = variable_name
+        self.target_value = target_value
+        self.rate_of_change = rate_of_change
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and
+        self.device == other.device and
+        self.variable_name == other.variable_name and
+        self.target_value == other.target_value and
+        self.rate_of_change == other.rate_of_change)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def run(self):
+        return self.device.enqueue_variable_target(self.variable_name, self.target_value, self.rate_of_change)
