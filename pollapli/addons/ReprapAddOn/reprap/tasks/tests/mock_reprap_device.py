@@ -1,5 +1,6 @@
 from pollapli.core.logic.devices.device import Device
-from twisted.internet import defer, reactor
+from twisted.internet import reactor, defer
+from twisted.internet.task import deferLater
 
 
 class MockReprapDevice(Device):
@@ -9,11 +10,10 @@ class MockReprapDevice(Device):
         self.command_delay = command_delay
 
     def set_variable_target(self, variable=None, value=None):
-        deferred = defer.Deferred()
-
+        #deferred = defer.Deferred()
         def do_some_mock_stuff(result):
             return (variable, value)
-
-        deferred.addCallback(do_some_mock_stuff)
-        reactor.callLater(self.command_delay, deferred.callback, None)
+        #deferred.addCallback(do_some_mock_stuff)
+        #reactor.callLater(self.command_delay, deferred.callback, None)
+        deferred = deferLater(reactor, self.command_delay, do_some_mock_stuff, None)
         return deferred

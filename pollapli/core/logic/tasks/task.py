@@ -9,25 +9,36 @@ import time
 class TaskStatus(object):
     def __init__(self, progress_increment=0, progress=0):
         self.is_started = False
+        self.is_finished = False
         self.is_paused = False
         self.progress_increment = progress_increment
         self.progress = progress
         self.start_time = 0
         self.total_time = 0
+        self.real_time = 0
+        self.last_pause_time = 0
 
     def start(self):
         self.is_started = True
-        self.is_paused = False
+        self.is_finished = False
         self.progress = 0
-        self.start_time = time.time()
+        self.last_pause_time = self.start_time = time.time()
 
     def stop(self):
         """
         sets the status to stopped
         should it be paused or should is running be set  to false?
         """
-        self.is_paused = True
+        self.is_finished = True
         self.is_started = False
+
+    def pause(self):
+        self.real_time = self.real_time + (time.time() - self.last_pause_time)
+        self.is_paused = True
+        
+    def resume(self):
+        self.last_pause_time = time.time()
+        self.is_paused = False
 
     def update_progress(self, value=None, increment=None):
         """updates the progress
@@ -42,9 +53,10 @@ class TaskStatus(object):
             self.progress += self.progress_increment
 
         self.total_time = time.time() - self.start_time
-        if self.progress == 100:
-            self.is_paused = True
-            self.is_started = False
+#        if self.progress == 100:
+#            self.is_finished = True
+#            self.is_paused = True
+#            self.is_started = False
 
 
 class Task(BaseComponent):
